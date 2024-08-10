@@ -5,6 +5,12 @@
       <p>{{ message.name }}: {{ message.text }}</p>
     </div>
   </div>
+  
+    <div v-if="contributorSent.length > 0">
+    <div v-for="contributor in contributorSent" :key="contributor.id">
+      <p>Beigetreten - SessionId: {{ contributor.session }} - ContributorId: {{ contributor.user }} - Contributor-Role: {{ contributor.role }}</p>
+    </div>
+  </div>
   <div v-else>
     <p>Keine Nachrichten empfangen.</p>
   </div>
@@ -34,12 +40,17 @@ function getUserData() {
   }
 }
 const msg = ref([]);
-
+const contributorSent = ref([]);
 // Hier müssen Sie den Code zum Empfangen der Nachricht über WebSockets einfügen
 Echo.channel('messages')
   .listen('MessageSent', (e) => {
     msg.value.push(e);
+  })
+  .listen('ContributorJoin', (e) => {
+    console.log('ContributorJoin Event empfangen:', e);
+    contributorSent.value.push(e);
   });
+
 // Funktion zum Senden der User-ID
 function updateUserId() {
   axios.post('/api/user', { user_id: localStorage.getItem('user_id') })

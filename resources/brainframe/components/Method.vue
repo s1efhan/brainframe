@@ -3,9 +3,9 @@
     <h2 v-if="method">{{method.name}}</h2>
     <table>
       <tr>
-        <td @click="sessionPhase ='collectingPhase'"><button>Collecting</button></td>
-        <td @click="sessionPhase ='votingPhase'"><button>Voting</button></td>
-        <td @click="sessionPhase ='closingPhase'"><button>Closing</button></td>
+        <td @click="switchPhase('collectingPhase')"><button>Collecting</button></td>
+        <td @click="switchPhase('votingPhase')"><button>Voting</button></td>
+        <td @click="switchPhase('closingPhase')"><button>Closing</button></td>
       </tr>
     </table>
     <CollectingPhase v-if="sessionPhase === 'collectingPhase' && personalContributor" :personalContributor="personalContributor" />
@@ -31,12 +31,25 @@ const props = defineProps({
     required: true
   }
 });
-
+const switchPhase = (switchedPhase) => {
+  console.log ('switching to phase: ', switchedPhase)
+  axios.post('/api/phase', {
+    switched_phase: switchedPhase,
+    session_id: sessionId.value
+  })
+  .then(response => {
+    console.log('Server response:', response.data);
+  })
+  .catch(error => {
+    console.error('Error switching Phase', error);
+  });
+};
 const route = useRoute();
 const methodId = ref(props.methodId);
 const method = ref('');
 const sessionPhase = ref('collectingPhase');
 const sessionId = ref('');
+
 const personalContributor = ref(null);
 const getMethodDetails = () => {
   axios.get(`/api/method/${methodId.value}`)
@@ -48,11 +61,18 @@ const getMethodDetails = () => {
       console.error('Error fetching Method Details', error);
     });
 };
+
 onMounted(() => {
   sessionId.value = route.params.id;
   sessionPhase.value = route.params.phase || 'collectingPhase';
   methodId.value = props.methodId;
   personalContributor.value = props.personalContributor;
     getMethodDetails();
+    Echo.channel('session.' + sessionId.value)
+  .listen('SwitchPhase', (e) => {
+      console.log('SwitchPhase Event empfangen:', e);
+      sessionPhase.value = e.phase;
+  });
+    console.log('session.' + sessionId.value)
 });
 </script>

@@ -10,26 +10,19 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageSent implements ShouldBroadcast
+class SwitchPhase implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
     public function __construct(
-        public string $name,
-        public string $text,
+        public string $sessionId,
+        public string $phase
     )
     {
-        //
     }
-    /**
-     * Get the channels the event should broadcast on.
-     * @return \Illuminate\Broadcasting\Channel
-     */
+
     public function broadcastOn(): Channel
     {
-        return new Channel('messages');
+        return new Channel('session.' . $this->sessionId);
     }
 }

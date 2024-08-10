@@ -17,3 +17,4 @@ Route::post('/session', [SessionController::class, 'update']);
 Route::post('/session/invite', [SessionController::class, 'invite']);
 Route::post('/idea', [IdeaController::class, 'store']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get']);
+Route::post('/phase', [MethodController::class, 'switchPhase']);

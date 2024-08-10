@@ -13,6 +13,7 @@
       <button v-else type="button" @click="isListening = false">⏸️</button>
       <br>
       <button type="submit" @click="isListening = false, submitIdea(true);">Idee speichern</button>
+      <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
     </form>
   </section>
 </template>
@@ -24,6 +25,7 @@ import { useRoute } from 'vue-router';
 
 const route = useRoute();
 const textInput = ref('');
+const errorMsg = ref('');
 const fileInput = ref(null);
 const sessionId = ref(route.params.id);
 const isListening = ref(false);
@@ -83,12 +85,17 @@ const compressImage = async (file, maxSizeInMB = 2) => {
 };
 
 const submitIdea = async () => {
+  if(imageFile.value || textInput.value){
   const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
   
   const formData = new FormData();
   formData.append('contributor_id', personalContributor.value.id);
   formData.append('session_id', sessionId.value);
-  formData.append('image_file', compressedImage);
+
+  if (compressedImage) {
+    formData.append('image_file', compressedImage);
+  }
+  
   formData.append('text_input', textInput.value);
 
   try {
@@ -102,7 +109,9 @@ const submitIdea = async () => {
   } catch (error) {
     console.error('Error saving idea', error);
   }
+}else {errorMsg.value="Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst"}
 };
+
 onMounted(() => {
   sessionId.value = route.params.id;
   personalContributor.value = props.personalContributor;

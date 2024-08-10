@@ -1,5 +1,5 @@
 <template>
-  <section v-if="showSelectRole && !personalContributor">
+  <section v-if="showSelectRole">
     <form @submit.prevent="handleSubmit">
       <label for="roleSelect">Wähle eine Rolle:</label>
       <select id="roleSelect" v-model="selectedRole.id" @change="updateSelectedRole">
@@ -10,13 +10,6 @@
       <p v-if="selectedRole">{{ selectedRole.description }}</p>
       <button type="button" @click="addContributor">Session Beitreten</button>
     </form>
-  </section>
-  <section v-if="personalContributor">
-    <ol>
-      <li v-for="(contributor, index) in contributors" :key="contributor.id">
-        {{ index + 1 }}. Teilnehmer: {{ contributor.role_name }}
-      </li>
-    </ol>
   </section>
 </template>
 
@@ -29,13 +22,9 @@ const props = defineProps({
   userId: {
     type: [String, Number],
     required: true
-  },
-  personalContributor: {
-    type: [Object, null],
-    required: true
   }
 });
-const personalContributor = ref(null);
+const emit = defineEmits(['contributorAdded']);
 const showSelectRole = ref(true);
 const sessionId = ref('');
 const selectedRole = ref({ id: null, name: '', description: '' });
@@ -72,20 +61,20 @@ const addContributor = () => {
     user_id: userId.value,
     role_id: selectedRole.value.id
   })
-    .then(response => {
-      console.log('Server response:', response.data);
-      showSelectRole.value = false;
-    })
-    .catch(error => {
-      showSelectRole.value = false;
-      console.error('Error adding Contributor', error);
-    });
+  .then(response => {
+    console.log('Server response:', response.data);
+    showSelectRole.value = false;
+    emit('contributorAdded'); // Emittieren Sie ein Event
+  })
+  .catch(error => {
+    showSelectRole.value = false;
+    console.error('Error adding Contributor', error);
+  });
 };
 
 onMounted(() => {
   sessionId.value = route.params.id;
   userId.value = props.userId;
-  personalContributor.value = props.personalContributor;
   if (sessionId.value) {
     getRoles();
   }

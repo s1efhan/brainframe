@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Contributor;
+use App\Events\ContributorJoin;
 
 class ContributorController extends Controller
 {
@@ -35,6 +36,7 @@ class ContributorController extends Controller
             'user_id' => $userId,
             'role_id' => $roleId
         ]);
+        ContributorJoin::dispatch($sessionId, $userId, $roleId);
 
         return response()->json(['success' => true, 'contributor' => $newContributor]);
     }public function get($sessionId, $userId)

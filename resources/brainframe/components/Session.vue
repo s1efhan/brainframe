@@ -3,14 +3,14 @@
 <p v-if="personalContributor">
   Deine Rolle: {{ personalContributor.role_name }}
 </p>
-  <Lobby  v-if="!personalContributor" :personalContributor="personalContributor" :userId="userId"/>
+  <Rollenwahl  v-if="!personalContributor" :userId="userId"  @contributorAdded="handleContributorAdded"/>
   <Method v-if="methodId && personalContributor" :personalContributor="personalContributor" :methodId ="methodId"/> 
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import Lobby from './Lobby.vue';
+import Rollenwahl from './Rollenwahl.vue';
 import Method from './Method.vue';
 import axios from 'axios';
 const route = useRoute();
@@ -23,6 +23,9 @@ const props = defineProps({
 });
 const contributors = ref([]);
 const personalContributor = ref(null);
+const handleContributorAdded = () => {
+  getContributors();
+};
 const getContributors = () => {
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {

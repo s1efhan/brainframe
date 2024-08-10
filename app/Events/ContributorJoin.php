@@ -10,7 +10,8 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageSent implements ShouldBroadcast
+
+class ContributorJoin implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -18,8 +19,9 @@ class MessageSent implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public string $name,
-        public string $text,
+        public string $session,
+        public string $user,
+        public string $role
     )
     {
         //

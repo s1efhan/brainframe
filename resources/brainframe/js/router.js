@@ -4,7 +4,6 @@ import Login from '../components/Login.vue';
 import Datenschutz from '../components/Datenschutz.vue';
 import Impressum from '../components/Impressum.vue';
 import Session from '../components/Session.vue';
-import Lobby from '../components/Lobby.vue';
 import Method from '../components/Method.vue';
 import Error404 from '../components/Error404.vue';
 
@@ -17,7 +16,6 @@ const router = createRouter({
       { name: 'impressum', path: '/brainframe/impressum', component: Impressum },
       { name: 'session', path: '/brainframe/:id', component: Session },
       { name: 'method', path: '/brainframe/:id/:method/:phase', component: Method },
-      { name: 'lobby', path: '/brainframe/:id/lobby', component: Lobby },
       { name: 'error404', path: '/:catchAll(.*)', component: Error404 },
     ],
 });
