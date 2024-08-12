@@ -28,6 +28,7 @@
                     placeholder="Enter email address">
             </div>
             <button @click="sessionInvite">Teilnehmer einladen</button>
+            <!-- Kalender-Termin hinzufügen-->
             <p v-if="sessionLink">
                 Your session link: <a :href="sessionLink">{{ sessionLink }}</a>
                 <button @click="copyToClipboard(sessionLink)">

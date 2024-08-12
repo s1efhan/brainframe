@@ -3,11 +3,25 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Idea;
+use App\Models\Contributor;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 class IdeaController extends Controller
 {
+    public function get($sessionId, $votingPhaseNumber)
+    {
+        Log::info('Received request to get ideas', ['sessionId' => $sessionId, 'votingPhaseNumber' => $votingPhaseNumber]);
+
+        $ideas = Idea::where('session_id', $sessionId)->get();
+        $ideasCount = $ideas->count();
+
+        return response()->json([
+            'success' => true,
+            'ideas' => $ideas,
+            'ideasCount' => $ideasCount
+        ]);
+    }
     public function store(Request $request)
     {
         // Validierung der eingehenden Anfrage
@@ -25,7 +39,7 @@ class IdeaController extends Controller
             $filePath = $imageFile->storeAs('brainframe/images', $fileName, 'public');
             $imageFileUrl = 'storage/' . $filePath;
         }
-        
+
         $contributorId = $request->input('contributor_id');
         $sessionId = $request->input('session_id');
         // Erstelle einen neuen Datensatz

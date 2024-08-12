@@ -1,19 +1,26 @@
 <template>
   <Menu></Menu>
+  <!-- 
   <div v-if="msg.length > 0">
-    <div v-for="message in msg" :key="message.id">
+     <div v-for="message in msg" :key="message.id">
       <p>{{ message.name }}: {{ message.text }}</p>
     </div>
-  </div>
+  </div> 
   
-    <div v-if="contributorSent.length > 0">
+  ////
+  // NUR ZUM TESTEN!
+  ////
+  
+  <div v-if="contributorSent.length > 0">
     <div v-for="contributor in contributorSent" :key="contributor.id">
-      <p>Beigetreten - SessionId: {{ contributor.session }} - ContributorId: {{ contributor.user }} - Contributor-Role: {{ contributor.role }}</p>
+      <p>Beigetreten - SessionId: {{ contributor.session }} - ContributorId: {{ contributor.user }} - Contributor-Role:
+        {{ contributor.role }}</p>
     </div>
   </div>
   <div v-else>
     <p>Keine Nachrichten empfangen.</p>
   </div>
+  -->
   <router-view :userId="userId"></router-view>
   <Footer></Footer>
 </template>

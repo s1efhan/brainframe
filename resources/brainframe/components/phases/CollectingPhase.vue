@@ -1,4 +1,5 @@
 <template>
+  <h2 v-if="method">{{ method.name }}</h2>
   <h3>CollectingPhase</h3>
   <section>
     <form @submit.prevent="handleSubmit">
@@ -21,13 +22,11 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import axios from 'axios';
-import { useRoute } from 'vue-router';
 
-const route = useRoute();
 const textInput = ref('');
 const errorMsg = ref('');
 const fileInput = ref(null);
-const sessionId = ref(route.params.id);
+const sessionId = ref(null);
 const isListening = ref(false);
 const personalContributor = ref(null);
 
@@ -38,6 +37,14 @@ const props = defineProps({
   personalContributor: {
     type: Object,
     required: true
+  },
+  sessionId: {
+    type: [String, Number],
+    required: true
+  },
+  method:{
+    type: Object,
+    required:true
   }
 });
 const imageFile = ref(null)
@@ -111,13 +118,14 @@ const submitIdea = async () => {
   }
 }else {errorMsg.value="Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst"}
 };
-
+const method = ref(null);
 onMounted(() => {
-  sessionId.value = route.params.id;
+  sessionId.value = props.sessionId;
   personalContributor.value = props.personalContributor;
+  method.value = props.method;
+  console.log("Collecting Method Value", method.value)
   console.log(personalContributor.value, sessionId.value);
 });
-
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = new SpeechRecognition();
 

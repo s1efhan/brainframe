@@ -52,7 +52,6 @@ const getSessionDetails = () => {
       console.error('Error fetching Session Details', error);
     });
 };
-const showLobby = ref(true);
 const sessionId = ref(route.params.id);
 const userId = ref(props.userId);
 

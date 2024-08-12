@@ -1,6 +1,5 @@
 <template>
   <section>
-    <h2 v-if="method">{{method.name}}</h2>
     <table>
       <tr>
         <td @click="switchPhase('collectingPhase')"><button>Collecting</button></td>
@@ -8,9 +7,9 @@
         <td @click="switchPhase('closingPhase')"><button>Closing</button></td>
       </tr>
     </table>
-    <CollectingPhase v-if="sessionPhase === 'collectingPhase' && personalContributor" :personalContributor="personalContributor" />
-    <VotingPhase v-if="sessionPhase === 'votingPhase' && personalContributor" :personalContributor="personalContributor"/>
-    <ClosingPhase v-if="sessionPhase === 'closingPhase' && personalContributor" :personalContributor="personalContributor"/>
+    <CollectingPhase v-if="method && sessionPhase === 'collectingPhase' && personalContributor" :method="method" :sessionId="sessionId" :personalContributor="personalContributor" />
+    <VotingPhase v-if="sessionPhase === 'votingPhase' && personalContributor" :sessionId="sessionId" :personalContributor="personalContributor"/>
+    <ClosingPhase v-if="sessionPhase === 'closingPhase' && personalContributor" :sessionId="sessionId" :personalContributor="personalContributor"/>
   </section>
 </template>
 
@@ -46,7 +45,7 @@ const switchPhase = (switchedPhase) => {
 };
 const route = useRoute();
 const methodId = ref(props.methodId);
-const method = ref('');
+const method = ref(null);
 const sessionPhase = ref('collectingPhase');
 const sessionId = ref('');
 
@@ -64,7 +63,7 @@ const getMethodDetails = () => {
 
 onMounted(() => {
   sessionId.value = route.params.id;
-  sessionPhase.value = route.params.phase || 'collectingPhase';
+  sessionPhase.value = route.params.phase || 'votingPhase';
   methodId.value = props.methodId;
   personalContributor.value = props.personalContributor;
     getMethodDetails();

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Models\Method;
-use App\Models\Contributor;
 use App\Events\SwitchPhase;
 class MethodController extends Controller
 {

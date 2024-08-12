@@ -18,3 +18,4 @@ Route::post('/session/invite', [SessionController::class, 'invite']);
 Route::post('/idea', [IdeaController::class, 'store']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get']);
 Route::post('/phase', [MethodController::class, 'switchPhase']);
+Route::get('/ideas/{sessionId}/{votingPhaseNumber}', [IdeaController::class, 'get']);
