@@ -9,9 +9,9 @@
     </div>
 
     <div v-if="collectingStarted">
-      <p>Runde: {{ currentRound }} / {{ collectingRounds }}</p>
+      <p>Runde: {{ currentRound }} {{ "/". collectingRounds }}</p>
       <p>Verbleibende Zeit: {{ remainingTime }} Sekunden</p>
-      <p>Eingereichte Ideen: {{ submittedIdeas }} / {{ maxIdeaInput }}</p>
+      <p>Eingereichte Ideen: {{ submittedIdeas }}  {{"/". maxIdeaInput }}</p>
 
       <form @submit.prevent="handleSubmit">
         <label for="image">Bild einfügen: </label>
@@ -26,7 +26,7 @@
         <button v-else type="button" @click="isListening = false">⏸️</button>
         <br>
         <button type="submit" @click="isListening = false, submitIdea(true);"
-          :disabled="submittedIdeas >= maxIdeaInput">Idee speichern</button>
+          :disabled="submittedIdeas >= maxIdeaInput && maxIdeaInput">Idee speichern</button>
         <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
       </form>
 
@@ -174,7 +174,7 @@ const compressImage = async (file, maxSizeInMB = 2) => {
 };
 
 const submitIdea = async () => {
-  if (submittedIdeas.value >= maxIdeaInput.value) {
+  if (submittedIdeas.value >= maxIdeaInput.value && maxIdeaInput.value !== null) {
     errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
     return;
   }

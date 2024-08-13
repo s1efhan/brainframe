@@ -45,27 +45,6 @@ const getIdeas = () => {
 onMounted(()=>{
     sessionId.value = props.sessionId;
     personalContributor.value = props.personalContributor;
-    //getIdeas();
+    getIdeas();
 });
 </script>
-<!--
-
-Schritt 1: Für große Ideenmengen:
-- entweder Swipen (yes/no wie Tinder)
-- oder Pick Left or Right (Idee vs. Idee)
-
-Schritt 2: Für kleine Ideenmengen:
-- entweder Up-Voten/Down-Voten (wie Reddit) mit Kommentaren
-- oder: Schulnoten/Sterne verteilen
-- oder: Rangfolge bilden
-
-- und dann: einzelne Aspekte von Ideen verknüpfen (Kombinieren via Drag and Drop)
-
-mit diesen Spezifikationen
-- kleine Kärtchen für Ideen mit Fortschrittsanzeige (z.B 12/36) bewertet
-- KI generierte Tags, Beschreibung und Titel
-- Countdown Timer
-- Indikator dafür wieviele Stimmen jeder Teilnehmer noch übrig hat (bei Updovten Pick Your Favorites)
-
-
--->

@@ -40,30 +40,6 @@
   <script setup>
   import { ref, onMounted } from 'vue';
   
-  const fakeIdeaData = ref([
-    {
-      id: 1,
-      ideaTitle: 'Improve User Interface',
-      ideaDescription: '<ul><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li></ul>',
-      contributorIcon: 'path/to/contributor1.png',
-      tag: 'UI/UX'
-    },
-    {
-      id: 2,
-      ideaTitle: 'Optimize Performance',
-      ideaDescription: '<ul><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li></ul>',
-      contributorIcon: 'path/to/contributor2.png',
-      tag: 'Performance'
-    },
-    {
-      id: 3,
-      ideaTitle: 'Add Dark Mode',
-      ideaDescription: '<ul><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li></ul>',
-      contributorIcon: 'path/to/contributor3.png',
-      tag: 'Feature'
-    }
-  ]);
-  
   const currentPair = ref([]);
   const previousPair = ref([]); // Um das letzte Paar zu speichern
   const decisionsMade = ref(0);
@@ -89,10 +65,10 @@
   });
   
   const setNextPair = () => {
-    if (fakeIdeaData.value.length >= 2) {
+    if (ideas.value.length >= 2) {
       previousPair.value = [...currentPair.value]; // Speichert das aktuelle Paar für das Rückgängig machen
-      currentPair.value = fakeIdeaData.value.slice(0, 2);
-      decisionsMade.value = props.ideasCount - fakeIdeaData.value.length;
+      currentPair.value = ideas.value.slice(0, 2);
+      decisionsMade.value = props.ideasCount - ideas.value.length;
     } else {
       currentPair.value = [];
     }
@@ -100,17 +76,17 @@
   
   const selectIdea = (selectedIndex) => {
     // Entfernt die nicht ausgewählte Idee
-    fakeIdeaData.value.splice(1 - selectedIndex, 1);
+    ideas.value.splice(1 - selectedIndex, 1);
     setNextPair();
   };
   
   const undoLastDecision = () => {
     if (previousPair.value.length === 2) {
       // Setzt das vorherige Paar zurück
-      fakeIdeaData.value.unshift(previousPair.value[1 - fakeIdeaData.value.length]);
+      ideas.value.unshift(previousPair.value[1 - ideas.value.length]);
       currentPair.value = [...previousPair.value];
       previousPair.value = [];
-      decisionsMade.value = props.ideasCount - fakeIdeaData.value.length;
+      decisionsMade.value = props.ideasCount - ideas.value.length;
     }
   };
   </script>

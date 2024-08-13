@@ -13,7 +13,24 @@ class IdeaController extends Controller
     {
         Log::info('Received request to get ideas', ['sessionId' => $sessionId, 'votingPhaseNumber' => $votingPhaseNumber]);
 
-        $ideas = Idea::where('session_id', $sessionId)->get();
+        $ideas = Idea::where('session_id', $sessionId)
+            ->with('contributor') // Laden Sie den zugehörigen Contributor
+            ->get()
+            ->map(function ($idea) {
+                $contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
+                $ideaTitle = $idea->text_input ?? 'Bild-Input';
+                $ideaDescription = "<ul><li>Idea Description wird KI generiert</li><li>Lorem Ipsum</li><li>dolor</li></ul>";
+                $ideaTag = "#KI_generierter_TAG";
+
+                return [
+                    'id' => $idea->id,
+                    'contributorIcon' => $contributorIcon,
+                    'ideaTitle' => $ideaTitle,
+                    'ideaDescritpion' => $ideaDescription,
+                    'tag' => $ideaTag
+                ];
+            });
+
         $ideasCount = $ideas->count();
 
         return response()->json([

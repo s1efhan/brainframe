@@ -20,30 +20,6 @@
   <script setup>
   import { ref, onMounted } from 'vue';
   
-  const fakeIdeaData = ref([
-    {
-      id: 1,
-      ideaTitle: 'Improve User Interface',
-      ideaDescription: '<ul><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li></ul>',
-      contributorIcon: 'path/to/contributor1.png',
-      tag: 'UI/UX'
-    },
-    {
-      id: 2,
-      ideaTitle: 'Optimize Performance',
-      ideaDescription: '<ul><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li></ul>',
-      contributorIcon: 'path/to/contributor2.png',
-      tag: 'Performance'
-    },
-    {
-      id: 3,
-      ideaTitle: 'Add Dark Mode',
-      ideaDescription: '<ul><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li><li>Lorem Ipsum Dolor</li></ul>',
-      contributorIcon: 'path/to/contributor3.png',
-      tag: 'Feature'
-    }
-  ]);
-  
   const currentIdea = ref(null);
   const previousIdea = ref(null);
   const decisionsMade = ref(0);
@@ -68,33 +44,33 @@
   });
   
   const setNextIdea = () => {
-    if (fakeIdeaData.value.length > 0) {
+    if (ideas.value.length > 0) {
       previousIdea.value = currentIdea.value;
-      currentIdea.value = fakeIdeaData.value[0];
+      currentIdea.value = ideas.value[0];
     } else {
       currentIdea.value = null;
     }
-    decisionsMade.value = props.ideasCount - fakeIdeaData.value.length;
+    decisionsMade.value = props.ideasCount - ideas.value.length;
   };
   
   const swipeLeft = () => {
     // Logik für "Nicht mögen"
-    fakeIdeaData.value.shift();
+    ideas.value.shift();
     setNextIdea();
   };
   
   const swipeRight = () => {
     // Logik für "Mögen"
-    fakeIdeaData.value.shift();
+    ideas.value.shift();
     setNextIdea();
   };
   
   const undoLastDecision = () => {
     if (previousIdea.value) {
-      fakeIdeaData.value.unshift(previousIdea.value);
+      ideas.value.unshift(previousIdea.value);
       currentIdea.value = previousIdea.value;
       previousIdea.value = null;
-      decisionsMade.value = props.ideasCount - fakeIdeaData.value.length;
+      decisionsMade.value = props.ideasCount - ideas.value.length;
     }
   };
   

@@ -6,7 +6,7 @@
     <h3>Ideas:</h3>
     <table>
       <tbody>
-        <tr v-for="(idea, index) in fakeIdeaData" :key="idea.id" draggable="true" @dragstart="dragStart(index)" @dragover.prevent @drop="drop(index)">
+        <tr v-for="(idea, index) in ideas" :key="idea.id" draggable="true" @dragstart="dragStart(index)" @dragover.prevent @drop="drop(index)">
           <td>
             <svg width="80px" height="80px" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" clip-rule="evenodd"
@@ -17,7 +17,7 @@
           <td>{{ index + 1 }}</td>
           <td>{{ idea.ideaTitle }}</td>
           <td>
-            <img :src="idea.contributorIcon" alt="Contributor Icon" width="24" height="24" />
+           {{idea.contributorIcon}}
           </td>
           <td>{{ idea.tag ? idea.tag : "ideaTag" }}</td>
           <td>
@@ -33,38 +33,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 
-const fakeIdeaData = ref([
-  {
-    id: 1,
-    ideaTitle: 'Improve User Interface',
-    contributorIcon: 'path/to/contributor1.png',
-    tag: 'UI/UX'
-  },
-  {
-    id: 2,
-    ideaTitle: 'Optimize Performance',
-    contributorIcon: 'path/to/contributor2.png',
-    tag: 'Performance'
-  },
-  {
-    id: 3,
-    ideaTitle: 'Add Dark Mode',
-    contributorIcon: 'path/to/contributor3.png',
-    tag: 'Feature'
-  }
-]);
-
 const props = defineProps({
-  ideasCount: {
-    type: [String, Number],
-    required: true
-  },
   ideas: {
-    type: Array,
+    type: Object,
     required: true
   }
 });
-
 const ideasCount = ref(null);
 const ideas = ref(null);
 
@@ -81,25 +55,25 @@ const dragStart = (index) => {
 
 const drop = (index) => {
   if (draggedItemIndex !== null) {
-    const draggedItem = fakeIdeaData.value.splice(draggedItemIndex, 1)[0];
-    fakeIdeaData.value.splice(index, 0, draggedItem);
+    const draggedItem = ideas.value.splice(draggedItemIndex, 1)[0];
+    ideas.value.splice(index, 0, draggedItem);
     draggedItemIndex = null;
   }
 };
 
 const moveUp = (index) => {
   if (index > 0) {
-    const temp = fakeIdeaData.value[index];
-    fakeIdeaData.value[index] = fakeIdeaData.value[index - 1];
-    fakeIdeaData.value[index - 1] = temp;
+    const temp = ideas.value[index];
+    ideas.value[index] = ideas.value[index - 1];
+    ideas.value[index - 1] = temp;
   }
 };
 
 const moveDown = (index) => {
-  if (index < fakeIdeaData.value.length - 1) {
-    const temp = fakeIdeaData.value[index];
-    fakeIdeaData.value[index] = fakeIdeaData.value[index + 1];
-    fakeIdeaData.value[index + 1] = temp;
+  if (index < ideas.value.length - 1) {
+    const temp = ideas.value[index];
+    ideas.value[index] = ideas.value[index + 1];
+    ideas.value[index + 1] = temp;
   }
 };
 </script>
