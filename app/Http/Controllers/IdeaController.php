@@ -30,6 +30,7 @@ class IdeaController extends Controller
             'image_file' => 'nullable|file|mimes:png,jpeg,pdf|max:5000',
             'session_id' => 'required|exists:bf_sessions,id',
             'contributor_id' => 'required|exists:bf_contributors,id',
+            'round' => 'required|integer'
         ]);
         // Verarbeite die Datei, falls vorhanden
         $imageFileUrl = null;
@@ -48,6 +49,7 @@ class IdeaController extends Controller
             'image_file_url' => $imageFileUrl,
             'session_id' => $sessionId,
             'contributor_id' => $contributorId,
+            'round' => $request->input('round')
         ]);
         // Rückgabe einer erfolgreichen Antwort
         return response()->json(['message' => 'Idea stored successfully', 'idea' => $idea], 201);

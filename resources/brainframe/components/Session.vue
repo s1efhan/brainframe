@@ -3,8 +3,9 @@
 <p v-if="personalContributor">
   Deine Rolle: {{ personalContributor.role_name }}
 </p>
+<p v-if = "sessionDetails">Methode: {{ methodName }}</p>
   <Rollenwahl  v-if="!personalContributor" :userId="userId"  @contributorAdded="handleContributorAdded"/>
-  <Method v-if="methodId && personalContributor" :personalContributor="personalContributor" :methodId ="methodId"/> 
+  <Method v-if="methodId && personalContributor" :personalContributor="personalContributor" :contributors="contributors" :methodId ="methodId"/> 
 </template>
 
 <script setup>
@@ -40,12 +41,14 @@ const getContributors = () => {
 };
 
 const methodId = ref('');
+const methodName = ref('');
 const sessionDetails = ref([])
 const getSessionDetails = () => {
   axios.get(`/api/session/${sessionId.value}`)
     .then(response => {
       sessionDetails.value = response.data;
       methodId.value = sessionDetails.value.method_id;
+      methodName.value = sessionDetails.value.method_name;
     
     })
     .catch(error => {

@@ -7,7 +7,7 @@
         <td @click="switchPhase('closingPhase')"><button>Closing</button></td>
       </tr>
     </table>
-    <CollectingPhase v-if="method && sessionPhase === 'collectingPhase' && personalContributor" :method="method" :sessionId="sessionId" :personalContributor="personalContributor" />
+    <CollectingPhase  v-if="method && sessionPhase === 'collectingPhase' && personalContributor" :method="method" :contributors="contributors" :sessionId="sessionId" :personalContributor="personalContributor" />
     <VotingPhase v-if="sessionPhase === 'votingPhase' && personalContributor" :sessionId="sessionId" :personalContributor="personalContributor"/>
     <ClosingPhase v-if="sessionPhase === 'closingPhase' && personalContributor" :sessionId="sessionId" :personalContributor="personalContributor"/>
   </section>
@@ -28,8 +28,13 @@ const props = defineProps({
   personalContributor: {
     type: [Object, null],
     required: true
+  },
+  contributors: {
+    type: [Object, null],
+    required: true
   }
 });
+const contributors = ref(null);
 const switchPhase = (switchedPhase) => {
   console.log ('switching to phase: ', switchedPhase)
   axios.post('/api/phase', {
@@ -63,8 +68,9 @@ const getMethodDetails = () => {
 
 onMounted(() => {
   sessionId.value = route.params.id;
-  sessionPhase.value = route.params.phase || 'votingPhase';
+  sessionPhase.value = route.params.phase || 'collectingPhase';
   methodId.value = props.methodId;
+  contributors.value = props.contributors;
   personalContributor.value = props.personalContributor;
     getMethodDetails();
     Echo.channel('session.' + sessionId.value)

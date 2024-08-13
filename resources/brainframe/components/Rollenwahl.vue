@@ -7,7 +7,7 @@
           {{ role.name }}
         </option>
       </select>
-      <p v-if="selectedRole">{{ selectedRole.description }}</p>
+      <p v-if="selectedRole">Rollen-Eigenschaften: {{ selectedRole.description }}</p>
       <button type="button" @click="addContributor">Session Beitreten</button>
     </form>
   </section>
