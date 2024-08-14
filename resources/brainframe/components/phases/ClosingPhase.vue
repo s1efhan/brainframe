@@ -1,7 +1,21 @@
 <template>
     <h3>ClosingPhase</h3>
 </template>
-
+<script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+const props = defineProps({
+    sessionHostId: {
+    type: [String, Number],
+    required: true
+  }
+});
+const sessionHostId = ref(null);
+onMounted(()=>{
+    sessionHostId.value = props.sessionHostId;
+    
+});
+</script>
 
 <!-- 
 - Email mit Zusammenfassung PDF

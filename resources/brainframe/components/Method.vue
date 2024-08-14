@@ -1,15 +1,15 @@
 <template>
   <section>
-    <table>
-      <tr>
+    <table v-if="sessionHostId && personalContributor">
+     <tr v-if="personalContributor && sessionHostId == personalContributor.id">
         <td @click="switchPhase('collectingPhase')"><button>Collecting</button></td>
         <td @click="switchPhase('votingPhase')"><button>Voting</button></td>
         <td @click="switchPhase('closingPhase')"><button>Closing</button></td>
       </tr>
     </table>
-    <CollectingPhase  v-if="method && sessionPhase === 'collectingPhase' && personalContributor" :method="method" :contributors="contributors" :sessionId="sessionId" :personalContributor="personalContributor" />
-    <VotingPhase v-if="sessionPhase === 'votingPhase' && personalContributor" :sessionId="sessionId" :personalContributor="personalContributor"/>
-    <ClosingPhase v-if="sessionPhase === 'closingPhase' && personalContributor" :sessionId="sessionId" :personalContributor="personalContributor"/>
+    <CollectingPhase  v-if="sessionHostId && personalContributor && method && sessionPhase === 'collectingPhase' && personalContributor" :method="method" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId" :personalContributor="personalContributor" />
+    <VotingPhase v-if="sessionHostId && personalContributor && sessionPhase === 'votingPhase' && personalContributor" :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"/>
+    <ClosingPhase v-if="sessionHostId && personalContributor && sessionPhase === 'closingPhase' && personalContributor" :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"/>
   </section>
 </template>
 
@@ -20,6 +20,7 @@ import VotingPhase from '../components/phases/VotingPhase.vue';
 import CollectingPhase from '../components/phases/CollectingPhase.vue';
 import ClosingPhase from '../components/phases/ClosingPhase.vue';
 import axios from 'axios';
+
 const props = defineProps({
   methodId: {
     type: [String, Number],
@@ -29,11 +30,17 @@ const props = defineProps({
     type: [Object, null],
     required: true
   },
+  sessionHostId: {
+    type: [String, Number],
+    required: true
+  },
   contributors: {
     type: [Object, null],
     required: true
   }
 });
+
+const sessionHostId = ref(null);
 const contributors = ref(null);
 const switchPhase = (switchedPhase) => {
   console.log ('switching to phase: ', switchedPhase)
@@ -71,13 +78,14 @@ onMounted(() => {
   sessionPhase.value = route.params.phase || 'collectingPhase';
   methodId.value = props.methodId;
   contributors.value = props.contributors;
+  sessionHostId.value = props.sessionHostId;
   personalContributor.value = props.personalContributor;
+  console.log("contributor_id, host_id", personalContributor.value, sessionHostId.value);
     getMethodDetails();
     Echo.channel('session.' + sessionId.value)
   .listen('SwitchPhase', (e) => {
       console.log('SwitchPhase Event empfangen:', e);
       sessionPhase.value = e.phase;
   });
-    console.log('session.' + sessionId.value)
 });
 </script>
