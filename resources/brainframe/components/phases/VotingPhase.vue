@@ -13,7 +13,7 @@ import StarVote from '../voting-methods/StarVote.vue';
 import RankingVote from '../voting-methods/RankingVote.vue';
 import LeftRightVote from '../voting-methods/LeftRightVote.vue';
 import SwipeVote from '../voting-methods/SwipeVote.vue';
-const ideasCount = ref(15);
+const ideasCount = ref(null);
 const votingPhaseNumber = ref(1);
 const ideas = ref([]);
 const personalContributor = ref(null);
@@ -25,8 +25,13 @@ const props = defineProps({
   sessionId: {
     type: [String, Number],
     required: true
+  },
+  sessionHostId: {
+    type: [String, Number],
+    required: true
   }
 });
+const sessionHostId = ref(null);
 const sessionId = ref(null)
 const getIdeas = () => {
   console.log('getIdeas');
@@ -45,6 +50,7 @@ const getIdeas = () => {
 onMounted(()=>{
     sessionId.value = props.sessionId;
     personalContributor.value = props.personalContributor;
+    sessionHostId.value = props.sessionHostId;
     getIdeas();
 });
 </script>

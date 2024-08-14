@@ -17,8 +17,8 @@
             <td v-html="currentPair[1].ideaDescription"></td>
           </tr>
           <tr v-if="currentPair.length === 2">
-            <td><img :src="currentPair[0].contributorIcon" alt="Contributor Icon 1" width="24" height="24" /></td>
-            <td><img :src="currentPair[1].contributorIcon" alt="Contributor Icon 2" width="24" height="24" /></td>
+            <td> {{currentPair[0].contributorIcon  }}</td>
+            <td> {{currentPair[1].contributorIcon  }}</td>
           </tr>
           <tr v-if="currentPair.length === 2">
             <td>#{{ currentPair[0].tag }}</td>

@@ -7,7 +7,7 @@
       <div v-if="currentIdea" class="idea-card" @touchstart="touchStart" @touchend="touchEnd">
         <h4>{{ currentIdea.ideaTitle }}</h4>
         <div v-html="currentIdea.ideaDescription"></div>
-        <img :src="currentIdea.contributorIcon" alt="Contributor Icon" width="24" height="24" />
+        <p>{{ currentIdea.contributorIcon }}</p>
         <p>#{{ currentIdea.tag }}</p>
         <div class="star-rating">
           <button @click="rate(1)" :class="{ active: tempRating >= 1 }">★</button>
@@ -48,15 +48,25 @@
   });
   
   const setNextIdea = () => {
-    if (ideas.value.length > 0) {
-      previousIdea.value = currentIdea.value;
-      currentIdea.value = ideas.value[0];
-      tempRating.value = 0;
-    } else {
-      currentIdea.value = null;
-    }
+  if (ideas.value.length > 0) {
+    previousIdea.value = currentIdea.value;
+    currentIdea.value = ideas.value[0];
+    tempRating.value = 0;
+  } else {
+    currentIdea.value = null;
+  }
+  decisionsMade.value = props.ideasCount - ideas.value.length;
+};
+
+const undoLastDecision = () => {
+  if (previousIdea.value) {
+    ideas.value.unshift(previousIdea.value);
+    currentIdea.value = previousIdea.value;
+    previousIdea.value = null;
+    tempRating.value = 0;
     decisionsMade.value = props.ideasCount - ideas.value.length;
-  };
+  }
+};
   
   const rate = (stars) => {
     tempRating.value = stars;
@@ -66,16 +76,7 @@
     ideas.value.shift();
     setNextIdea();
   };
-  
-  const undoLastDecision = () => {
-    if (previousIdea.value) {
-      ideas.value.unshift(previousIdea.value);
-      currentIdea.value = previousIdea.value;
-      previousIdea.value = null;
-      tempRating.value = 0;
-      decisionsMade.value = props.ideasCount - ideas.value.length;
-    }
-  };
+
   
   // Touch-Funktionalität
   let touchStartX = 0;

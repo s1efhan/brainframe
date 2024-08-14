@@ -7,7 +7,7 @@
       <div v-if="currentIdea" class="idea-card" @touchstart="touchStart" @touchend="touchEnd">
         <h4>{{ currentIdea.ideaTitle }}</h4>
         <div v-html="currentIdea.ideaDescription"></div>
-        <img :src="currentIdea.contributorIcon" alt="Contributor Icon" width="24" height="24" />
+        <p >{{currentIdea.contributorIcon}}</p>
         <p>#{{ currentIdea.tag }}</p>
           <button @click="swipeLeft">←</button>
           <button @click="swipeRight">→</button>
