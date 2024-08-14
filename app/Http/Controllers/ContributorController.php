@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -22,8 +22,8 @@ class ContributorController extends Controller
 
         // Überprüfe, ob ein Contributor mit der gleichen user_id und session_id existiert
         $existingContributor = Contributor::where('session_id', $sessionId)
-                                         ->where('user_id', $userId)
-                                         ->first();
+            ->where('user_id', $userId)
+            ->first();
 
         if ($existingContributor) {
             // Gib eine Fehlermeldung zurück, wenn der Contributor bereits existiert
@@ -39,30 +39,33 @@ class ContributorController extends Controller
         ContributorJoin::dispatch($sessionId, $userId, $roleId);
 
         return response()->json(['success' => true, 'contributor' => $newContributor]);
-    }public function get($sessionId, $userId)
+    }
+    public function get($sessionId, $userId)
     {
         // Alle Contributors für die gegebene Session abrufen
         $contributors = Contributor::where('session_id', $sessionId)
-            ->with('role:id,name')
+            ->with('role:id,name,icon')  // Lade sowohl 'name' als auch 'icon'
             ->get()
             ->map(function ($contributor) {
                 return [
                     'id' => $contributor->id,
-                    'role_name' => $contributor->role->name
+                    'role_name' => $contributor->role->name,
+                    'icon' => $contributor->role->icon // Icon hinzufügen
                 ];
             });
     
-        // Persönlichen Contributor für die gegebene userId abrufen
+        // Den persönlichen Contributor für den gegebenen Benutzer abrufen
         $personalContributor = Contributor::where('session_id', $sessionId)
             ->where('user_id', $userId)
-            ->with('role:id,name')
+            ->with('role:id,name,icon')  // Lade sowohl 'name' als auch 'icon'
             ->first();
     
         $personalContributorDetails = null;
         if ($personalContributor) {
             $personalContributorDetails = [
                 'id' => $personalContributor->id,
-                'role_name' => $personalContributor->role->name
+                'role_name' => $personalContributor->role->name,
+                'icon' => $personalContributor->role->icon // Icon hinzufügen
             ];
         }
     
@@ -73,4 +76,5 @@ class ContributorController extends Controller
         ]);
     }
     
+
 }

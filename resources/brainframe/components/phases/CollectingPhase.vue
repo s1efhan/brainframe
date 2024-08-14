@@ -2,16 +2,18 @@
   <h3>CollectingPhase</h3>
   <section>
     <div v-if="!collectingStarted">
-      <p>Runden: {{ collectingRounds }}</p>
-      <p>Max. Ideen pro Runde: {{ maxIdeaInput }}</p>
+      <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
+      <p>Ideen pro Runde: {{ maxIdeaInput }}</p>
       <p>Zeit pro Runde: {{ collectingTimer/60 }} Minute(n)</p>
-      <button v-if="currentRound < collectingRounds || collectingRounds === 1" @click="startCollecting">Start Collecting</button>
+      <button
+        v-if="personalContributor &&  sessionHostId == personalContributor.id && showStartButton|| collectingRounds === 1"
+        @click="callStartCollecting">Start Collecting</button>
     </div>
 
     <div v-if="collectingStarted">
-      <p>Runde: {{ currentRound }} {{ "/". collectingRounds }}</p>
+      <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
       <p>Verbleibende Zeit: {{ remainingTime }} Sekunden</p>
-      <p>Eingereichte Ideen: {{ submittedIdeas }}  {{"/". maxIdeaInput }}</p>
+      <p>Eingereichte Ideen: {{ submittedIdeas }} {{"/". maxIdeaInput }}</p>
 
       <form @submit.prevent="handleSubmit">
         <label for="image">Bild einfügen: </label>
@@ -30,7 +32,8 @@
         <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
       </form>
 
-      <button @click="stopCollecting">Stop Collecting</button>
+      <button v-if="personalContributor && sessionHostId == personalContributor.id" @click="callStopCollecting">Stop
+        Collecting</button>
     </div>
   </section>
 </template>
@@ -47,18 +50,50 @@ const errorMsg = ref('');
 const fileInput = ref(null);
 const sessionId = ref(null);
 const isListening = ref(false);
+const showStartButton = ref(true)
 const personalContributor = ref(null);
 let timer = null;
+const callStartCollecting = () => {
+  axios.post('/api/collecting/start', {
+    current_round: currentRound.value,
+    session_id: sessionId.value
+  })
+    .then(response => {
+      console.log('Server response:', response.data);
+    })
+    .catch(error => {
+      console.error('Error starting Collecting', error);
+    });
+};
 const startCollecting = () => {
   collectingStarted.value = true;
   submittedIdeas.value = 0;
   startTimer();
+  showStartButton.value = false;  
 };
+
 const stopCollecting = () => {
   collectingStarted.value = false;
   clearInterval(timer);
-  if (currentRound.value < collectingRounds.value)
+  if (currentRound.value < collectingRounds.value) {
     currentRound.value++;
+    showStartButton.value = true;  
+  } else {
+    showStartButton.value = false; 
+  }
+};
+
+const callStopCollecting = () => {
+  axios.post('/api/collecting/stop', {
+    current_round: currentRound.value,
+    session_id: sessionId.value
+  })
+    .then(response => {
+      console.log('Server response:', response.data);
+    })
+    .catch(error => {
+      console.error('Error stoping Collecting', error);
+    });
 };
 const startTimer = () => {
   remainingTime.value = collectingTimer.value;
@@ -72,11 +107,12 @@ const startTimer = () => {
         submittedIdeas.value = 0;
         startTimer();
       } else {
-        stopCollecting();
+        callStopCollecting();
       }
     }
   }, 1000);
 };
+const sessionHostId = ref(null);
 const openFileInput = () => {
   fileInput.value.click();
   //timer starten
@@ -85,6 +121,10 @@ const openFileInput = () => {
 const props = defineProps({
   personalContributor: {
     type: Object,
+    required: true
+  },
+  sessionHostId: {
+    type: [String, Number],
     required: true
   },
   sessionId: {
@@ -240,9 +280,20 @@ onMounted(() => {
   console.log(contributors.value.length);
   personalContributor.value = props.personalContributor;
   method.value = props.method;
+  sessionHostId.value = props.sessionHostId;
   console.log("method", method.value.id);
   console.log("Collecting Method Value", method.value)
   console.log(personalContributor.value, sessionId.value);
   setMethodParameters();
+  Echo.channel('session.' + sessionId.value)
+    .listen('StartCollecting', (e) => {
+      console.log('StartCollecting Event empfangen:', e);
+      startCollecting();
+    })
+    .listen('StopCollecting', (e) => {
+      console.log('StopCollecting Event empfangen:', e);
+      stopCollecting();
+      console.log("collectingStarted", collectingStarted.value)
+    });
 });
 </script>

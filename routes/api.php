@@ -19,3 +19,6 @@ Route::post('/idea', [IdeaController::class, 'store']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get']);
 Route::post('/phase', [MethodController::class, 'switchPhase']);
 Route::get('/ideas/{sessionId}/{votingPhaseNumber}', [IdeaController::class, 'get']);
+Route::post('/collecting/start', [SessionController::class, 'startCollecting']);
+Route::post('/collecting/stop', [SessionController::class, 'stopCollecting']);
+Route::post('/test/api', [IdeaController::class, 'testAPI']);
