@@ -9,7 +9,7 @@ class Idea extends Model
 {
     use HasFactory;
     protected $table = 'bf_ideas';
-    protected $fillable = ['text_input', 'session_id', 'contributor_id', 'image_file_url', 'round'];
+    protected $fillable = ['text_input', 'session_id', 'contributor_id', 'image_file_url', 'round', 'idea_title', 'idea_description', 'tag'];
 
     public function session()
     {
