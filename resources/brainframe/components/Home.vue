@@ -4,7 +4,9 @@
     <button @click="showSetup=true">Session erstellen</button>
   </section>
   <Setup v-if="showSetup" :userId="userId"/>
-  <input type="text" v-model="testNachricht" placeholder="Nachricht eingeben">
+  <label for="sessionIdInput">Session Id, für die ideen die KI optimiert werden sollen.</label>
+  <br>
+  <input type="text" id="sessionIdInput" v-model="sessionIdInput" placeholder="Session Id">
   <button @click="sendToApi">Send</button>
   <div v-if="apiAntwort">
   <div v-for="(idea, index) in apiAntwort" :key="index">
@@ -22,7 +24,7 @@ import { ref } from 'vue';
 import axios from 'axios';
 import Setup from '../components/Setup.vue';
 
-const testNachricht = ref('');
+const sessionIdInput = ref('76391');
 const showSetup = ref(false);
 const apiAntwort = ref(null);
 
@@ -35,8 +37,7 @@ const props = defineProps({
 
 const sendToApi = () => {
   axios.post('/api/test/api', {
-    test_nachricht: testNachricht.value,
-    session_id: 76391
+    session_id: sessionIdInput.value
   })
   .then(response => {
     console.log('Server response:', response.data);

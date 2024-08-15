@@ -40,7 +40,7 @@ const props = defineProps({
   }
 });
 const ideasCount = ref(null);
-const ideas = ref(null);
+const ideas = ref([]);
 
 onMounted(() => {
   ideasCount.value = props.ideasCount;

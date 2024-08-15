@@ -13,7 +13,7 @@ import StarVote from '../voting-methods/StarVote.vue';
 import RankingVote from '../voting-methods/RankingVote.vue';
 import LeftRightVote from '../voting-methods/LeftRightVote.vue';
 import SwipeVote from '../voting-methods/SwipeVote.vue';
-const ideasCount = ref(null);
+const ideasCount = ref(5);
 const votingPhaseNumber = ref(1);
 const ideas = ref([]);
 const personalContributor = ref(null);
@@ -38,7 +38,7 @@ const getIdeas = () => {
   axios.get(`/api/ideas/${sessionId.value}/${votingPhaseNumber.value}`)
     .then(response => {
       ideas.value = response.data.ideas;
-      ideasCount.value = response.data.ideasCount;
+     ideasCount.value = response.data.ideasCount;
       console.log('Ideas:', JSON.parse(JSON.stringify(ideas.value)));
       console.log('Ideas Count:', ideasCount.value);
       console.log('votingPhaseNumber', votingPhaseNumber.value);
