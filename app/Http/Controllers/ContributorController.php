@@ -9,36 +9,38 @@ class ContributorController extends Controller
 {
     public function create(Request $request)
     {
-        // Validierung der eingehenden Daten
         $validated = $request->validate([
             'session_id' => 'required',
             'role_id' => 'required',
             'user_id' => 'required',
         ]);
-
+    
         $sessionId = $request->input('session_id');
         $userId = $request->input('user_id');
         $roleId = $request->input('role_id');
-
-        // Überprüfe, ob ein Contributor mit der gleichen user_id und session_id existiert
-        $existingContributor = Contributor::where('session_id', $sessionId)
+    
+        $contributor = Contributor::where('session_id', $sessionId)
             ->where('user_id', $userId)
             ->first();
-
-        if ($existingContributor) {
-            // Gib eine Fehlermeldung zurück, wenn der Contributor bereits existiert
-            return response()->json(['success' => false, 'message' => 'Contributor already exists for this session and user.'], 400);
+    
+        if ($contributor) {
+            // Aktualisiere den bestehenden Contributor mit der Rolle
+            $contributor->role_id = $roleId;
+            $contributor->save();
+            $message = 'Contributor updated successfully.';
+        } else {
+            // Erstelle einen neuen Contributor
+            $contributor = Contributor::create([
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'role_id' => $roleId
+            ]);
+            $message = 'Contributor created successfully.';
         }
-
-        // Erstelle neuen Contributor
-        $newContributor = Contributor::create([
-            'session_id' => $sessionId,
-            'user_id' => $userId,
-            'role_id' => $roleId
-        ]);
+    
         ContributorJoin::dispatch($sessionId, $userId, $roleId);
-
-        return response()->json(['success' => true, 'contributor' => $newContributor]);
+    
+        return response()->json(['success' => true, 'message' => $message, 'contributor' => $contributor]);
     }
     public function get($sessionId, $userId)
     {

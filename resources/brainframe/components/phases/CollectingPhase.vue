@@ -69,7 +69,7 @@ const startCollecting = () => {
   collectingStarted.value = true;
   submittedIdeas.value = 0;
   startTimer();
-  showStartButton.value = false;  
+  showStartButton.value = false;
 };
 
 const stopCollecting = () => {
@@ -77,9 +77,9 @@ const stopCollecting = () => {
   clearInterval(timer);
   if (currentRound.value < collectingRounds.value) {
     currentRound.value++;
-    showStartButton.value = true;  
+    showStartButton.value = true;
   } else {
-    showStartButton.value = false; 
+    showStartButton.value = false;
   }
 };
 
@@ -94,12 +94,25 @@ const callStopCollecting = () => {
     .catch(error => {
       console.error('Error stoping Collecting', error);
     });
-};
-const startTimer = () => {
+}; const startTimer = () => {
   remainingTime.value = collectingTimer.value;
   timer = setInterval(() => {
     if (remainingTime.value > 0) {
       remainingTime.value--;
+      // Hier die Axios-Anfrage einfügen
+      axios.post('/api/countdown/put', {
+        current_round: currentRound.value,
+        session_id: sessionId.value,
+        current_phase: 'Collecting Phase',
+        seconds_left: remainingTime.value
+      })
+        .then(response => {
+          console.log('Server response:', response.data);
+        })
+        .catch(error => {
+          console.error('Error updating countdown', error);
+        });
+
     } else {
       clearInterval(timer);
       if (currentRound.value < collectingRounds.value) {
@@ -295,5 +308,15 @@ onMounted(() => {
       stopCollecting();
       console.log("collectingStarted", collectingStarted.value)
     });
+    if(personalContributor.value.id != sessionHostId.value ){
+    Echo.channel('session.' + sessionId.value)
+    .listen('UpdateCountdown', (e) => {
+      console.log('UpdateCountdown Event empfangen:', e);
+      remainingTime.value = e.secondsLeft;
+      currentRound.value = e.round;
+      if(remainingTime.value < collectingTimer.value){
+        collectingStarted.value = true;
+    }});
+  }
 });
 </script>

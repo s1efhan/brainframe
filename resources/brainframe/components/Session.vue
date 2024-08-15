@@ -45,6 +45,7 @@ const methodName = ref(null);
 const sessionHostId = ref(null);
 const sessionDetails = ref([])
 const getSessionDetails = () => {
+  console.log("sessionId.value", sessionId.value);
   axios.get(`/api/session/${sessionId.value}`)
     .then(response => {
       sessionDetails.value = response.data;

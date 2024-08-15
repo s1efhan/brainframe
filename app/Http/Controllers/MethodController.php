@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Models\Method;
+use App\Models\Session;
 use App\Events\SwitchPhase;
+use App\Events\UpdateCountdown;
 class MethodController extends Controller
 {
     public function get()
@@ -42,10 +44,25 @@ class MethodController extends Controller
             'description' => $method->description,
         ], 200);
     }
+
+    public function putCountdown(Request $request){
+        $sessionId = $request->input('session_id');
+        $phase = $request->input('current_phase');
+        $round = $request->input('current_round');
+        $secondsLeft = $request->input('seconds_left');
+        event(new UpdateCountdown($sessionId, $phase, $round, $secondsLeft));
+    }
     public function switchPhase(Request $request)
     {
         $sessionId = $request->input('session_id');
         $phase = $request->input('switched_phase');
+        // Aktualisiere den Wert der Spalte `active_round` für die Session
+        $session = Session::find($sessionId);
+        if ($session) {
+            $session->active_phase = $phase;
+            $session->save();
+        }
+        
         
         event(new SwitchPhase($sessionId, $phase));
         

@@ -22,3 +22,4 @@ Route::get('/ideas/{sessionId}/{votingPhaseNumber}', [IdeaController::class, 'ge
 Route::post('/collecting/start', [SessionController::class, 'startCollecting']);
 Route::post('/collecting/stop', [SessionController::class, 'stopCollecting']);
 Route::post('/test/api', [IdeaController::class, 'testAPI']);
+Route::post('/countdown/put', [MethodController::class, 'putCountdown']);

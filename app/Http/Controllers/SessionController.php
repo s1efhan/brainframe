@@ -43,34 +43,68 @@ class SessionController extends Controller
             'method_id' => 'required',
             'session_target' => 'nullable|string|present'
         ]);
-
-
+    
         $sessionId = $request->input('session_id');
+        $hostId = $request->input('host_id');
+    
         $session = Session::firstOrNew(['id' => $sessionId]);
+        $isNewSession = !$session->exists;
+    
         $session->target = $request->input('session_target') ?: 'Kein Ziel festgelegt';
-        $session->host_id = $request->input('host_id');
+        $session->host_id = $hostId;
         $session->method_id = $request->input('method_id');
         $session->save();
-
+    
+        if ($isNewSession) {
+            $defaultRoleId = 0; // Angenommen, 1 ist die ID für die "Unassigned" Rolle
+            Contributor::create([
+                'session_id' => $session->id,
+                'user_id' => $hostId,
+                'role_id' => $defaultRoleId
+            ]);
+        }
+    
         return response()->json([
-            'message' => $session->wasRecentlyCreated ? 'Session created successfully.' : 'Session updated successfully.'
+            'message' => $isNewSession ? 'Session created successfully.' : 'Session updated successfully.'
         ], 200);
     }
     public function startCollecting(Request $request)
     {
         $sessionId = $request->input('session_id');
         $round = $request->input('current_round');
+    
+        // Aktualisiere den Wert der Spalte `active_round` für die Session
+        $session = Session::find($sessionId);
+        if ($session) {
+            $session->active_round = $round;
+            $session->save();
+        }
+    
+        // Event auslösen
         event(new StartCollecting($sessionId, $round));
+    
         return response()->json(['message' => 'Collecting successfully started']);
     }
+    
 
     public function stopCollecting(Request $request)
     {
         $sessionId = $request->input('session_id');
         $round = $request->input('current_round');
+    
+        // Aktualisiere den Wert der Spalte `active_round` für die Session
+        $session = Session::find($sessionId);
+        if ($session) {
+            $session->active_round = $round;
+            $session->save();
+        }
+    
+        // Event auslösen
         event(new StopCollecting($sessionId, $round));
+    
         return response()->json(['message' => 'Collecting successfully stopped']);
     }
+    
     public function invite(Request $request)
     {
         $request->validate([
