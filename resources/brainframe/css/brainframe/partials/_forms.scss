@@ -1,0 +1,83 @@
+.join__form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 70vw;
+    margin: 0 auto;
+
+    &__input,
+    &__submit {
+        margin: 0.25em 0;
+        padding: 0.75em 1.5em;
+        border-radius: 15px;
+        color: var(--text);
+        background-color: var(--accent);
+        border: solid var(--text);
+        font-size: 1.1em;
+        text-align: center;
+        &::placeholder {
+            text-align: center;
+            color: var(--text);
+        }
+    }
+    &__input {width: 60vw;}
+    &__submit {width:72vw;}
+
+    &__input:active {
+        border-color: var(--accent);
+    }
+}
+.join__info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4em;
+    color: var(--accent);
+    border: solid var(--secondary);
+    border-radius: 50%;
+    background-color: var(--text);
+    margin-left: auto; /* Schiebt das Element nach rechts */
+    margin-right: 10vw;
+    margin-bottom:1em;
+
+    p {
+        font-family: 'Nohemi-Light', sans-serif;
+        margin: 0;
+        font-size: 1.5em;
+        text-align: center;
+    }
+}
+
+.join__form__input:focus {
+    outline: none;
+    border-color: var(--text);
+    box-shadow: none;
+}
+
+
+.join_buttons {
+    display: flex;
+    justify-content: space-between;
+    width: 80vw;
+    margin: 1em auto;
+    border: solid var(--secondary) thin;
+    background-color: var(--secondary);
+    box-sizing: border-box; 
+
+    &__Pin,
+    &__Scan {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+            flex-shrink: 0;
+        }
+
+        p {
+            margin-left: 0.5em;
+            white-space: nowrap;
+        }
+    }
+    Button.join_buttons__Pin{border-right: solid thin;}
+}

@@ -1,2 +1,7 @@
-body, a, ul, ol{color:lightsalmon;background:darkslategray; text-decoration: none; list-style-type: none;}
-svg {fill:black; width: 15px; height: 15xpx;}
+@import'brainframe/partials/_body.scss';
+@import'brainframe/partials/_buttons.scss';
+@import'brainframe/partials/_menu.scss';
+@import'brainframe/partials/_headlines.scss';
+@import'brainframe/partials/_forms.scss';
+@import'./colors.scss';
+@import'./fonts.scss';

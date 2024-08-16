@@ -1,35 +1,14 @@
 <template>
-  <Menu></Menu>
-  <!-- 
-  <div v-if="msg.length > 0">
-     <div v-for="message in msg" :key="message.id">
-      <p>{{ message.name }}: {{ message.text }}</p>
-    </div>
-  </div> 
-  
-  ////
-  // NUR ZUM TESTEN!
-  ////
-  
-  <div v-if="contributorSent.length > 0">
-    <div v-for="contributor in contributorSent" :key="contributor.id">
-      <p>Beigetreten - SessionId: {{ contributor.session }} - ContributorId: {{ contributor.user }} - Contributor-Role:
-        {{ contributor.role }}</p>
-    </div>
-  </div>
-  <div v-else>
-    <p>Keine Nachrichten empfangen.</p>
-  </div>
-  -->
   <router-view :userId="userId"></router-view>
-  <Footer></Footer>
+  <Menu></Menu>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
 import Menu from './components/Menu.vue';
-import Footer from './components/Footer.vue';
 import axios from 'axios';
+const route = useRoute();
+import { useRoute } from 'vue-router';
 const userId = ref('');
 // Funktion zur Generierung und Setzen der User-ID
 function initializeUserId() {
@@ -41,6 +20,7 @@ function initializeUserId() {
     localStorage.setItem('user_id', userId.value);
   }
 }
+const sessionId = (null);
 function getUserData() {
   if (userId.value) {
     userId.value = localStorage.getItem('user_id');
@@ -69,6 +49,8 @@ function updateUserId() {
 }
 
 onMounted(() => {
+  if(route.params.id)
+{sessionId.value = route.params.id;}
   initializeUserId(); // Initialisiere die User-ID beim Mounten der Komponente
   updateUserId(); //senden der user id  aus der local storage an die Datenbank über POST /user
   getUserData();

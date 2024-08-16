@@ -1,0 +1,27 @@
+.headline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-weight: bold;
+    font-family: 'Nohemi-Bold', sans-serif;
+    &__icon {
+        width: 30vw;
+    }
+  
+    &__text {
+        margin-top: 0.5em;
+      display: flex;
+    }
+  
+    &__brain {
+      color: var(--primary);
+    }
+  
+    &__frame {
+      color: white;
+    }
+  
+    p {
+      margin: 0;
+    }
+  }

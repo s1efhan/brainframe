@@ -1,0 +1,36 @@
+.join_buttons button {
+    padding: 0.75em 1em;
+    border-radius: 0;
+    color: var(--secondary);
+    background-color: var(--text);
+    border: solid var(--secondary);
+    cursor: pointer;
+    border: none;
+    border-radius: 0;
+    flex: 1 1 50%; 
+    padding: 1em;
+    margin: 0; 
+    box-sizing: border-box; 
+    max-width: 50%; 
+}
+
+button.primary {
+    color: white;
+    background-color: var(--text);
+    border: solid var(--primary);
+    font-size: 1.1em;
+}
+
+.join__info {
+    border: solid var(--secondary);
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50px;
+}
+
+button svg {
+    width: 5vw;
+    height: auto;
+    fill: var(--secondary);
+    margin: 0;
+}
