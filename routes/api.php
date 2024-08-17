@@ -11,6 +11,7 @@ Route::post('/user', [UserController::class, 'store']);
 Route::get('/method/{methodId}', [MethodController::class, 'getDetails']);
 Route::get('/methods', [MethodController::class, 'get']);
 Route::get('/sessions/{sessionId}/roles', [RoleController::class, 'get']);
+Route::get('/{userId}/sessions', [SessionController::class, 'getUserSessions']);
 Route::post('/contributor', [ContributorController::class, 'create']);
 Route::get('contributors/{sessionId}/{userId}', [ContributorController::class, 'get']);
 Route::post('/session', [SessionController::class, 'update']);

@@ -10,7 +10,7 @@
         <canvas class="qr-code" v-if="sessionLink" ref="qrcodeCanvas"></canvas>
     </div>
     <div @click="copyToClipboard(sessionLink)" class="session-link" v-if="sessionLink && contributorsAmount">
-        <a :href="sessionLink">{{ sessionLink }} </a>
+        <router-link :to="'/brainframe/' + sessionId">{{ sessionLink }} </router-link>
         <p><CopyIcon/> </p>
         
     </div>

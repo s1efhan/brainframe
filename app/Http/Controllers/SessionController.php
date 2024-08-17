@@ -7,9 +7,11 @@ use App\Models\Session;
 use App\Models\User;
 use App\Models\Method;
 use App\Models\Contributor;
+use App\Models\Role;
 use Illuminate\Support\Facades\Mail;
 use App\Events\StartCollecting;
 use App\Events\StopCollecting;
+use Log;
 
 class SessionController extends Controller
 {
@@ -35,6 +37,30 @@ class SessionController extends Controller
             'method_name' => $session->method->name
         ], 200);
     }
+
+    public function getUserSessions($userId) {
+        $contributors = Contributor::where('user_id', $userId)->get();
+    
+        $sessions = $contributors->map(function ($contributor) {
+            $session = Session::find($contributor->session_id);
+            $method = Method::find($session->method_id);
+            $role = Role::find($contributor->role_id);
+    
+            return [
+                'session_id' => $contributor->session_id,
+                'target' => $session->target,
+                'role' => $role->name,
+                'updated_at' => $session->updated_at,
+                'method_name' => $method->name,
+            ];
+        });
+    
+        Log::info('User Sessions:', $sessions->toArray());
+    
+        return response()->json($sessions, 200);
+    }
+    
+    
     public function update(Request $request)
     {
         $request->validate([

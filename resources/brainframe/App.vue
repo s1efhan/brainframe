@@ -1,5 +1,5 @@
 <template>
-<div v-if="sessionId"  class="headline">
+  <div v-if="sessionId" class="headline">
     <h1 class="headline__session-pin">
       Session-PIN
       <p @click="copyToClipboard(sessionId)">
@@ -12,7 +12,7 @@
     </div>
   </div>
   <router-view :userId="userId"></router-view>
-  <Footer/>
+  <Footer />
   <Menu @resetSessionId="handleSessionIdUpdate"></Menu>
 </template>
 
@@ -41,7 +41,7 @@ function initializeUserId() {
 }
 
 const copyToClipboard = (copyText) => {
-    navigator.clipboard.writeText(copyText);
+  navigator.clipboard.writeText(copyText);
 };
 
 
@@ -73,8 +73,9 @@ function updateUserId() {
 }
 
 onMounted(() => {
-  if(route.params.id)
-{sessionId.value = route.params.id;}
+  if (Number.isInteger(parseInt(route.params.id))) {
+    sessionId.value = route.params.id;
+  }
   initializeUserId();
   updateUserId();
   getUserData();

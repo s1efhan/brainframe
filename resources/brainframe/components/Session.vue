@@ -64,7 +64,6 @@ const userId = ref(props.userId);
 
 onMounted(() => {
   sessionId.value = route.params.id;
-  userId.value = props.userId;
   if (sessionId.value) {
     getSessionDetails();
     getContributors();
