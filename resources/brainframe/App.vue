@@ -1,15 +1,34 @@
 <template>
+<div v-if="sessionId"  class="headline">
+    <h1 class="headline__session-pin">
+      Session-PIN
+      <p @click="copyToClipboard(sessionId)">
+        {{ sessionId }}
+        <CopyIcon />
+      </p>
+    </h1>
+    <div class="headline__brainframe-icon">
+      <BrainFrameIcon />
+    </div>
+  </div>
   <router-view :userId="userId"></router-view>
-  <Menu></Menu>
+  <Footer/>
+  <Menu @resetSessionId="handleSessionIdUpdate"></Menu>
 </template>
 
 <script setup>
+import { sessionId } from './js/eventBus.js'
 import { onMounted, ref } from 'vue';
 import Menu from './components/Menu.vue';
-import axios from 'axios';
+import Footer from './components/Footer.vue';
+import CopyIcon from './components/icons/CopyIcon.vue';
+import BrainFrameIcon from './components/icons/BrainFrameIcon.vue'
 const route = useRoute();
 import { useRoute } from 'vue-router';
 const userId = ref('');
+function handleSessionIdUpdate(newSessionId) {
+  sessionId.value = newSessionId;
+}
 // Funktion zur Generierung und Setzen der User-ID
 function initializeUserId() {
   userId.value = localStorage.getItem('user_id');
@@ -20,7 +39,12 @@ function initializeUserId() {
     localStorage.setItem('user_id', userId.value);
   }
 }
-const sessionId = (null);
+
+const copyToClipboard = (copyText) => {
+    navigator.clipboard.writeText(copyText);
+};
+
+
 function getUserData() {
   if (userId.value) {
     userId.value = localStorage.getItem('user_id');
@@ -51,8 +75,8 @@ function updateUserId() {
 onMounted(() => {
   if(route.params.id)
 {sessionId.value = route.params.id;}
-  initializeUserId(); // Initialisiere die User-ID beim Mounten der Komponente
-  updateUserId(); //senden der user id  aus der local storage an die Datenbank über POST /user
+  initializeUserId();
+  updateUserId();
   getUserData();
 });
 

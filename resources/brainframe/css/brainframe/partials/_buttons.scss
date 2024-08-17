@@ -7,11 +7,15 @@
     cursor: pointer;
     border: none;
     border-radius: 0;
-    flex: 1 1 50%; 
+    flex: 1 1 50%;
     padding: 1em;
-    margin: 0; 
-    box-sizing: border-box; 
-    max-width: 50%; 
+    margin: 0;
+    box-sizing: border-box;
+    max-width: 50%;
+}
+
+button {
+    cursor: pointer;
 }
 
 button.primary {
@@ -19,6 +23,10 @@ button.primary {
     background-color: var(--text);
     border: solid var(--primary);
     font-size: 1.1em;
+
+    &:hover {
+        background-color: var(--primary)
+    }
 }
 
 .join__info {
@@ -26,6 +34,31 @@ button.primary {
     width: 1.5em;
     height: 1.5em;
     border-radius: 50px;
+}
+
+.session-link {
+    margin: 1em 0 1em 0;
+    border: solid thin var(--secondary);
+    display: flex;
+    height: 3em;
+    justify-content: center;
+    align-items: center;
+
+    a {
+        color: var(--secondary);
+        text-decoration: none;
+    }
+
+    svg {
+        margin-left: 1em;
+        width: 1em;
+        fill: var(--secondary);
+
+        &:hover,
+        &:focus {
+            fill: var(--accent)
+        }
+    }
 }
 
 button svg {

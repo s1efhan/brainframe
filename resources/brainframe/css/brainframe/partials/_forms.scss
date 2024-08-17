@@ -2,7 +2,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 70vw;
     margin: 0 auto;
 
     &__input,
@@ -15,30 +14,45 @@
         border: solid var(--text);
         font-size: 1.1em;
         text-align: center;
+
         &::placeholder {
             text-align: center;
-            color: var(--text);
+            color: var(--secondary);
         }
     }
-    &__input {width: 60vw;}
-    &__submit {width:72vw;}
+
+    &__input {
+        width: 60vw;
+    }
+
+    &__submit {
+        width: 72vw;
+    }
 
     &__input:active {
         border-color: var(--accent);
     }
 }
+
 .join__info {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0.4em;
+    cursor: pointer;
     color: var(--accent);
     border: solid var(--secondary);
     border-radius: 50%;
     background-color: var(--text);
-    margin-left: auto; /* Schiebt das Element nach rechts */
+    margin-left: auto;
+    /* Schiebt das Element nach rechts */
     margin-right: 10vw;
-    margin-bottom:1em;
+    margin-bottom: 1em;
+
+    &:hover {
+        background-color: var(--accent);
+        color: var(--secondary);
+    }
 
     p {
         font-family: 'Nohemi-Light', sans-serif;
@@ -62,7 +76,7 @@
     margin: 1em auto;
     border: solid var(--secondary) thin;
     background-color: var(--secondary);
-    box-sizing: border-box; 
+    box-sizing: border-box;
 
     &__Pin,
     &__Scan {
@@ -79,5 +93,53 @@
             white-space: nowrap;
         }
     }
-    Button.join_buttons__Pin{border-right: solid thin;}
+
+    Button.join_buttons__Pin {
+        border-right: solid thin;
+    }
 }
+
+.session-settings {
+    box-sizing: border-box;
+    border: solid var(--accent);
+  
+    &__method-carousel {
+      background-color: var(--text);
+      color: var(--accent);
+  
+      .method-display {
+        h2 {
+          background-color: var(--secondary);
+          border-bottom: solid var(--accent);
+          width: 100%;
+          color: var(--accent);
+          padding: 0.5em 0 0.5em 0;
+          text-align: center;
+          margin-bottom: 1.5em;
+        }
+  
+        p {
+          display: inline-block;
+          margin: 0;
+          padding: 0;
+          vertical-align: middle;
+        }
+      }
+  
+      &__buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1em;
+      }
+  
+      button {
+        padding: 0.5em;
+        background-color: var(--text);
+        border: none;
+        color: var(--secondary);
+        font-size: 2em;
+      }
+    }
+  }
+  

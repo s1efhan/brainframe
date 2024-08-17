@@ -1,42 +1,5 @@
 <template>
-    <section>
-        <h1>Session Setup</h1>
-        <form @submit.prevent>
-            <h3>Ziel definieren</h3>
-            <label for="sessionTarget">Zielfrage:</label>
-            <input type="text" v-model="sessionTarget" placeholder="Die Problemstellung deiner Session">
-            <h3>Methode auswählen</h3>
-            <!-- Karussel mit Methoden-Auswahl-->
-            <label for="methodSelect">Wähle eine Methode:</label>
-            <select id="methodSelect" v-model="selectedMethod.id" @change="updateSelectedMethod">
-                <option v-for="method in methods" :key="method.id" :value="method.id">
-                    {{ method.name }}
-                </option>
-            </select>
-            <p v-if="selectedMethod">{{ selectedMethod.description }}</p>
-            <!-- Slider mit Teilnehmer Anzahl-->
-            <label for="contributorsAmount">Anzahl Teilnehmer</label>
-            <br>
-            <input id="contributorsAmount" type="range" min="3" max="18" v-model="contributorsAmount">
-            <br>
-            <input type="number" disabled v-model="contributorsAmount" />
-            <!-- Tool-Tip mit Erklärung und Link zur detaillierten Anleitung-->
-            <div v-for="(email, index) in contributorEmailAddresses" :key="index">
-                <input type="email" v-model="contributorEmailAddresses[index]" @input="validateEmail(index)"
-                    placeholder="E-Mail-Adresse eingeben">
-            </div>
-        </form>
-        <button @click="sessionInvite">Teilnehmer einladen</button>
-            <!-- Kalender-Termin hinzufügen-->
-            <p v-if="sessionLink">
-                Your session link: <a :href="sessionLink">{{ sessionLink }}</a>
-                <button @click="copyToClipboard(sessionLink)">
-                    <copyIcon/>
-                </button>
-            </p>
-            <p v-if="sessionId">Session ID: <button @click="copyToClipboard(sessionId)">{{ sessionId }}</button></p>
-            <canvas v-if="sessionLink" ref="qrcodeCanvas"></canvas>
-    </section>
+
 </template>
 
 <script setup>
@@ -150,9 +113,7 @@ const getMethods = () => {
             console.error('Error fetching methods', error);
         });
 };
-const copyToClipboard = (copyText) => {
-    navigator.clipboard.writeText(copyText);
-};
+
 
 onMounted(() => {
     getMethods();
