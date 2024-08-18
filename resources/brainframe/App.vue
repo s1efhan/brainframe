@@ -1,4 +1,5 @@
 <template>
+  <main>
   <div v-if="sessionId" class="headline">
     <h1 class="headline__session-pin">
       Session-PIN
@@ -12,6 +13,7 @@
     </div>
   </div>
   <router-view :userId="userId"></router-view>
+</main>
   <Footer />
   <Menu @resetSessionId="handleSessionIdUpdate"></Menu>
 </template>

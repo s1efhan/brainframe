@@ -7,7 +7,7 @@
           {{ role.name }}
         </option>
       </select>
-      <button type="button" @click="addContributor">Session Beitreten</button>
+      <button type="button" @click="addContributor">Rolle Wählen</button>
     </form>
   </section>
 </template>

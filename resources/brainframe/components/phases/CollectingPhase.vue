@@ -1,41 +1,41 @@
 <template>
   <h3>CollectingPhase</h3>
-  <section>
-    <div v-if="!collectingStarted">
-      <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
-      <p>Ideen pro Runde: {{ maxIdeaInput }}</p>
-      <p>Zeit pro Runde: {{ collectingTimer/60 }} Minute(n)</p>
-      <button
-        v-if="personalContributor &&  sessionHostId == personalContributor.id && showStartButton|| collectingRounds === 1"
-        @click="callStartCollecting">Start Collecting</button>
+  <div v-if="!collectingStarted">
+    <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
+    <p>Ideen pro Runde: {{ maxIdeaInput }}</p>
+    <p>Zeit pro Runde: {{ collectingTimer/60 }} Minute(n)</p>
+    <button
+      v-if="personalContributor &&  sessionHostId == personalContributor.id && showStartButton|| collectingRounds === 1"
+      @click="callStartCollecting">Start Collecting</button>
+  </div>
+
+  <div v-if="collectingStarted">
+    <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
+    <p>Verbleibende Zeit: {{ remainingTime }} Sekunden</p>
+    <p>Eingereichte Ideen: {{ submittedIdeas }} {{"/". maxIdeaInput }}</p>
+
+    <form @submit.prevent="handleSubmit">
+      <label for="image">Bild einfügen: </label>
+      <br>
+      <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
+      <img @click="openFileInput" :src="imageFileUrl ? imageFileUrl : '/fake-url'" alt="uploadedImageIdea" height="100">
+      <br>
+      <label for="textInput">Idee:</label>
+      <input type="text" id="textInput" v-model="textInput">
+      <button v-if="!isListening" type="button" @click="isListening = true">▶️</button>
+      <button v-else type="button" @click="isListening = false">⏸️</button>
+      <br>
+      <button type="submit" @click="isListening = false, submitIdea(true);"
+        :disabled="submittedIdeas >= maxIdeaInput && maxIdeaInput">Idee speichern</button>
+      <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
+    </form>
+
+    <button v-if="personalContributor && sessionHostId == personalContributor.id" @click="callStopCollecting">Stop
+      Collecting</button>
+    <div class="timer" :style="{ '--progress': `${(1 - remainingTime / collectingTimer) * 360}deg` }">
+      {{ remainingTime }}
     </div>
-
-    <div v-if="collectingStarted">
-      <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
-      <p>Verbleibende Zeit: {{ remainingTime }} Sekunden</p>
-      <p>Eingereichte Ideen: {{ submittedIdeas }} {{"/". maxIdeaInput }}</p>
-
-      <form @submit.prevent="handleSubmit">
-        <label for="image">Bild einfügen: </label>
-        <br>
-        <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
-        <img @click="openFileInput" :src="imageFileUrl ? imageFileUrl : '/fake-url'" alt="uploadedImageIdea"
-          height="100">
-        <br>
-        <label for="textInput">Idee:</label>
-        <input type="text" id="textInput" v-model="textInput">
-        <button v-if="!isListening" type="button" @click="isListening = true">▶️</button>
-        <button v-else type="button" @click="isListening = false">⏸️</button>
-        <br>
-        <button type="submit" @click="isListening = false, submitIdea(true);"
-          :disabled="submittedIdeas >= maxIdeaInput && maxIdeaInput">Idee speichern</button>
-        <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
-      </form>
-
-      <button v-if="personalContributor && sessionHostId == personalContributor.id" @click="callStopCollecting">Stop
-        Collecting</button>
-    </div>
-  </section>
+  </div>
 </template>
 
 <script setup>
@@ -290,13 +290,9 @@ watch(isListening, () => {
 onMounted(() => {
   sessionId.value = props.sessionId;
   contributors.value = props.contributors;
-  console.log(contributors.value.length);
   personalContributor.value = props.personalContributor;
   method.value = props.method;
   sessionHostId.value = props.sessionHostId;
-  console.log("method", method.value.id);
-  console.log("Collecting Method Value", method.value)
-  console.log(personalContributor.value, sessionId.value);
   setMethodParameters();
   Echo.channel('session.' + sessionId.value)
     .listen('StartCollecting', (e) => {

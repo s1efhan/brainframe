@@ -1,16 +1,7 @@
 <template>
-  <section>
-    <table v-if="sessionHostId && personalContributor">
-     <tr v-if="personalContributor && sessionHostId == personalContributor.id">
-        <td @click="switchPhase('collectingPhase')"><button>Collecting</button></td>
-        <td @click="switchPhase('votingPhase')"><button>Voting</button></td>
-        <td @click="switchPhase('closingPhase')"><button>Closing</button></td>
-      </tr>
-    </table>
     <CollectingPhase  v-if="sessionHostId && personalContributor && method && sessionPhase === 'collectingPhase' && personalContributor" :method="method" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId" :personalContributor="personalContributor" />
     <VotingPhase v-if="sessionHostId && personalContributor && sessionPhase === 'votingPhase' && personalContributor" :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"/>
     <ClosingPhase v-if="sessionHostId && personalContributor && sessionPhase === 'closingPhase' && personalContributor" :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"/>
-  </section>
 </template>
 
 <script setup>
