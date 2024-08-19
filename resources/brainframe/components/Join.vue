@@ -79,18 +79,25 @@ const onInit = (promise) => {
       }
     });
 };
-const onDetect = (result) => {
-  console.log('QR Code detected:', result);
-  if (result && result.content) {
-    const detectedUrl = result.content;
-    // Überprüfen Sie, ob die URL gültig ist
-    if (detectedUrl.startsWith('http://') || detectedUrl.startsWith('https://')) {
-      // Verwenden Sie router.push, wenn es eine interne Route ist
-      // Oder window.location.href für externe Links
-      window.location.href = detectedUrl;
-    } else {
-      console.error('Ungültige URL erkannt:', detectedUrl);
-      error.value = 'Ungültiger QR-Code-Inhalt erkannt.';
+const onDetect = (detections) => {
+  if (detections && detections.length > 0) {
+    const detection = detections[0];
+    console.log('QR Code detected:', detection);
+    
+    if (detection.rawValue) {
+      const detectedUrl = detection.rawValue;
+      
+      // Überprüfen, ob die URL mit Ihrer Domain beginnt
+      if (detectedUrl.startsWith('https://stefan-theissen.de/brainframe/')) {
+        // Extrahieren Sie die Session-ID aus der URL
+        const sessionId = detectedUrl.split('/').pop();
+        
+        // Verwenden Sie Vue Router für die Navigation
+        router.push(`/brainframe/${sessionId}`);
+      } else {
+        console.error('Ungültige URL erkannt:', detectedUrl);
+        error.value = 'Ungültiger QR-Code-Inhalt erkannt.';
+      }
     }
   }
 };
