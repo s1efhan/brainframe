@@ -6,16 +6,19 @@
         "build": "vite build"
     },
     "devDependencies": {
+        "@vitejs/plugin-vue": "^5.0.4",
         "axios": "^1.6.4",
         "laravel-echo": "^1.16.1",
         "laravel-vite-plugin": "^1.0",
-        "qrcode": "^1.5.3",
         "pusher-js": "^8.4.0-rc2",
-        "vite": "^5.0",
+        "qrcode": "^1.5.3",
         "sass": "^1.70.0",
+        "vite": "^5.0",
         "vue": "^3.4.21",
         "vue-loader": "^17.4.2",
-        "vue-router": "^4.2.5",
-        "@vitejs/plugin-vue": "^5.0.4"
+        "vue-router": "^4.2.5"
+    },
+    "dependencies": {
+        "vue-qrcode-reader": "^5.5.7"
     }
 }
