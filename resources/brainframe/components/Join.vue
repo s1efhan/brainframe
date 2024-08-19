@@ -79,15 +79,20 @@ const onInit = (promise) => {
       }
     });
 };
-
-const onDetect = (promise) => {
-  promise
-    .then(result => {
-      console.log('QR Code detected:', result);
-    })
-    .catch(error => {
-      console.error('Failed to detect QR Code:', error);
-    });
+const onDetect = (result) => {
+  console.log('QR Code detected:', result);
+  if (result && result.content) {
+    const detectedUrl = result.content;
+    // Überprüfen Sie, ob die URL gültig ist
+    if (detectedUrl.startsWith('http://') || detectedUrl.startsWith('https://')) {
+      // Verwenden Sie router.push, wenn es eine interne Route ist
+      // Oder window.location.href für externe Links
+      window.location.href = detectedUrl;
+    } else {
+      console.error('Ungültige URL erkannt:', detectedUrl);
+      error.value = 'Ungültiger QR-Code-Inhalt erkannt.';
+    }
+  }
 };
 
 const sessionId = ref(null);
