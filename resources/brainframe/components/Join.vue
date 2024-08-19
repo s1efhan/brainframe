@@ -13,8 +13,12 @@
         <input class="join__form__input" v-model="sessionId" type="integer" placeholder="Session-PIN">
         <button @click="joinSession" class="join__form__submit primary">Session beitreten</button>
     </form>
-    <!-- QR Code Scanner anzeigen, wenn activeButton 'QrCode' ist -->
-    <qrcode-stream v-if="activeButton === 'QrCode'" @decode="onDecode" @init="onInit"></qrcode-stream>
+    <qrcode-stream
+    v-if="activeButton === 'QrCode'"
+    @decode="onDecode"
+    @init="onInit"
+    @detect="onDetect"
+  ></qrcode-stream>
     <div class="join_buttons">
         <button @click="switchPinQrCode('Pin')" :class="{'active': activeButton === 'Pin'}" class="join_buttons__Pin">
             <PinIcon />
@@ -43,17 +47,46 @@ const props = defineProps({
         required: true
     }
 });
-// Diese Methode wird aufgerufen, wenn ein QR-Code erfolgreich gescannt wurde
 const onDecode = (result) => {
-    sessionId.value = result;  // Setze die Session-ID auf das QR-Code-Ergebnis
-    joinSession();  // Starte die Session
+  console.log('QR Code decoded:', result);
+  sessionId.value = result;
+  joinSession();
 };
 
-// Diese Methode wird aufgerufen, wenn der QR-Code-Scanner initialisiert wird
 const onInit = (promise) => {
-    promise.catch(error => {
-        console.error(error);
-        // Behandlung von Fehlern, z.B. wenn keine Kamera verfügbar ist
+  promise
+    .then(() => {
+      console.log('QR Code scanner initialized successfully');
+    })
+    .catch(error => {
+      console.error('Failed to initialize QR Code scanner:', error);
+      if (error.name === 'NotAllowedError') {
+        error.value = 'ERROR: you need to grant camera access permission';
+      } else if (error.name === 'NotFoundError') {
+        error.value = 'ERROR: no camera on this device';
+      } else if (error.name === 'NotSupportedError') {
+        error.value = 'ERROR: secure context required (HTTPS, localhost)';
+      } else if (error.name === 'NotReadableError') {
+        error.value = 'ERROR: is the camera already in use?';
+      } else if (error.name === 'OverconstrainedError') {
+        error.value = 'ERROR: installed cameras are not suitable';
+      } else if (error.name === 'StreamApiNotSupportedError') {
+        error.value = 'ERROR: Stream API is not supported in this browser';
+      } else if (error.name === 'InsecureContextError') {
+        error.value = 'ERROR: Camera access is only permitted in secure context. Use HTTPS or localhost rather than HTTP.';
+      } else {
+        error.value = `ERROR: Camera error (${error.name})`;
+      }
+    });
+};
+
+const onDetect = (promise) => {
+  promise
+    .then(result => {
+      console.log('QR Code detected:', result);
+    })
+    .catch(error => {
+      console.error('Failed to detect QR Code:', error);
     });
 };
 
