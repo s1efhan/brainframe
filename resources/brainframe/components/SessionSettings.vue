@@ -1,6 +1,6 @@
 <template>
-    <div class="session-settings">
-      <div v-if="methods" class="session-settings__method-carousel">
+    <div v-if="methods" class="session-settings">
+      <div class="session-settings__method-carousel">
         <div class="method-display">
           <h2>{{ currentMethod.name }}</h2>
           <div class="session-settings__method-carousel__buttons">
@@ -31,6 +31,10 @@ const props = defineProps({
         required: false
     },
     sessionId: {
+        type: [String, Number],
+        required: true
+    },
+    contributorsAmount: {
         type: [String, Number],
         required: true
     }
@@ -64,11 +68,11 @@ const sessionTarget = toRef(props, 'sessionTarget');
 const selectedMethod = ref(props.selectedMethod);
 const methods = ref(null);
 const updateSession = () => {
-    console.log("Update Session")
     axios.post('/api/session', {
         session_id: sessionId.value,
         method_id: selectedMethod.value.id,
         host_id: userId.value,
+        contributors_amount: props.contributorsAmount,
         session_target: sessionTarget.value,
         contributor_email_addresses: contributorEmailAddresses.value
     }).catch(error => {
@@ -76,8 +80,10 @@ const updateSession = () => {
     });
 };
 
+const contributorsAmount = toRef(props, 'contributorsAmount');
+
 // Beobachtungen
-watch([selectedMethod, sessionTarget], updateSession);
+watch([selectedMethod, sessionTarget, contributorsAmount], updateSession);
 
 
 const getMethods = () => {

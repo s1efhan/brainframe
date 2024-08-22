@@ -15,16 +15,29 @@
 }
 
 .join_buttons {
-    button:hover, .active{
+
+    button:hover,
+    .active {
         color: var(--text);
         background-color: var(--accent);
-        border: solid  thin var(--secondary);
+        border: solid thin var(--secondary);
     }
 }
+
 button {
     cursor: pointer;
 }
+button.secondary {
+    color: var(--accent);
+    background-color: var(--text);
+    border: solid var(--accent);
+    font-size: 1.1em;
 
+    &:hover {
+        background-color: var(--accent);
+        color: var(--background);
+    }
+}
 button.primary {
     color: white;
     background-color: var(--text);
@@ -67,10 +80,75 @@ button.primary {
         }
     }
 }
-
+.startCollecting, .stopCollecting{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    button {
+        display: inline-block;
+        padding: 0.5em;
+        margin-bottom: 0.5em;
+    }
+}
+.collectForm{
+    button {
+        display: inline-block;
+        padding: 0.5em;
+    }
+}
 button svg {
     width: 5vw;
     height: auto;
     fill: var(--secondary);
     margin: 0;
+}
+.roundCountInfo__container, .join__info__containerr{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+.roundCount {
+    width:100%;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+}
+
+.round-item {
+    display: flex;
+    align-items: center;
+}
+
+.round-circle {
+    padding: 0.5em;
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    background-color: var(--text);
+    display: flex;
+    color: var(--background);
+    justify-content: center;
+    align-items: center;
+}
+
+.round-circle.completed {
+    background-color: var(--secondary);
+    ;
+    color: var(--text);
+    ;
+}
+
+.connecting-line {
+    width:4vw;
+    height: 0.2em;
+    background-color: var(--text);
+    ;
+}
+
+.connecting-line.completed {
+    background-color: var(--secondary);
+    ;
 }

@@ -1,5 +1,4 @@
 <template>
-    <h2>VotingPhase</h2>
     <SwipeVote v-if="ideasCount > 15 && votingPhaseNumber === 1" :ideas="ideas" :ideasCount ="ideasCount"/>
     <LeftRightVote v-if="ideasCount > 15 && votingPhaseNumber === 2" :ideas="ideas" :ideasCount ="ideasCount"/>
     <StarVote v-if="ideasCount > 5 && ideasCount <= 15":ideasCount ="ideasCount" :ideas="ideas"/>

@@ -22,5 +22,5 @@ Route::post('/phase', [MethodController::class, 'switchPhase']);
 Route::get('/ideas/{sessionId}/{votingPhaseNumber}', [IdeaController::class, 'get']);
 Route::post('/collecting/start', [SessionController::class, 'startCollecting']);
 Route::post('/collecting/stop', [SessionController::class, 'stopCollecting']);
-Route::post('/test/api', [IdeaController::class, 'testAPI']);
+Route::post('/ideas/sendToGPT', [IdeaController::class, 'sendIdeasToGPT']);
 Route::post('/countdown/put', [MethodController::class, 'putCountdown']);

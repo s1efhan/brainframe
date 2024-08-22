@@ -1,27 +1,32 @@
 <template>
+           <main>
     <textarea class="headline__session-target" v-model="sessionTarget" placeholder="< Zielfrage der Session >"
         :rows="rows" @input="adjustTextarea"></textarea>
-    <div class="join__contributors__count">
-        <ProfileIcon />
-        <p>{{ contributorsCount }} | {{ contributorsAmount ? contributorsAmount : "?" }}</p>
-        <input @change="generateQRCode" id="contributorsAmount" type="range" min="3" max="18" v-model="contributorsAmount" />
-    </div>
-    <div v-if="contributorsAmount" class="qr-code-container">
-        <canvas class="qr-code" v-if="sessionLink" ref="qrcodeCanvas"></canvas>
-    </div>
-    <div @click="copyToClipboard(sessionLink)" class="session-link" v-if="sessionLink && contributorsAmount">
-        <router-link :to="'/brainframe/' + sessionId">{{ sessionLink }} </router-link>
-        <p><CopyIcon/> </p>
-        
-    </div>
-    <div v-for="(email, index) in contributorEmailAddresses" :key="index">
-        <input type="email" v-model="contributorEmailAddresses[index]" @input="validateEmail(index)"
-            placeholder="E-Mail-Adresse eingeben">
-    </div>
-    <button @click="sessionInvite">Teilnehmer einladen</button>
-    <SessionSettings v-if="userId && sessionId" :userId="userId" :sessionId="sessionId"
+ 
+        <div class="join__contributors__count">
+            <ProfileIcon />
+            <p>{{ contributorsCount }} | {{ contributorsAmount ? contributorsAmount : "?" }}</p>
+            <input @change="generateQRCode" id="contributorsAmount" type="range" min="3" max="18"
+                v-model="contributorsAmount" />
+        </div>
+        <SessionSettings v-if="userId && sessionId && contributorsAmount" :contributorsAmount="contributorsAmount" :userId="userId" :sessionId="sessionId"
         :contributorEmailAddresses="contributorEmailAddresses" :sessionTarget="sessionTarget" />
-
+        <div v-if="contributorsAmount" class="qr-code-container">
+            <canvas class="qr-code" v-if="sessionLink" ref="qrcodeCanvas"></canvas>
+        </div>
+        
+        <div @click="copyToClipboard(sessionLink)" class="session-link" v-if="sessionLink && contributorsAmount">
+            <router-link :to="'/brainframe/' + sessionId">{{ sessionLink }} </router-link>
+            <p>
+                <CopyIcon />
+            </p>
+        </div>
+        <div v-if="sessionLink && contributorsAmount" v-for="(email, index) in contributorEmailAddresses" :key="index">
+            <input type="email" v-model="contributorEmailAddresses[index]" @input="validateEmail(index)"
+                placeholder="E-Mail-Adresse eingeben">
+        </div>
+        <button v-if="sessionLink && contributorsAmount" @click="sessionInvite">Teilnehmer einladen</button>
+    </main>
 </template>
 
 <script setup>
@@ -62,10 +67,8 @@ const generateLink = () => {
 
 const adjustTextarea = (event) => {
     const textarea = event.target;
-
-    // Begrenzen Sie die Eingabe auf maximal 50 Zeichen
-    if (textarea.value.length > 50) {
-        textarea.value = textarea.value.slice(0, 50);
+    if (textarea.value.length > 60) {
+        textarea.value = textarea.value.slice(0, 60);
     }
 
     // Passen Sie die Höhe des Textarea an
@@ -104,7 +107,7 @@ const generateQRCode = () => {
         showQRCode.value = true;
         QRCode.toCanvas(qrcodeCanvas.value, sessionLink.value, (error) => {
             if (error) console.error(error);
-            
+
         });
     }
 };

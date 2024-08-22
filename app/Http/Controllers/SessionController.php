@@ -20,24 +20,31 @@ class SessionController extends Controller
         if (!$sessionId) {
             return response()->json(['message' => 'Session ID is required'], 400);
         }
-
+    
         $session = Session::with(['host', 'method'])->find($sessionId);
-
-        $contributor = Contributor::where('user_id', $session->host_id)->where('session_id', $session->id)->first();
-
+    
         if (!$session) {
             return response()->json(['message' => 'Session not found'], 404);
         }
-
+    
+        $contributor = Contributor::where('user_id', $session->host_id)
+                                  ->where('session_id', $session->id)
+                                  ->first();
+    
+        $contributorsCount = Contributor::where('session_id', $session->id)->count();
+        Log::info('ContributorsCount: '. $contributorsCount);
         return response()->json([
             'id' => $session->id,
             'session_host' => $contributor->id,
             'method_id' => $session->method_id,
             'target' => $session->target,
-            'method_name' => $session->method->name
+            'method_name' => $session->method->name,
+            'session_phase' => $session->active_phase,
+            'contributors_count' => $contributorsCount, // Anzahl der Contributors mit der Session_ID
+            'contributors_amount' => $session->contributors_amount // Erwartete Anzahl der Teilnehmer 
         ], 200);
     }
-
+    
     public function getUserSessions($userId) {
         $contributors = Contributor::where('user_id', $userId)->get();
     
@@ -67,17 +74,19 @@ class SessionController extends Controller
             'session_id' => 'required',
             'host_id' => 'required',
             'method_id' => 'required',
-            'session_target' => 'nullable|string|present'
+            'session_target' => 'nullable|string|present',
+            'contributors_amount' =>'required'
         ]);
     
         $sessionId = $request->input('session_id');
         $hostId = $request->input('host_id');
-    
+        $contributorsAmount = $request->input('contributors_amount');
         $session = Session::firstOrNew(['id' => $sessionId]);
         $isNewSession = !$session->exists;
     
         $session->target = $request->input('session_target') ?: 'Kein Ziel festgelegt';
         $session->host_id = $hostId;
+        $session->contributors_amount = $contributorsAmount;
         $session->method_id = $request->input('method_id');
         $session->save();
     

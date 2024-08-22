@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 class IdeaController extends Controller
 {
-    public function testAPI(Request $request)
+    public function sendIdeasToGPT(Request $request)
     {
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
@@ -64,13 +64,13 @@ class IdeaController extends Controller
             ]);
             $responseBody = json_decode($response->getBody(), true);
             \Log::info('API Response:', $responseBody);
-            
+
             if (isset($responseBody['choices'][0]['message']['content'])) {
                 $content = $responseBody['choices'][0]['message']['content'];
                 // Entferne mögliche JSON-Codeblock-Markierungen
                 $content = preg_replace('/```json\s*|\s*```/', '', $content);
                 $newIdeas = json_decode($content, true);
-                
+
                 if (is_array($newIdeas)) {
                     foreach ($newIdeas as $idea) {
                         Idea::create([
@@ -88,7 +88,7 @@ class IdeaController extends Controller
             } else {
                 \Log::error('Unexpected API response format', $responseBody);
             }
-            
+
             return response()->json($responseBody);
 
         } catch (\GuzzleHttp\Exception\ClientException $e) {
@@ -104,38 +104,38 @@ class IdeaController extends Controller
 
 
     public function get($sessionId, $votingPhaseNumber)
-{
-    Log::info('Received request to get ideas', ['sessionId' => $sessionId, 'votingPhaseNumber' => $votingPhaseNumber]);
+    {
+        Log::info('Received request to get ideas', ['sessionId' => $sessionId, 'votingPhaseNumber' => $votingPhaseNumber]);
 
-    // Abfrage anpassen, um nur Ideen mit vorhandenem Tag abzurufen
-    $ideas = Idea::where('session_id', $sessionId)
-        ->whereNotNull('tag') // Sicherstellen, dass das Tag-Feld nicht NULL ist
-        ->where('tag', '!=', '') // Sicherstellen, dass das Tag-Feld nicht leer ist
-        ->with('contributor') // Laden Sie den zugehörigen Contributor
-        ->get()
-        ->map(function ($idea) {
-            $contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
-            $ideaTitle = $idea->idea_title;
-            $ideaDescription = $idea->idea_description;
-            $ideaTag = $idea->tag;
+        // Abfrage anpassen, um nur Ideen mit vorhandenem Tag abzurufen
+        $ideas = Idea::where('session_id', $sessionId)
+            ->whereNotNull('tag') // Sicherstellen, dass das Tag-Feld nicht NULL ist
+            ->where('tag', '!=', '') // Sicherstellen, dass das Tag-Feld nicht leer ist
+            ->with('contributor') // Laden Sie den zugehörigen Contributor
+            ->get()
+            ->map(function ($idea) {
+                $contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
+                $ideaTitle = $idea->idea_title;
+                $ideaDescription = $idea->idea_description;
+                $ideaTag = $idea->tag;
 
-            return [
-                'id' => $idea->id,
-                'contributorIcon' => $contributorIcon,
-                'ideaTitle' => $ideaTitle,
-                'ideaDescription' => $ideaDescription, // Tippfehler in der ursprünglichen Rückgabe behoben
-                'tag' => $ideaTag
-            ];
-        });
+                return [
+                    'id' => $idea->id,
+                    'contributorIcon' => $contributorIcon,
+                    'ideaTitle' => $ideaTitle,
+                    'ideaDescription' => $ideaDescription, // Tippfehler in der ursprünglichen Rückgabe behoben
+                    'tag' => $ideaTag
+                ];
+            });
 
-    $ideasCount = $ideas->count();
+        $ideasCount = $ideas->count();
 
-    return response()->json([
-        'success' => true,
-        'ideas' => $ideas,
-        'ideasCount' => $ideasCount
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'ideas' => $ideas,
+            'ideasCount' => $ideasCount
+        ]);
+    }
 
     public function store(Request $request)
     {

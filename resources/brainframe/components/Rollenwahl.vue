@@ -1,15 +1,20 @@
 <template>
-  <section v-if="showSelectRole">
-    <form @submit.prevent="handleSubmit">
-      <label for="roleSelect">Wähle eine Rolle:</label>
-      <select id="roleSelect" v-model="selectedRole.id" @change="updateSelectedRole">
-        <option v-for="role in roles" :key="role.id" :value="role.id">
-          {{ role.name }}
-        </option>
-      </select>
-      <button type="button" @click="addContributor">Rolle Wählen</button>
-    </form>
-  </section>
+  <div class="selectRole__head">
+    <h2>Wähle dein Pseudonym</h2>
+    <div class="info__container">
+      <div class="join__info">
+        <p>i</p>
+      </div>
+    </div>
+  </div>
+  <form class="selectRole" v-if="showSelectRole" @submit.prevent="handleSubmit">
+    <select id="roleSelect" v-model="selectedRole.id" @change="updateSelectedRole">
+      <option v-for="role in roles" :key="role.id" :value="role.id">
+        {{ role.icon }} {{ role.name}}
+      </option>
+    </select>
+    <button class="primary" type="button" @click="addContributor">Rolle Wählen</button>
+  </form>
 </template>
 
 <script setup>
@@ -60,15 +65,15 @@ const addContributor = () => {
     user_id: userId.value,
     role_id: selectedRole.value.id
   })
-  .then(response => {
-    console.log('Server response:', response.data);
-    showSelectRole.value = false;
-    emit('contributorAdded'); // Emittieren Sie ein Event
-  })
-  .catch(error => {
-    showSelectRole.value = false;
-    console.error('Error adding Contributor', error);
-  });
+    .then(response => {
+      console.log('Server response:', response.data);
+      showSelectRole.value = false;
+      emit('contributorAdded'); // Emittieren Sie ein Event
+    })
+    .catch(error => {
+      showSelectRole.value = false;
+      console.error('Error adding Contributor', error);
+    });
 };
 
 onMounted(() => {

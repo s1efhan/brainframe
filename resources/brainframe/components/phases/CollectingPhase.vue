@@ -1,46 +1,102 @@
 <template>
-  <h3>CollectingPhase</h3>
-  <div v-if="!collectingStarted">
-    <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
-    <p>Ideen pro Runde: {{ maxIdeaInput }}</p>
-    <p>Zeit pro Runde: {{ collectingTimer/60 }} Minute(n)</p>
-    <button
-      v-if="personalContributor &&  sessionHostId == personalContributor.id && showStartButton|| collectingRounds === 1"
-      @click="callStartCollecting">Start Collecting</button>
+  <div class="roundCountInfo__container">
+    <div class="roundCount">
+      <div v-if="collectingRounds > 1" v-for="round in collectingRounds" :key="round" class="round-item">
+        <div class="round-circle" :class="{ 'completed': round <= currentRound }">
+          {{ round }}
+        </div>
+        <div v-if="round < collectingRounds" class="connecting-line" :class="{ 'completed': round < currentRound }">
+        </div>
+      </div> 
+    </div>
+    <div @click ="showInfo = !showInfo" class="info__container">
+      <div class="join__info">
+        <p>i</p>
+      </div>
+    </div>
+  </div>
+  <div v-if="showInfo" class="info__text__container">
+    <div class="info__text">
+  <h3>Sammel Phase:</h3>
+  <ul>
+    <li>Team sammelt Ideen.</li>
+    <li>Je nach Methode: mehrere Runden mit <strong>Zeit- </strong> oder <strong>Ideen-Limit.</strong></li>
+    <li>Einreichung: <strong>Bild</strong> (PNG, PDF, JPEG), <strong>Sprach- </strong> oder <strong>Texteingabe.</strong></li>
+    <li>Fotos werden von der <strong>BrainFrame KI in Text </strong> umgewandelt.</li>
+  </ul>
+</div>
+</div>
+  <div class="startCollecting" v-if="!collectingStarted">
+    <button class="primary"
+      v-if="personalContributor && sessionHostId == personalContributor.id && personalContributor.role_name != 'Default' && showStartButton || collectingRounds === 1 && personalContributor.role_name != 'Default'"
+      @click="callStartCollecting">Starte Runde</button>
   </div>
 
-  <div v-if="collectingStarted">
-    <p>Runde: {{ currentRound }} / {{ collectingRounds }} </p>
-    <p>Verbleibende Zeit: {{ remainingTime }} Sekunden</p>
-    <p>Eingereichte Ideen: {{ submittedIdeas }} {{"/". maxIdeaInput }}</p>
-
-    <form @submit.prevent="handleSubmit">
-      <label for="image">Bild einfügen: </label>
-      <br>
+    <form v-if="collectingStarted" class="collectForm" @submit.prevent="handleSubmit">
       <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
-      <img @click="openFileInput" :src="imageFileUrl ? imageFileUrl : '/fake-url'" alt="uploadedImageIdea" height="100">
-      <br>
-      <label for="textInput">Idee:</label>
-      <input type="text" id="textInput" v-model="textInput">
-      <button v-if="!isListening" type="button" @click="isListening = true">▶️</button>
-      <button v-else type="button" @click="isListening = false">⏸️</button>
-      <br>
-      <button type="submit" @click="isListening = false, submitIdea(true);"
-        :disabled="submittedIdeas >= maxIdeaInput && maxIdeaInput">Idee speichern</button>
+        <div class="Input__container">
+      <textarea id="textInput" v-model="textInput" rows="5"></textarea>
+      <div class="inputImage__container">
+        <img @click="openFileInput" :src="imageFileUrl ? imageFileUrl : '/storage/brainframe/images/404.png'"
+        alt="uploadedImageIdea" height="100">
+      <button class="secondary" v-if="!isListening" type="button" @click="isListening = true">🎙️</button>
+      <button class="secondary" v-else type="button" @click="isListening = false">⏸</button>
+    </div>
+    </div>
       <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
     </form>
-
-    <button v-if="personalContributor && sessionHostId == personalContributor.id" @click="callStopCollecting">Stop
-      Collecting</button>
+    <div v-if="apiAntwort">
+  <div v-for="(idea, index) in apiAntwort" :key="index">
+    <h3>{{ index }} {{ idea.ideaTitle }}</h3>
+    <p>Contributor ID: {{ idea.contributor_id }}</p>
+    <div v-html="idea.ideaDescription"></div>
+    <p>Tag: {{ idea.tag }}</p>
+  </div>
+</div>
+    <div class="stopCollecting" v-if="collectingStarted">
+      <button class="primary" type="submit" @click="isListening = false, submitIdea(true);"
+      :disabled="submittedIdeas >= maxIdeaInput && maxIdeaInput">Idee speichern</button>
+      <button class="secondary" v-if="personalContributor && sessionHostId == personalContributor.id"
+        @click="callStopCollecting">Beende Runde</button>
+    </div>
     <div class="timer" :style="{ '--progress': `${(1 - remainingTime / collectingTimer) * 360}deg` }">
       {{ remainingTime }}
     </div>
-  </div>
+    <div v-if= "maxideaInput" class="ideasCount">
+      {{ submittedIdeas}} | {{maxIdeaInput}}
+      <p class="ideas-icon" v-if="submittedIdeas === maxIdeaInput">✓</p>
+    </div>
+    <div v-else class="ideasCount">
+      {{ submittedIdeas}}
+    </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import axios from 'axios';
+const props = defineProps({
+  personalContributor: {
+    type: Object,
+    required: true
+  },
+  sessionHostId: {
+    type: [String, Number],
+    required: true
+  },
+  sessionId: {
+    type: [String, Number],
+    required: true
+  },
+  method: {
+    type: Object,
+    required: true
+  },
+  contributors: {
+    type: [Object, null],
+    required: true
+  }
+});
+const showInfo = ref(false);
 const collectingStarted = ref(false);
 const currentRound = ref(1);
 const remainingTime = ref(0);
@@ -51,7 +107,7 @@ const fileInput = ref(null);
 const sessionId = ref(null);
 const isListening = ref(false);
 const showStartButton = ref(true)
-const personalContributor = ref(null);
+const personalContributor = ref(props.personalContributor);
 let timer = null;
 const callStartCollecting = () => {
   axios.post('/api/collecting/start', {
@@ -71,7 +127,7 @@ const startCollecting = () => {
   startTimer();
   showStartButton.value = false;
 };
-
+const emit = defineEmits(['switchPhase']);
 const stopCollecting = () => {
   collectingStarted.value = false;
   clearInterval(timer);
@@ -80,9 +136,34 @@ const stopCollecting = () => {
     showStartButton.value = true;
   } else {
     showStartButton.value = false;
+    emit('switchPhase', 'votingPhase');
+    axios.post('/api/ideas/sendToGPT', {
+    session_id: sessionId.value
+  })
+  .then(response => {
+    console.log('Server response:', response.data);
+    // Extrahiere nur den Content aus der API-Antwort
+    if (response.data.choices && response.data.choices.length > 0) {
+      const content = response.data.choices[0].message.content;
+      try {
+        // Entferne die Markdown-Codeblöcke und parse als JSON
+        const cleanedContent = content.replace(/```json|\n```/g, '').trim();
+        apiAntwort.value = JSON.parse(cleanedContent);
+      } catch (error) {
+        console.error('Fehler beim Parsen des JSON:', error);
+        apiAntwort.value = 'Fehler beim Verarbeiten der Antwort';
+      }
+    } else {
+      apiAntwort.value = 'Keine Antwort erhalten.';
+    }
+  })
+  .catch(error => {
+    console.error('Fehler bei der API-Anfrage', error);
+    apiAntwort.value = 'Fehler bei der API-Anfrage';
+  });
   }
 };
-
+const apiAntwort = ref(null);
 const callStopCollecting = () => {
   axios.post('/api/collecting/stop', {
     current_round: currentRound.value,
@@ -94,7 +175,8 @@ const callStopCollecting = () => {
     .catch(error => {
       console.error('Error stoping Collecting', error);
     });
-}; const startTimer = () => {
+}; 
+const startTimer = () => {
   remainingTime.value = collectingTimer.value;
   timer = setInterval(() => {
     if (remainingTime.value > 0) {
@@ -130,28 +212,14 @@ const openFileInput = () => {
   fileInput.value.click();
   //timer starten
 }
-// wenn Timer abgelaufen ist, dann stopCollecting
-const props = defineProps({
-  personalContributor: {
-    type: Object,
-    required: true
-  },
-  sessionHostId: {
-    type: [String, Number],
-    required: true
-  },
-  sessionId: {
-    type: [String, Number],
-    required: true
-  },
-  method: {
-    type: Object,
-    required: true
-  },
-  contributors: {
-    type: [Object, null],
-    required: true
-  }
+watch(() => props.personalContributor, (newVal) => {
+  personalContributor.value = newVal;
+});
+watch(() => props.sessionHostId, (newVal) => {
+  sessionHostId.value = newVal;
+});
+watch(() => props.method, (newVal) => {
+  method.value = newVal;
 });
 const contributors = ref(null);
 const maxIdeaInput = ref(null);
@@ -287,10 +355,11 @@ watch(isListening, () => {
     recognition.stop();
   }
 });
+
 onMounted(() => {
   sessionId.value = props.sessionId;
   contributors.value = props.contributors;
-  personalContributor.value = props.personalContributor;
+  console.log(personalContributor.value)
   method.value = props.method;
   sessionHostId.value = props.sessionHostId;
   setMethodParameters();
@@ -304,15 +373,16 @@ onMounted(() => {
       stopCollecting();
       console.log("collectingStarted", collectingStarted.value)
     });
-    if(personalContributor.value.id != sessionHostId.value ){
+  if (personalContributor.value.id != sessionHostId.value) {
     Echo.channel('session.' + sessionId.value)
-    .listen('UpdateCountdown', (e) => {
-      console.log('UpdateCountdown Event empfangen:', e);
-      remainingTime.value = e.secondsLeft;
-      currentRound.value = e.round;
-      if(remainingTime.value < collectingTimer.value){
-        collectingStarted.value = true;
-    }});
+      .listen('UpdateCountdown', (e) => {
+        console.log('UpdateCountdown Event empfangen:', e);
+        remainingTime.value = e.secondsLeft;
+        currentRound.value = e.round;
+        if (remainingTime.value < collectingTimer.value) {
+          collectingStarted.value = true;
+        }
+      });
   }
 });
 </script>

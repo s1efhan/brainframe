@@ -1,7 +1,9 @@
 <template>
-    <div>
-      <h1>User Sessions</h1>
-      <table v-if="userSessions && userSessions.length > 0">
+  <div class="headline__sessions">
+    <h1>User Sessions</h1>
+  </div>
+    <main>
+      <table class="sessions__table"v-if="userSessions && userSessions.length > 0">
         <thead>
           <tr>
             <th>Session ID</th>
@@ -34,7 +36,7 @@
         </tbody>
       </table>
       <p v-else>Keine Sitzungen gefunden.</p>
-    </div>
+    </main>
   </template>
   
   <script setup>

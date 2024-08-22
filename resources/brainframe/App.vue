@@ -1,6 +1,5 @@
 <template>
-  <main>
-  <div v-if="sessionId" class="headline">
+<header v-if="sessionId && route.path !== '/brainframe/join'" class="headline">
     <h1 class="headline__session-pin">
       Session-PIN
       <p @click="copyToClipboard(sessionId)">
@@ -11,10 +10,16 @@
     <div class="headline__brainframe-icon">
       <BrainFrameIcon />
     </div>
-  </div>
-  <router-view :userId="userId"></router-view>
-</main>
-  <Footer />
+  </header>
+  <router-view 
+    v-if="route.name === 'Session'"
+    @updateSessionId="handleSessionIdUpdate"
+    :userId="userId"
+  ></router-view>
+  <router-view 
+    v-else
+    :userId="userId"
+  ></router-view>
   <Menu @resetSessionId="handleSessionIdUpdate"></Menu>
 </template>
 
@@ -25,8 +30,9 @@ import Menu from './components/Menu.vue';
 import Footer from './components/Footer.vue';
 import CopyIcon from './components/icons/CopyIcon.vue';
 import BrainFrameIcon from './components/icons/BrainFrameIcon.vue'
-const route = useRoute();
 import { useRoute } from 'vue-router';
+const route = useRoute();
+const showSessionHeadline = ref(false);
 const userId = ref('');
 function handleSessionIdUpdate(newSessionId) {
   sessionId.value = newSessionId;
@@ -73,7 +79,6 @@ function updateUserId() {
       console.error('Error sending user ID to server:', error);
     });
 }
-
 onMounted(() => {
   if (Number.isInteger(parseInt(route.params.id))) {
     sessionId.value = route.params.id;
