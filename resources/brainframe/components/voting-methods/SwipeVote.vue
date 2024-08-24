@@ -23,13 +23,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, toRef } from 'vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
+import axios from 'axios';
+
 const currentIdea = ref(null);
 const previousIdea = ref(null);
 const decisionsMade = ref(0);
 const ideasCount = ref(null);
-const ideas = ref(null);
+const ideas = ref([]);
 
 const props = defineProps({
   ideasCount: {
@@ -39,8 +41,36 @@ const props = defineProps({
   ideas: {
     type: Array,
     required: true
+  },
+  sessionId: {
+    type: [String, Number],
+    required: true
+  },
+  contributorId: {
+    type: [String, Number],
+    required: true
   }
 });
+
+const sessionId = toRef(props, 'sessionId');
+const contributorId = toRef(props, 'contributorId');
+
+const sendVote = (ideaId, voteValue) => {
+  console.log('sessionId.value, voteValue, ideaId, contributorId.value, left_right, voteValue', sessionId.value, voteValue, ideaId, contributorId.value, 'left_right', voteValue);
+  axios.post('/api/vote', {
+    session_id: sessionId.value,
+    idea_id: ideaId,
+    contributor_id: contributorId.value,
+    vote_type: 'left_right',
+    vote_value: voteValue
+  })
+  .then(response => {
+    console.log('Server response:', response.data);
+  })
+  .catch(error => {
+    console.error('Fehler beim Speichern deines Votes', error);
+  });
+};
 
 onMounted(() => {
   ideasCount.value = props.ideasCount;
@@ -59,13 +89,15 @@ const setNextIdea = () => {
 };
 
 const swipeLeft = () => {
-  // Logik für "Nicht mögen"
+  // "Nicht mögen" Logic
+  sendVote(currentIdea.value.id, 0);  // Sende "Nicht mögen" Abstimmung
   ideas.value.shift();
   setNextIdea();
 };
 
 const swipeRight = () => {
-  // Logik für "Mögen"
+  // "Mögen" Logic
+  sendVote(currentIdea.value.id, 1);  // Sende "Mögen" Abstimmung
   ideas.value.shift();
   setNextIdea();
 };

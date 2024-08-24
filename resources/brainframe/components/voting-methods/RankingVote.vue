@@ -31,31 +31,36 @@
       </template>
     </tbody>
   </table>
-  <div class="ranking-vote__submit__container"><button class="primary">Senden</button></div>
+  <div class="ranking-vote__submit__container">
+  <button class="primary" @click="submitRanking">Senden</button>
+</div>
+
 </template>
 
 <script setup>
 import { ref, onMounted, toRef } from 'vue';
+import axios from 'axios';
 
 const props = defineProps({
   ideas: {
-    type: Object,
+    type: Array,
     required: true
   },
   ideasCount: {
     type: Number,
     required: true
+  },
+  sessionId: {
+    type: [String, Number],
+    required: true
+  },
+  contributorId: {
+    type: [String, Number],
+    required: true
   }
 });
-const activeIdeaId = ref(null);
 
-const toggleShowIdeaDetails = (ideaId) => {
-  if (activeIdeaId.value === ideaId) {
-    activeIdeaId.value = null;
-  } else {
-    activeIdeaId.value = ideaId;
-  }
-};
+const activeIdeaId = ref(null);
 const ideasCount = toRef(props, 'ideasCount');
 const ideas = toRef(props, 'ideas');
 
@@ -64,8 +69,35 @@ onMounted(() => {
     console.log("ideasCount.value", ideasCount.value);
     console.log("ideas.value", JSON.parse(JSON.stringify(ideas.value)));
   }
-  else console.log("kein IdeasCount und ideas");
 });
+
+const sendVote = (ideaId, voteValue) => {
+  axios.post('/api/vote', {
+    session_id: props.sessionId,
+    idea_id: ideaId,
+    contributor_id: props.contributorId,
+    vote_type: 'ranking',
+    vote_value: voteValue
+  })
+  .then(response => {
+    console.log('Server response:', response.data);
+  })
+  .catch(error => {
+    console.error('Fehler beim Speichern deines Votes', error);
+  });
+};
+
+const submitRanking = () => {
+  ideas.value.forEach((idea, index) => {
+    sendVote(idea.id, ideasCount.value - index);
+  });
+  console.log('Ranking submitted!');
+};
+
+const toggleShowIdeaDetails = (ideaId) => {
+  activeIdeaId.value = activeIdeaId.value === ideaId ? null : ideaId;
+};
+
 let draggedItemIndex = null;
 
 const dragStart = (index) => {
