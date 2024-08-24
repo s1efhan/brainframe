@@ -1,103 +1,94 @@
 <template>
-    <section>
-      <h2>StarVote</h2>
-      <p class="star-vote-icon">★★✰</p>
-      <p>Ideas Count: {{ decisionsMade }}/{{ ideasCount }}</p>
-      <h3>Rate This Idea From 1-3 Stars</h3>
-      <div v-if="currentIdea" class="idea-card" @touchstart="touchStart" @touchend="touchEnd">
-        <h4>{{ currentIdea.ideaTitle }}</h4>
-        <div v-html="currentIdea.ideaDescription"></div>
-        <p>{{ currentIdea.contributorIcon }}</p>
-        <p>#{{ currentIdea.tag }}</p>
-        <div class="star-rating">
-          <button @click="rate(1)" :class="{ active: tempRating >= 1 }">★</button>
-          <button @click="rate(2)" :class="{ active: tempRating >= 2 }">★</button>
-          <button @click="rate(3)" :class="{ active: tempRating >= 3 }">★</button>
-        </div>
-      </div>
-      <p v-else>No more ideas to rate.</p>
-      <button @click="undoLastDecision" :disabled="!previousIdea">↺</button>
-    </section>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted } from 'vue';
-  
-  const currentIdea = ref(null);
-  const previousIdea = ref(null);
-  const decisionsMade = ref(0);
-  const ideasCount = ref(null);
-  const ideas = ref(null);
-  const tempRating = ref(0);
-  
-  const props = defineProps({
-    ideasCount: {
-      type: [String, Number],
-      required: true
-    },
-    ideas: {
-      type: Array,
-      required: true
-    }
-  });
-  
-  onMounted(() => {
-    ideasCount.value = props.ideasCount;
-    ideas.value = props.ideas;
-    setNextIdea();
-  });
-  
-  const setNextIdea = () => {
-  if (ideas.value.length > 0) {
-    previousIdea.value = currentIdea.value;
-    currentIdea.value = ideas.value[0];
-    tempRating.value = 0;
+  <div class="vote__headline__container">
+ <h2>Rate This Idea <br>★★✰</h2>
+ </div>
+ <div v-if="currentIdea" class="idea-card star-vote" @touchstart="touchStart" @touchend="touchEnd">
+ <h3>{{ currentIdea.ideaTitle }}</h3>
+ <div class="idea__description__container">
+ <div v-html="currentIdea.ideaDescription"></div>
+ </div>
+ <div class="star-rating">
+ <button class="primary" @click="rate(1)" :class="{ active: tempRating >= 1 }">★</button>
+ <button class="primary" @click="rate(2)" :class="{ active: tempRating >= 2 }">★</button>
+ <button class="primary" @click="rate(3)" :class="{ active: tempRating >= 3 }">★</button>
+ </div>
+ <div class="idea-card__bottom">
+ <button @click="undoLastDecision" class="secondary undo":disabled="!previousIdea">↺</button>
+ <div class="tag">#{{ currentIdea.tag }}</div>
+ <div class="contributor__icon"> <ProfileIcon/>{{currentIdea.contributorIcon}}</div>
+ </div>
+ </div>
+ <p v-else>Fertig. Du musst warten, bis der Rest fertig mit Voten ist.</p>
+ <div v-if="ideasCount" class="ideasCount">
+  {{ decisionsMade }}/{{ ideasCount }}
+ </div>
+ </template>
+ <script setup>
+ import { ref, onMounted } from 'vue';
+ const currentIdea = ref(null);
+ const previousIdea = ref(null);
+ const decisionsMade = ref(0);
+ const ideasCount = ref(null);
+ const ideas = ref(null);
+ const tempRating = ref(0);
+ const props = defineProps({
+  ideasCount: {
+  type: [String, Number],
+  required: true
+  },
+  ideas: {
+  type: Array,
+  required: true
+  }
+ });
+ onMounted(() => {
+  ideasCount.value = props.ideasCount;
+  ideas.value = props.ideas;
+  setNextIdea();
+ });
+ const setNextIdea = () => {
+ if (ideas.value.length > 0) {
+  previousIdea.value = currentIdea.value;
+  currentIdea.value = ideas.value[0];
+  tempRating.value = 0;
   } else {
-    currentIdea.value = null;
+  currentIdea.value = null;
   }
   decisionsMade.value = props.ideasCount - ideas.value.length;
-};
-
-const undoLastDecision = () => {
-  if (previousIdea.value) {
-    ideas.value.unshift(previousIdea.value);
-    currentIdea.value = previousIdea.value;
-    previousIdea.value = null;
-    tempRating.value = 0;
-    decisionsMade.value = props.ideasCount - ideas.value.length;
+ };
+ const undoLastDecision = () => {
+ if (previousIdea.value) {
+  ideas.value.unshift(previousIdea.value);
+  currentIdea.value = previousIdea.value;
+  previousIdea.value = null;
+  tempRating.value = 0;
+  decisionsMade.value = props.ideasCount - ideas.value.length;
   }
-};
-  
-  const rate = (stars) => {
-    tempRating.value = stars;
-    // Hier können Sie die Bewertung speichern oder verarbeiten
-    console.log(`Idea rated with ${stars} stars`);
-    // Entfernen Sie die aktuelle Idee und gehen Sie zur nächsten
-    ideas.value.shift();
-    setNextIdea();
-  };
-
-  
-  // Touch-Funktionalität
-  let touchStartX = 0;
-  let touchEndX = 0;
-  
-  const touchStart = (event) => {
-    touchStartX = event.changedTouches[0].screenX;
-  };
-  
-  const touchEnd = (event) => {
-    touchEndX = event.changedTouches[0].screenX;
-    handleSwipe();
-  };
-  
-  const handleSwipe = () => {
-    const swipeThreshold = 50;
-    const swipeDistance = touchEndX - touchStartX;
-    
-    if (Math.abs(swipeDistance) > swipeThreshold) {
-      const starRating = Math.min(3, Math.max(1, Math.ceil(3 * (swipeDistance + swipeThreshold) / (2 * swipeThreshold))));
-      rate(starRating);
-    }
-  };
-  </script>
+ };
+ const rate = (stars) => {
+  tempRating.value = stars;
+ // Hier können Sie die Bewertung speichern oder verarbeiten
+  console.log(`Idea rated with ${stars} stars`);
+ // Entfernen Sie die aktuelle Idee und gehen Sie zur nächsten
+  ideas.value.shift();
+  setNextIdea();
+ };
+ // Touch-Funktionalität
+ let touchStartX = 0;
+ let touchEndX = 0;
+ const touchStart = (event) => {
+  touchStartX = event.changedTouches[0].screenX;
+ };
+ const touchEnd = (event) => {
+  touchEndX = event.changedTouches[0].screenX;
+  handleSwipe();
+ };
+ const handleSwipe = () => {
+ const swipeThreshold = 50;
+ const swipeDistance = touchEndX - touchStartX;
+ if (Math.abs(swipeDistance) > swipeThreshold) {
+ const starRating = Math.min(3, Math.max(1, Math.ceil(3 * (swipeDistance + swipeThreshold) / (2 * swipeThreshold))));
+  rate(starRating);
+  }
+ };
+ </script>

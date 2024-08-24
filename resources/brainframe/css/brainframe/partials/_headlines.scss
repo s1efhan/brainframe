@@ -38,7 +38,7 @@
     width: 60vw;
     text-align: center;
     padding: 0.5em;
-    font-size: 1.6em;
+    font-size: 1.3em;
     border: solid var(--accent) thick;
     background-color: var(--text);
     color: var(--secondary);
@@ -88,9 +88,8 @@
     font-family: 'Nohemi-Regular', sans-serif;
   }
 }
-
 .headline__session-target {
-  font-size: 1.2em;
+  font-size: 1.4em;
   display: inline-block;
   border: solid var(--primary) thick;
   box-sizing: border-box;
@@ -211,9 +210,7 @@
 }
 
 .ideasCount {
-  position: fixed;
-  bottom: 15vh;
-  left: 1em;
+  margin: 0.5em;
 }
 
 .headline__sessions {
@@ -230,6 +227,7 @@
 
 .session_headline__details {
   display: flex;
+  justify-content: space-between;
   div {
     min-width: 6em;
     background-color: var(--text);
@@ -250,4 +248,10 @@
       fill: var(--secondary)
     }
   }
+}
+
+.vote__headline__container {
+  text-align: center;
+  margin-top: 0.5em;
+  font-size: 1em;
 }

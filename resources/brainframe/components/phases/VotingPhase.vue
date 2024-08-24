@@ -2,7 +2,7 @@
     <SwipeVote v-if="ideasCount > 15 && votingPhaseNumber === 1" :ideas="ideas" :ideasCount ="ideasCount"/>
     <LeftRightVote v-if="ideasCount > 15 && votingPhaseNumber === 2" :ideas="ideas" :ideasCount ="ideasCount"/>
     <StarVote v-if="ideasCount > 5 && ideasCount <= 15":ideasCount ="ideasCount" :ideas="ideas"/>
-    <RankingVote v-if="ideasCount <= 5":ideasCount ="ideasCount" :ideas="ideas"/>
+    <RankingVote v-if="ideas && ideasCount && ideasCount <= 5":ideasCount ="ideasCount" :ideas="ideas"/>
 </template>
 
 <script setup>
