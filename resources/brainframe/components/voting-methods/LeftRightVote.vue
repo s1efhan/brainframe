@@ -1,5 +1,5 @@
 <template>
-  <div class="vote__headline__container">
+ <div class="vote__headline__container">
     <h2>Pick Left or Right to Vote <br>↔</h2>
   </div>
   <div class="left-right__container" v-if="currentPair.length === 2">
@@ -30,8 +30,6 @@
       </div>
     </div>
   </div>
-
-  <p v-else>Fertig. Du musst warten, bis der Rest fertig mit Voten ist.</p>
   <button class="secondary undo" @click="undoLastDecision" :disabled="previousPair.length === 0">↺</button>
   <div v-if="ideasCount" class="ideasCount">
     {{ decisionsMade }}/{{ ideasCount }}
@@ -48,7 +46,7 @@ const props = defineProps({
     required: true
   },
   ideas: {
-    type: Array,
+    type:  [Array, Object],
     required: true
   },
   sessionId: {
@@ -59,25 +57,35 @@ const props = defineProps({
     type: [String, Number],
     required: true
   },
+  votingPhase: {
+    type: Number,
+    required:true
+  }
 });
 
 
 const currentPair = ref([]);
 const previousPair = ref([]);
 const decisionsMade = ref(0);
-const ideasCount = ref(0);
-const ideas = ref([]);
+const ideasCount = toRef(props, 'ideasCount');
+const ideas = ref(Object.values(props.ideas));
 const sessionId = toRef(props, 'sessionId');
 const contributorId = toRef(props, 'contributorId');
+const votingPhase = toRef(props, 'votingPhase');
 
 const sendVote = (ideaId, voteValue) => {
-  console.log('sessionId.value, voteValue, ideaId, contributorId.value, left_right, voteValue', sessionId.value, voteValue, ideaId, contributorId.value, 'left_right', voteValue);
+  console.log('Sending vote:', sessionId.value, voteValue, ideaId, contributorId.value, 'left_right', voteValue);
   axios.post('/api/vote', {
-    session_id: sessionId.value,
-    idea_id: ideaId,
-    contributor_id: contributorId.value,
-    vote_type: 'left_right',
-    vote_value: voteValue
+    votes: [
+      {
+        session_id: sessionId.value,
+        idea_id: ideaId,
+        contributor_id: contributorId.value,
+        vote_type: 'left_right',
+        vote_value: voteValue,
+        voting_phase: votingPhase.value
+      }
+    ]
   })
   .then(response => {
     console.log('Server response:', response.data);
@@ -86,6 +94,7 @@ const sendVote = (ideaId, voteValue) => {
     console.error('Fehler beim Speichern deines Votes', error);
   });
 };
+
 
 const setNextPair = () => {
   if (ideas.value.length >= 2) {
@@ -118,9 +127,9 @@ const undoLastDecision = () => {
 };
 
 onMounted(() => {
-  ideasCount.value = parseInt(props.ideasCount);
-  ideas.value = [...props.ideas];
   setNextPair();
   console.log("ContributorId: Pops", props.contributorId);
+  console.log("ideas.value, ideasCount.value", ideas.value, ideasCount.value)
 });
+
 </script>

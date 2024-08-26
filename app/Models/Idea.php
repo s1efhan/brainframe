@@ -20,5 +20,9 @@ class Idea extends Model
     {
         return $this->belongsTo(Contributor::class, 'contributor_id');
     }
+    public function votes()
+    {
+        return $this->hasMany(Vote::class, 'idea_id', 'id');
+    }
 }
 

@@ -16,7 +16,8 @@ class Vote extends Model
         'contributor_id',
         'vote_type',
         'vote_value',
-        'vote_boolean'
+        'vote_boolean',
+        'voting_phase'
     ];
 
     // Definiert die Beziehung zu BfSession (session_id)
@@ -28,7 +29,7 @@ class Vote extends Model
     // Definiert die Beziehung zu BfIdea (idea_id)
     public function idea()
     {
-        return $this->belongsTo(Idea::class, 'idea_id');
+        return $this->belongsTo(Idea::class, 'idea_id', 'id');
     }
 
     // Definiert die Beziehung zu BfContributor (contributor_id)

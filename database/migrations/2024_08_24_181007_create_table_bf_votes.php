@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('vote_type', ['swipe', 'left_right', 'star', 'ranking']);
             $table->integer('vote_value')->nullable();
             $table->integer('vote_boolean')->nullable();
+            $table->integer('voting_phase')->default(1);
             $table->timestamps();
             $table->foreign('session_id')->references('id')->on('bf_sessions')->onDelete('cascade');
             $table->foreign('idea_id')->references('id')->on('bf_ideas')->onDelete('cascade');

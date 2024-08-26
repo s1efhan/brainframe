@@ -39,20 +39,20 @@ class IdeaController extends Controller
                         [
                             'role' => 'system',
                             'content' => 'Du bist verantwortlich für die Verarbeitung und Filterung von Brainstorming-Ergebnissen. Dein Ziel ist die Qualität und Verständlichkeit der eingesandten Ideen sicherzustellen.
-                Folge diesen Anweisungen strikt:
-
-   1) Erstelle einen umfassenden ideaTitle, der die Konzepte und Grundidee widerspiegelt.
-   2) Fülle ideaDescription mit mindestens 2 bis zu 3 Stichpunkten, die verschiedene Aspekte der Ideen abdecken.
-   3) Wähle einen thematischen tag, der die Kernessenz der Ideen erfasst und die Ideen zu Gruppen zuordnen lässt.
-   4) Formatiere die Ausgabe als JSON-Array mit den Feldern: contributor_id, ideaTitle, ideaDescription, tag wie im Beispiel.
-
-   Beispiel:
-{
-  "contributor_id": [1, 34]",
-  "ideaTitle": "Lifestyle-Marken spielen gegeneinander",
-  "ideaDescription": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
-  "tag": "Gesellschaftskritik"
-'
+                                    Folge diesen Anweisungen strikt:
+                    
+                       1) Erstelle einen umfassenden ideaTitle, der die Konzepte und Grundidee widerspiegelt.
+                       2) Fülle ideaDescription mit mindestens 2 bis zu 3 Stichpunkten, die verschiedene Aspekte der Ideen abdecken.
+                       3) Wähle einen thematischen tag, der die Kernessenz der Ideen erfasst und die Ideen zu Gruppen zuordnen lässt.
+                       4) Formatiere die Ausgabe als JSON-Array mit den Feldern: contributor_id, ideaTitle, ideaDescription, tag wie im Beispiel.
+                    
+                       Beispiel:
+                    {
+                      "contributor_id": [1, 34]",
+                      "ideaTitle": "Lifestyle-Marken spielen gegeneinander",
+                      "ideaDescription": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
+                      "tag": "Gesellschaftskritik"
+                    '
                         ],
                         [
                             'role' => 'user',
@@ -102,39 +102,97 @@ class IdeaController extends Controller
         }
     }
 
-
-    public function get($sessionId, $votingPhaseNumber)
+    public function get($sessionId, $votingPhase, $contributorId)
     {
-        Log::info('Received request to get ideas', ['sessionId' => $sessionId, 'votingPhaseNumber' => $votingPhaseNumber]);
+        if ($votingPhase >= 1 && $votingPhase <= 4) {
 
-        // Abfrage anpassen, um nur Ideen mit vorhandenem Tag abzurufen
-        $ideas = Idea::where('session_id', $sessionId)
-            ->whereNotNull('tag') // Sicherstellen, dass das Tag-Feld nicht NULL ist
-            ->where('tag', '!=', '') // Sicherstellen, dass das Tag-Feld nicht leer ist
-            ->with('contributor') // Laden Sie den zugehörigen Contributor
-            ->get()
-            ->map(function ($idea) {
-                $contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
-                $ideaTitle = $idea->idea_title;
-                $ideaDescription = $idea->idea_description;
-                $ideaTag = $idea->tag;
+            if ($votingPhase <= 1) {
+                $ideas = Idea::where('session_id', $sessionId)
+                    ->with('contributor')
+                    ->with([
+                        'votes' => function ($query) use ($votingPhase) {
+                            $query->where('voting_phase', $votingPhase - 1);
+                        }
+                    ])
+                    ->whereNotNull('tag')
+                    ->where('tag', '!=', '')
+                    ->get();
+            } else {
+                $ideas = Idea::where('session_id', $sessionId)
+                    ->with('contributor')
+                    ->with([
+                        'votes' => function ($query) use ($votingPhase) {
+                            $query->where('voting_phase', $votingPhase - 1);
+                        }
+                    ])
+                    ->whereNotNull('tag')
+                    ->where('tag', '!=', '')
+                    ->whereHas('votes', function ($query) use ($votingPhase) {
+                        $query->where('voting_phase', $votingPhase - 1);
+                    })
+                    ->get();
 
+                $ideas = $ideas->map(function ($idea) {
+                    $totalVotes = $idea->votes->map(function ($vote) {
+                        return $vote->vote_value !== null ? $vote->vote_value : $vote->vote_boolean;
+                    });
+                    $idea->averageVote = $totalVotes->avg() ?? 0;
+                    return $idea;
+                })->sortByDesc('averageVote');
+                $ideasCount = $ideas->count();
+            Log::info("else ideasCount: " . $ideasCount);
+            }
+
+            $ideasCount = $ideas->count();
+            Log::info("Initial ideasCount: " . $ideasCount);
+            Log::info("votingPhase: " . $votingPhase);
+            if ($votingPhase > 1) {
+                $votingMethod = $ideasCount > 32 ? 'LeftRightVote' : ($ideasCount > 15 ? 'StarVote' : 'RankingVote');
+            } else {
+                $votingMethod = $ideasCount > 15 ? 'SwipeVote' : ($ideasCount > 5 ? 'StarVote' : 'RankingVote');
+            }
+            switch ($votingMethod) {
+                case 'LeftRightVote':
+                    $numberOfIdeas = min(intval($ideasCount / 2), 30);
+                    if ($numberOfIdeas % 2 !== 0) {
+                        $numberOfIdeas--; // Reduce to the next even number
+                    }
+                    $numberOfIdeas = max($numberOfIdeas, 2);
+                    $ideas = $ideas->slice(0, $numberOfIdeas);
+                    break;
+                case 'StarVote':
+                    $ideas = $ideas->take(15);
+                    break;
+                case 'RankingVote':
+                    $ideas = $ideas->take(5);
+                    break;
+            }
+            $ideasCount = $ideas->count();
+            Log::info("New ideasCount: " . $ideasCount);
+            Log::info("New votingMethod: " . $votingMethod);
+            $ideas = $ideas->map(function ($idea) use ($votingPhase) {
                 return [
                     'id' => $idea->id,
-                    'contributorIcon' => $contributorIcon,
-                    'ideaTitle' => $ideaTitle,
-                    'ideaDescription' => $ideaDescription, // Tippfehler in der ursprünglichen Rückgabe behoben
-                    'tag' => $ideaTag
+                    'contributorIcon' => $idea->contributor->role->icon ?? 'default_icon',
+                    'ideaTitle' => $idea->idea_title,
+                    'ideaDescription' => $idea->idea_description,
+                    'tag' => $idea->tag,
+                    'averageVote' => $idea->averageVote ?? null,
                 ];
             });
-
-        $ideasCount = $ideas->count();
-
-        return response()->json([
-            'success' => true,
-            'ideas' => $ideas,
-            'ideasCount' => $ideasCount
-        ]);
+            $ideas = $ideas->values()->all();
+            return response()->json([
+                'success' => true,
+                'ideas' => $ideas,
+                'ideasCount' => $ideasCount,
+                'votingMethod' => $votingMethod
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ungültige Voting-Phase'
+            ], 400);
+        }
     }
 
     public function store(Request $request)

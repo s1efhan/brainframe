@@ -1,38 +1,18 @@
 <template>
-  <SwipeVote 
-    v-if="ideasCount > 15 && votingPhaseNumber === 1 && personalContributor && sessionId" 
-    :contributorId="personalContributor.id" 
-    :ideas="ideas" 
-    :ideasCount="ideasCount" 
-    :sessionId="sessionId" 
-  />
-  
-  <LeftRightVote 
-    v-if="ideasCount > 15 && votingPhaseNumber === 2 && personalContributor && sessionId" 
-    :contributorId="personalContributor.id" 
-    :ideas="ideas" 
-    :ideasCount="ideasCount"  
-    :sessionId="sessionId" 
-  />
-  
-  <StarVote 
-    v-if="ideasCount > 5 && ideasCount <= 15 && personalContributor && sessionId" 
-    :contributorId="personalContributor.id" 
-    :ideas="ideas" 
-    :ideasCount="ideasCount" 
-    :sessionId="sessionId" 
-  />
-  
-  <RankingVote 
-    v-if="ideas && ideasCount && ideasCount <= 5 && personalContributor && sessionId"
-    :contributorId="personalContributor.id" 
-    :ideas="ideas" 
-    :ideasCount="ideasCount" 
-    :sessionId="sessionId" 
-  />
+  <button class="primary" @click="finishedVoting">finishedVoting</button>
+  <p>{{ votingPhase }}</p>
+  <p>{{ votingMethod }}</p>
+  <input type="range" min="5" max="30" v-model="ideasCount">
+  <component 
+  :is="votingMethods[votingMethod]" 
+  v-if="personalContributor && sessionId" 
+  :contributorId="personalContributor.id"
+  :ideas="ideas" 
+  :ideasCount="ideasCount" 
+  :sessionId="sessionId" 
+  :votingPhase="votingPhase"
+/>
 </template>
-
-
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -40,13 +20,24 @@ import StarVote from '../voting-methods/StarVote.vue';
 import RankingVote from '../voting-methods/RankingVote.vue';
 import LeftRightVote from '../voting-methods/LeftRightVote.vue';
 import SwipeVote from '../voting-methods/SwipeVote.vue';
-const ideasCount = ref(5);
-const votingPhaseNumber = ref(1);
+const ideasCount = ref(null);
+const votingPhase = ref(1);
 const ideas = ref([]);
-const personalContributor = ref(null);
+const votingMethod = ref(null);
+const votingMethods = {
+  StarVote,
+  RankingVote,
+  LeftRightVote,
+  SwipeVote
+};
+
 const props = defineProps({
   personalContributor: {
     type: Object,
+    required: true
+  },
+  contributorsCount: {
+    type: [String, Number],
     required: true
   },
   sessionId: {
@@ -58,27 +49,38 @@ const props = defineProps({
     required: true
   }
 });
+const personalContributor = ref(props.personalContributor);
 const sessionHostId = ref(null);
 const sessionId = ref(null)
 const getIdeas = () => {
   console.log('getIdeas');
-  axios.get(`/api/ideas/${sessionId.value}/${votingPhaseNumber.value}`)
+  axios.get(`/api/ideas/${sessionId.value}/${votingPhase.value}/${personalContributor.value.id}`)
     .then(response => {
       ideas.value = response.data.ideas;
       ideasCount.value = response.data.ideasCount;
-      console.log('Ideas:', JSON.parse(JSON.stringify(ideas.value)));
-      console.log('Ideas Count:', ideasCount.value);
-      console.log('votingPhaseNumber', votingPhaseNumber.value);
+      votingMethod.value = response.data.votingMethod;
+      console.log("votingMethod.value", votingMethod.value);
+      console.log("ideas.value", ideas.value);
+      console.log(Array.isArray(ideas.value)); // Gibt true oder false zurück
     })
     .catch(error => {
       console.error('Error fetching ideas', error);
     });
+}
+const finishedVoting = () =>{
+  console.log("finishedVoting", votingPhase.value);
+  votingPhase.value++;
+  getIdeas();
 }
 onMounted(() => {
   sessionId.value = props.sessionId;
   personalContributor.value = props.personalContributor;
   sessionHostId.value = props.sessionHostId;
   getIdeas();
+  Echo.channel('session.' + sessionId.value)
+    .listen('VotingFinished', (e) => {
+      console.log('VotingFinished Event empfangen:', e);
+      console.log("contributorsCount", props.contributorsCount);
+    })
 });
-
 </script>

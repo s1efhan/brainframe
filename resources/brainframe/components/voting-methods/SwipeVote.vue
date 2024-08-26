@@ -49,20 +49,29 @@ const props = defineProps({
   contributorId: {
     type: [String, Number],
     required: true
+  },
+  votingPhase: {
+    type: Number,
+    required:true
   }
 });
 
 const sessionId = toRef(props, 'sessionId');
 const contributorId = toRef(props, 'contributorId');
-
+const votingPhase = toRef(props, 'votingPhase');
 const sendVote = (ideaId, voteValue) => {
-  console.log('sessionId.value, voteValue, ideaId, contributorId.value, left_right, voteValue', sessionId.value, voteValue, ideaId, contributorId.value, 'left_right', voteValue);
+  console.log('Sending vote:', sessionId.value, voteValue, ideaId, contributorId.value, 'left_right', voteValue);
   axios.post('/api/vote', {
-    session_id: sessionId.value,
-    idea_id: ideaId,
-    contributor_id: contributorId.value,
-    vote_type: 'left_right',
-    vote_value: voteValue
+    votes: [
+      {
+        session_id: sessionId.value,
+        idea_id: ideaId,
+        contributor_id: contributorId.value,
+        vote_type: 'swipe',
+        vote_value: voteValue,
+        voting_phase: votingPhase.value
+      }
+    ]
   })
   .then(response => {
     console.log('Server response:', response.data);
@@ -71,7 +80,6 @@ const sendVote = (ideaId, voteValue) => {
     console.error('Fehler beim Speichern deines Votes', error);
   });
 };
-
 onMounted(() => {
   ideasCount.value = props.ideasCount;
   ideas.value = props.ideas;

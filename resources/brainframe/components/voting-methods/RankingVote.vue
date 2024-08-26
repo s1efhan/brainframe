@@ -43,7 +43,7 @@ import axios from 'axios';
 
 const props = defineProps({
   ideas: {
-    type: Array,
+    type: [Array, Object],
     required: true
   },
   ideasCount: {
@@ -57,6 +57,10 @@ const props = defineProps({
   contributorId: {
     type: [String, Number],
     required: true
+  },
+  votingPhase: {
+    type: Number,
+    required:true
   }
 });
 
@@ -71,27 +75,23 @@ onMounted(() => {
   }
 });
 
-const sendVote = (ideaId, voteValue) => {
-  axios.post('/api/vote', {
+const submitRanking = () => {
+  const votes = ideas.value.map((idea, index) => ({
     session_id: props.sessionId,
-    idea_id: ideaId,
+    idea_id: idea.id,
     contributor_id: props.contributorId,
     vote_type: 'ranking',
-    vote_value: voteValue
-  })
-  .then(response => {
-    console.log('Server response:', response.data);
-  })
-  .catch(error => {
-    console.error('Fehler beim Speichern deines Votes', error);
-  });
-};
+    vote_value: ideasCount.value - index,
+    voting_phase: props.votingPhase
+  }));
 
-const submitRanking = () => {
-  ideas.value.forEach((idea, index) => {
-    sendVote(idea.id, ideasCount.value - index);
-  });
-  console.log('Ranking submitted!');
+  axios.post('/api/vote', { votes })
+    .then(response => {
+      console.log('Server response:', response.data);
+    })
+    .catch(error => {
+      console.error('Fehler beim Speichern der Votes', error);
+    });
 };
 
 const toggleShowIdeaDetails = (ideaId) => {

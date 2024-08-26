@@ -22,7 +22,7 @@
     <CollectingPhase @switchPhase="switchPhase" v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' " :method="method" :sessionHostId="sessionHostId"
       :contributors="contributors" :sessionId="sessionId" :personalContributor="personalContributor" />
     <VotingPhase v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' " :sessionId="sessionId" :sessionHostId="sessionHostId"
-      :personalContributor="personalContributor" />
+      :personalContributor="personalContributor" :contributorsCount="contributorsCount"/>
     <ClosingPhase v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' " :sessionId="sessionId" :sessionHostId="sessionHostId"
       :personalContributor="personalContributor" />
     </main>
@@ -137,7 +137,6 @@ const getMethodDetails = () => {
       console.error('Error fetching Method Details', error);
     });
 };
-
 onMounted(() => {
   console.log("Session Mounted")
   Echo.channel('session.' + sessionId.value)

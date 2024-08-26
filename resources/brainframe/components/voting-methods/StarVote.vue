@@ -2,7 +2,7 @@
   <div class="vote__headline__container">
     <h2>Rate This Idea <br>★★✰</h2>
   </div>
-  <div v-if="currentIdea" class="idea-card star-vote" @touchstart="touchStart" @touchend="touchEnd">
+  <div v-if="currentIdea" class="idea-card star-vote">
     <h3>{{ currentIdea.ideaTitle }}</h3>
     <div class="idea__description__container">
       <div v-html="currentIdea.ideaDescription"></div>
@@ -29,7 +29,7 @@
 <script setup>
 import { ref, onMounted, toRef } from 'vue';
 import axios from 'axios';
-
+import ProfileIcon from '../icons/ProfileIcon.vue';
 const currentIdea = ref(null);
 const previousIdea = ref(null);
 const decisionsMade = ref(0);
@@ -54,91 +54,84 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  votingPhase: {
+    type: Number,
+    required: true,
+  },
 });
 
 const sessionId = toRef(props, 'sessionId');
 const contributorId = toRef(props, 'contributorId');
+const votingPhase = toRef(props, 'votingPhase');
 
 const sendVote = (ideaId, voteValue) => {
-  axios
-    .post('/api/vote', {
-      session_id: sessionId.value,
-      idea_id: ideaId,
-      contributor_id: contributorId.value,
-      vote_type: 'star',
-      vote_value: voteValue,
-    })
-    .then((response) => {
+  console.log('Sending vote:', sessionId.value, voteValue, ideaId, contributorId.value, 'star', voteValue);
+  axios.post('/api/vote', {
+    votes: [
+      {
+        session_id: sessionId.value,
+        idea_id: ideaId,
+        contributor_id: contributorId.value,
+        vote_type: 'star',
+        vote_value: voteValue,
+        voting_phase: votingPhase.value
+      },
+    ],
+  })
+    .then(response => {
       console.log('Server response:', response.data);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('Fehler beim Speichern deines Votes', error);
     });
 };
 
 onMounted(() => {
   ideasCount.value = props.ideasCount;
-  ideas.value = props.ideas;
+  ideas.value = Array.isArray(props.ideas) ? [...props.ideas] : { ...props.ideas };
+  console.log(ideas.value);
   setNextIdea();
 });
 
 const setNextIdea = () => {
-  if (ideas.value.length > 0) {
+  if (Array.isArray(ideas.value) && ideas.value.length > 0) {
     previousIdea.value = currentIdea.value;
-    currentIdea.value = ideas.value[0];
+    currentIdea.value = ideas.value.shift();
+    tempRating.value = 0;
+  } else if (typeof ideas.value === 'object' && Object.keys(ideas.value).length > 0) {
+    const nextKey = Object.keys(ideas.value)[0];
+    previousIdea.value = currentIdea.value;
+    currentIdea.value = ideas.value[nextKey];
+    delete ideas.value[nextKey];
     tempRating.value = 0;
   } else {
     currentIdea.value = null;
   }
-  decisionsMade.value = props.ideasCount - ideas.value.length;
+  updateDecisionsMade();
+};
+
+const updateDecisionsMade = () => {
+  const remainingIdeas = Array.isArray(ideas.value) ? ideas.value.length : Object.keys(ideas.value).length;
+  decisionsMade.value = props.ideasCount - remainingIdeas;
 };
 
 const undoLastDecision = () => {
   if (previousIdea.value) {
-    ideas.value.unshift(previousIdea.value);
+    if (Array.isArray(ideas.value)) {
+      ideas.value.unshift(currentIdea.value);
+    } else {
+      ideas.value[currentIdea.value.id] = currentIdea.value;
+    }
     currentIdea.value = previousIdea.value;
     previousIdea.value = null;
     tempRating.value = 0;
-    decisionsMade.value = props.ideasCount - ideas.value.length;
+    updateDecisionsMade();
   }
 };
 
 const rate = (stars) => {
   tempRating.value = stars;
-  
-  // Send vote to the server
   sendVote(currentIdea.value.id, stars);
-
-  // Entfernen Sie die aktuelle Idee und gehen Sie zur nächsten
-  ideas.value.shift();
   setNextIdea();
-};
-
-// Touch-Funktionalität
-let touchStartX = 0;
-let touchEndX = 0;
-
-const touchStart = (event) => {
-  touchStartX = event.changedTouches[0].screenX;
-};
-
-const touchEnd = (event) => {
-  touchEndX = event.changedTouches[0].screenX;
-  handleSwipe();
-};
-
-const handleSwipe = () => {
-  const swipeThreshold = 50;
-  const swipeDistance = touchEndX - touchStartX;
-  if (Math.abs(swipeDistance) > swipeThreshold) {
-    const starRating = Math.min(
-      3,
-      Math.max(
-        1,
-        Math.ceil((3 * (swipeDistance + swipeThreshold)) / (2 * swipeThreshold))
-      )
-    );
-    rate(starRating);
-  }
 };
 </script>
