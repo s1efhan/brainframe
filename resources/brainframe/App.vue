@@ -14,7 +14,12 @@
   <router-view 
     v-if="route.name === 'Session'"
     @updateSessionId="handleSessionIdUpdate"
-    :userId="userId"
+    :userId="userId" :authToken="authToken"
+  ></router-view>
+  <router-view 
+    v-if="route.name === 'Profile'"
+    @logout="handleLogout" @login="handleLogin"
+    :userId="userId" :authToken="authToken"
   ></router-view>
   <router-view 
     v-else
@@ -35,35 +40,14 @@ import { useRoute } from 'vue-router';
 
 const route = useRoute();
 const userId = ref(0);
+const authToken = ref(null);
 
-function handleSessionIdUpdate(newSessionId) {
-  sessionId.value = newSessionId;
-}
-
-function initializeUserId() {
-  userId.value = Number(localStorage.getItem('user_id'));
-  if (!userId.value) {
-    const array = new Uint32Array(1); // Erzeuge ein Array mit einem 32-Bit Integer
-    window.crypto.getRandomValues(array); // Fülle das Array mit Zufallswerten
+const initializeUserId = () => {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
     userId.value = Number(array[0]);
     localStorage.setItem('user_id', userId.value.toString());
-  }
-}
-
-const copyToClipboard = (copyText) => {
-  navigator.clipboard.writeText(copyText);
-};
-
-function getUserData() {
-  
-  if (userId.value) {
-    userId.value = Number(localStorage.getItem('user_id'));
-  }
-}
-
-// Funktion zum Senden der User-ID
-function updateUserId() {
-  axios.post('/api/user', { user_id: Number(userId.value) })
+    axios.post('/api/user', { user_id: Number(userId.value) })
     .then(response => {
 
     })
@@ -71,13 +55,36 @@ function updateUserId() {
       console.error('Error sending user ID to server:', error);
     });
 }
+
+const getUserData = () => {
+    userId.value = Number(localStorage.getItem('user_id'));
+    authToken.value = localStorage.getItem('authToken');
+}
+const handleLogout = () => {
+  getUserData() 
+  if(!userId.value){
+    initializeUserId();
+  }
+}
+const handleLogin = () => {
+  getUserData();
+}
+const handleSessionIdUpdate = (newSessionId) => {
+  sessionId.value = newSessionId;
+}
+const copyToClipboard = (copyText) => {
+  navigator.clipboard.writeText(copyText);
+};
+
+
 onMounted(() => {
   if (Number.isInteger(parseInt(route.params.id))) {
     sessionId.value = route.params.id;
   }
-  initializeUserId();
-  updateUserId();
-  getUserData();
+  getUserData() 
+  if(!userId.value){
+    initializeUserId();
+  }
 });
 
 

@@ -29,4 +29,5 @@ Route::post('/ideas/sendToGPT', [IdeaController::class, 'sendIdeasToGPT']);
 Route::post('/countdown/put', [MethodController::class, 'putCountdown']);
 Route::post('/vote', [VoteController::class, 'vote']);
 Route::get('user/{userId}', [UserController::class, 'get']);
+Route::post('/logout', [UserController::class, 'logout']);
 Route::post('/ice-breaker', [IdeaController::class, 'iceBreaker']);

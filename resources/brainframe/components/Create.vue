@@ -6,7 +6,7 @@
         <div class="join__contributors__count">
             <ProfileIcon />
             <p>{{ contributorsCount }} | {{ contributorsAmount ? contributorsAmount : "?" }}</p>
-            <input @change="generateQRCode" id="contributorsAmount" type="range" min="3" max="18"
+            <input @change="generateQRCode" id="contributorsAmount" type="range" min="3" max="12"
                 v-model="contributorsAmount" />
         </div>
         <SessionSettings v-if="userId && sessionId && contributorsAmount" :contributorsAmount="contributorsAmount" :userId="userId" :sessionId="sessionId"

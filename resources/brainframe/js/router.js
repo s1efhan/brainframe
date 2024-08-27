@@ -19,7 +19,7 @@ const router = createRouter({
       { name: 'datenschutz', path: '/brainframe/datenschutz', component: Datenschutz },
       { name: 'impressum', path: '/brainframe/impressum', component: Impressum },
       { name: 'session', path: '/brainframe/:id', component: Session },
-      { name: 'profile', path: '/brainframe/profile', component: Profile },
+      { name: 'Profile', path: '/brainframe/profile', component: Profile },
       { name: 'Sessions', path: '/brainframe/sessions', component: Sessions },
       { name: 'Wissen', path: '/brainframe/knowledge', component: Wissen },
       { name: 'error404', path: '/:catchAll(.*)', component: Error404 },
