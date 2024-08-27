@@ -37,11 +37,21 @@ h2 {
     max-height: 100%;
 }
 
-main {
-    margin-bottom: 6em;
+footer {
+    margin-bottom: 8em;
+  ul {
+    display:flex;
+    align-items: center;
+    justify-content: space-evenly;
+    li{list-style-type: none;}
+    a {
+        color:var(--secondary);
+        text-decoration: none;
+    }
+  }
 }
 
-
+main {min-height: 100vh;}
 .error {
     color: white;
     border: solid white;
@@ -85,6 +95,22 @@ font-size:0.8em;
             a {
                 color: var(--accent);
             }
+        }
+    }
+}
+
+.profile-data__containers{
+    display:flex;
+    align-items:center;
+    justify-content: center;
+    ul {
+        border:solid var(--primary);
+        padding: 2em;
+        color: var(--accent);
+        background-color: var(--text);
+        margin-top: 4em;
+        li {
+            padding: 1em;
         }
     }
 }

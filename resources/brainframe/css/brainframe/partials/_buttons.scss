@@ -27,6 +27,7 @@
 button {
     cursor: pointer;
 }
+
 button.secondary {
     color: var(--accent);
     background-color: var(--text);
@@ -38,6 +39,7 @@ button.secondary {
         color: var(--background);
     }
 }
+
 button.primary {
     color: white;
     background-color: var(--text);
@@ -48,6 +50,20 @@ button.primary {
         background-color: var(--primary)
     }
 }
+
+button.accent {
+    color: var(--secondary);
+    background-color: var(--text);
+    border: solid var(--text);
+    font-size: 1.1em;
+
+    &:hover {
+        color: var(--background);
+        background-color: var(--secondary);
+        border: solid var(--secondary);
+    }
+}
+
 
 .join__info {
     border: solid var(--secondary);
@@ -80,61 +96,74 @@ button.primary {
         }
     }
 }
-.ranking-vote__submit__container{
-    display:flex;
+
+.ranking-vote__submit__container {
+    display: flex;
     justify-content: center;
+
     button {
         margin: 0.5em;
-        padding:0.3em;
+        padding: 0.3em;
     }
 }
-.startCollecting, .stopCollecting{
+
+.startCollecting,
+.stopCollecting {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+
     button {
         display: inline-block;
         padding: 0.5em;
         margin-bottom: 0.5em;
     }
 }
-.collectForm{
+
+.collectForm {
     button {
         display: inline-block;
         padding: 0.5em;
     }
 }
+
 button svg {
     width: 5vw;
     height: auto;
     fill: var(--secondary);
     margin: 0;
 }
-.roundCountInfo__container, .join__info__containerr{
+
+.roundCountInfo__container,
+.join__info__containerr {
     display: flex;
     width: 100%;
     align-items: center;
     justify-content: center;
-    box-sizing:border-box;
-    overflow:hidden;
+    box-sizing: border-box;
+    overflow: hidden;
 }
+
 .roundCount {
-    width:100%;
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: start;
 }
+
 .idea-card {
     button {
-        border-radius:15px;
+        border-radius: 15px;
     }
 }
+
 .round-item {
     display: flex;
     align-items: center;
 }
+
 .undo.secondary {
     height: 2em;
     font-size: 1em;
@@ -149,6 +178,7 @@ button svg {
         color: var(--secondary);
     }
 }
+
 .round-circle {
     padding: 0.4em;
     width: 0.8em;
@@ -169,7 +199,7 @@ button svg {
 }
 
 .connecting-line {
-    width:4vw;
+    width: 4vw;
     height: 0.2em;
     background-color: var(--text);
     ;

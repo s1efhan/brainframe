@@ -35,12 +35,13 @@
     <form v-if="collectingStarted" class="collectForm" @submit.prevent="handleSubmit">
       <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
         <div class="Input__container">
-      <textarea id="textInput" v-model="textInput" rows="5"></textarea>
+      <textarea id="textInput" :placeholder="iceBreakerMsg" v-model="textInput" rows="5"></textarea>
       <div class="inputImage__container">
         <img @click="openFileInput" :src="imageFileUrl ? imageFileUrl : '/storage/brainframe/images/404.png'"
         alt="uploadedImageIdea" height="100">
       <button class="secondary" v-if="!isListening" type="button" @click="isListening = true">🎙️</button>
       <button class="secondary" v-else type="button" @click="isListening = false">⏸</button>
+      <button @click="iceBreaker">✨</button>
     </div>
     </div>
       <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
@@ -62,13 +63,14 @@
     <div class="timer" :style="{ '--progress': `${(1 - remainingTime / collectingTimer) * 360}deg` }">
       {{ remainingTime }}
     </div>
-    <div v-if= "maxideaInput" class="ideasCount">
-      {{ submittedIdeas}} | {{maxIdeaInput}}
-      <p class="ideas-icon" v-if="submittedIdeas === maxIdeaInput">✓</p>
-    </div>
-    <div v-else class="ideasCount">
-      {{ submittedIdeas}}
-    </div>
+    <div v-if="maxIdeaInput" class="ideasCount">
+  {{ submittedIdeas }} | {{ maxIdeaInput }}
+  <p class="ideas-icon" v-if="submittedIdeas === maxIdeaInput">✓</p>
+</div>
+<div v-else class="ideasCount">
+  {{ submittedIdeas }}
+</div>
+
 </template>
 
 <script setup>
@@ -163,6 +165,23 @@ const stopCollecting = () => {
   });
   }
 };
+const iceBreakerMsg = ref('');
+const iceBreaker = () => {
+  axios.post('/api/ice-breaker',
+    {
+      session_id: sessionId.value,
+      contributor_id: personalContributor.value.id
+    })
+    .then(response => {
+      console.log(response.data);
+      iceBreakerMsg.value = response.data.iceBreaker_msg;
+      console.log(iceBreakerMsg.value);
+    })
+    .catch(error => {
+      console.error('Error fetching iceBreaker', error);
+      iceBreakerMsg.value = "Fehler beim IceBreaker!";
+    });
+}
 const apiAntwort = ref(null);
 const callStopCollecting = () => {
   axios.post('/api/collecting/stop', {
@@ -189,7 +208,7 @@ const startTimer = () => {
         seconds_left: remainingTime.value
       })
         .then(response => {
-          console.log('Server response:', response.data);
+         
         })
         .catch(error => {
           console.error('Error updating countdown', error);
@@ -222,7 +241,7 @@ watch(() => props.method, (newVal) => {
   method.value = newVal;
 });
 const contributors = ref(null);
-const maxIdeaInput = ref(null);
+const maxIdeaInput = ref(0);
 const collectingRounds = ref(null);
 const collectingTimer = ref(null);
 
@@ -376,7 +395,6 @@ onMounted(() => {
   if (personalContributor.value.id != sessionHostId.value) {
     Echo.channel('session.' + sessionId.value)
       .listen('UpdateCountdown', (e) => {
-        console.log('UpdateCountdown Event empfangen:', e);
         remainingTime.value = e.secondsLeft;
         currentRound.value = e.round;
         if (remainingTime.value < collectingTimer.value) {

@@ -213,12 +213,14 @@
   margin: 0.5em;
 }
 
-.headline__sessions {
+.headline__sessions, .headline__login{
   margin-top: 1em;
   display: inline-block;
   border: solid var(--accent)thick;
   background-color: var(--text);
   padding: 1em;
+  width: 100%;
+  box-sizing:border-box;
 
   h1 {
     color: var(--accent);

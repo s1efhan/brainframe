@@ -1,9 +1,25 @@
 .join__qr-code_container {
-    max-height: 10em;
     display: flex;
     align-items: center;
     justify-content: center;
-    max-width: 95vw;
+    box-sizing: border-box;
+
+    div {
+        height: 12em;
+        width: 12em;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+
+        div {
+            height: 12em;
+            width: 12em;
+            border: solid var(--primary);
+            overflow: hidden;
+        }
+    }
 }
 
 .join__form {
@@ -194,7 +210,9 @@
         justify-content: center;
         align-items: center;
         width: 100%;
-
+textarea::placeholder {
+            color: var(--secondary);
+        }
     }
 
     .inputImage__container {
@@ -257,23 +275,23 @@
 
     .info__text {
         background-color: var(--background-color);
+        margin: 0.5em;
+        border: solid thin var(--primary);
+        padding: 0.3em;
+        font-size: 1em;
 
         strong {
             color: var(--accent);
             font-family: 'Nohemi-Regular', sans-serif;
         }
 
-        margin: 0.5em;
-        border:solid thin var(--primary);
-        padding: 0.3em;
-        font-size: 1em;
-
         ul {
             li {
                 font-family: 'Nohemi-Thin', sans-serif;
+                list-style-type: none;
             }
 
-            list-style-type: none;
+
         }
     }
 }
@@ -304,7 +322,10 @@
     }
 
     .idea-card__bottom {
-
+        margin-top: 0.5em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
 
         svg {
             fill: var(--secondary);
@@ -316,21 +337,16 @@
         }
 
         .contributor__icon {
+            display: flex;
+            flex-direction: row;
+            border-radius: 15px;
+
             svg {
                 width: 0.8em;
                 border-right: solid;
                 padding: 0.3em;
             }
-
-            display:flex;
-            flex-direction: row;
-            border-radius: 15px;
         }
-
-        margin-top: 0.5em;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
     }
 
     h3 {
@@ -404,14 +420,14 @@
 }
 
 .idea-card.star-vote {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
     li {
         margin-left: 1.5em;
     }
-
-    display:flex;
-    flex-direction:column;
-    justify-content: center;
-    align-items: center;
 
     .idea__description__container {
         width: 100%;
@@ -503,14 +519,16 @@
         border-radius: 50%;
         margin: 0.5em;
     }
-    
-.description {
-    padding:1em;
-    padding-left: 2em;
-    li{
-        padding: 0.2em;
+
+    .description {
+        padding: 1em;
+        padding-left: 2em;
+
+        li {
+            padding: 0.2em;
+        }
     }
-}
+
     .contributor__tag {
         cursor: grab;
         text-align: center;
@@ -525,5 +543,81 @@
         fill: var(--accent);
         height: 3em;
         width: 2.5em;
+    }
+}
+
+.login__main {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    width: 100%;
+    flex-direction: column;
+}
+
+.login-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+
+    div {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        box-sizing: border-box;
+        margin: 0.5em 0;
+
+        label {
+            flex: 0 0 20%;
+            text-align: right;
+            margin-right: 1em;
+            font-size: 0.9em;
+            color: var(--accent);
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            flex: 1;
+            padding: 0.3em;
+            border-radius: 10px;
+            width: auto;
+            outline: none;
+            border: solid var(--accent);
+            box-shadow: none;
+            color: var(--accent);
+            background-color: var(--text);
+            flex: 0 0 60%;
+
+            &::placeholder {
+                color: var(--secondary);
+            }
+        }
+
+        input[type="checkbox"] {
+            margin-left: 0.5em;
+            width: 1em;
+        }
+    }
+
+    .login-form__email,
+    .login-form__password {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .login-form__buttons {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+
+        button {
+            font-size: 0.9em;
+            padding: 0.5em 1em;
+            margin: 0.5em;
+        }
     }
 }

@@ -1,4 +1,5 @@
 <template>
+  <main>
     <h1 class="headline__join">
         <BrainFrameIcon class="headline__join__icon" />
         <div class="headline__join__text">
@@ -26,11 +27,13 @@
         <button @click="joinSession" class="join__form__submit primary">Session beitreten</button>
     </form>
     <div class="join__qr-code_container"  v-if="activeButton === 'QrCode'">
+      <div class="join__qr-code">
       <qrcode-stream
     @decode="onDecode"
     @init="onInit"
     @detect="onDetect"
   ></qrcode-stream>
+</div>
     </div>
     <div class="join_buttons">
         <button @click="switchPinQrCode('Pin')" :class="{'active': activeButton === 'Pin'}" class="join_buttons__Pin">
@@ -45,6 +48,7 @@
     <div v-if="error" class="error">
         {{ error }}
     </div>
+  </main>
 </template>
 <script setup>
 import { QrcodeStream } from 'vue-qrcode-reader';
@@ -53,13 +57,19 @@ import { useRouter } from 'vue-router';
 import BrainFrameIcon from '../components/icons/BrainFrameIcon.vue';
 import QrScannerIcon from '../components/icons/QrScannerIcon.vue';
 import PinIcon from '../components/icons/PinIcon.vue';
-const activeButton = ref('Pin');
+
 const props = defineProps({
     userId: {
         type: [String, Number],
         required: true
     }
 });
+const showInfo = ref(false);
+const sessionId = ref(null);
+const router = useRouter();
+const error = ref(null);
+const activeButton = ref('Pin');
+
 const onDecode = (result) => {
   console.log('QR Code decoded:', result);
   sessionId.value = result;
@@ -114,10 +124,7 @@ const onDetect = (detections) => {
     }
   }
 };
-const showInfo = ref(false);
-const sessionId = ref(null);
-const router = useRouter();
-const error = ref(null);
+
 const switchPinQrCode = (button_type) => {
     activeButton.value = button_type;  // setzt den aktiven Button
 }

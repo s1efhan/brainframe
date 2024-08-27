@@ -34,7 +34,6 @@
   <div class="ranking-vote__submit__container">
   <button class="primary" @click="submitRanking">Senden</button>
 </div>
-
 </template>
 
 <script setup>

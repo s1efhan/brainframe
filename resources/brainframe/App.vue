@@ -20,7 +20,8 @@
     v-else
     :userId="userId"
   ></router-view>
-  <Menu @resetSessionId="handleSessionIdUpdate"></Menu>
+  <Footer/>
+  <Menu :sessionId="sessionId" @resetSessionId="handleSessionIdUpdate"></Menu>
 </template>
 
 <script setup>
@@ -31,20 +32,21 @@ import Footer from './components/Footer.vue';
 import CopyIcon from './components/icons/CopyIcon.vue';
 import BrainFrameIcon from './components/icons/BrainFrameIcon.vue'
 import { useRoute } from 'vue-router';
+
 const route = useRoute();
-const showSessionHeadline = ref(false);
-const userId = ref('');
+const userId = ref(0);
+
 function handleSessionIdUpdate(newSessionId) {
   sessionId.value = newSessionId;
 }
-// Funktion zur Generierung und Setzen der User-ID
+
 function initializeUserId() {
-  userId.value = localStorage.getItem('user_id');
+  userId.value = Number(localStorage.getItem('user_id'));
   if (!userId.value) {
     const array = new Uint32Array(1); // Erzeuge ein Array mit einem 32-Bit Integer
     window.crypto.getRandomValues(array); // Fülle das Array mit Zufallswerten
-    userId.value = array[0];
-    localStorage.setItem('user_id', userId.value);
+    userId.value = Number(array[0]);
+    localStorage.setItem('user_id', userId.value.toString());
   }
 }
 
@@ -52,28 +54,18 @@ const copyToClipboard = (copyText) => {
   navigator.clipboard.writeText(copyText);
 };
 
-
 function getUserData() {
+  
   if (userId.value) {
-    userId.value = localStorage.getItem('user_id');
+    userId.value = Number(localStorage.getItem('user_id'));
   }
 }
-const msg = ref([]);
-const contributorSent = ref([]);
-// Hier müssen Sie den Code zum Empfangen der Nachricht über WebSockets einfügen
-Echo.channel('messages')
-  .listen('MessageSent', (e) => {
-    msg.value.push(e);
-  })
-  .listen('ContributorJoin', (e) => {
-    console.log('ContributorJoin Event empfangen:', e);
-    contributorSent.value.push(e);
-  });
 
 // Funktion zum Senden der User-ID
 function updateUserId() {
-  axios.post('/api/user', { user_id: localStorage.getItem('user_id') })
+  axios.post('/api/user', { user_id: Number(userId.value) })
     .then(response => {
+
     })
     .catch(error => {
       console.error('Error sending user ID to server:', error);

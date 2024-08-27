@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Idea;
 use App\Models\Contributor;
+use App\Models\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
@@ -48,7 +49,7 @@ class IdeaController extends Controller
                     
                        Beispiel:
                     {
-                      "contributor_id": [1, 34]",
+                      "contributor_id": 1",
                       "ideaTitle": "Lifestyle-Marken spielen gegeneinander",
                       "ideaDescription": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
                       "tag": "Gesellschaftskritik"
@@ -77,7 +78,7 @@ class IdeaController extends Controller
                             'idea_title' => $idea['ideaTitle'] ?? '',
                             'idea_description' => $idea['ideaDescription'] ?? '',
                             'tag' => $idea['tag'] ?? '',
-                            'contributor_id' => json_encode($idea['contributor_id'] ?? []),
+                            'contributor_id' => $idea['contributor_id'] ?? 0,
                             'session_id' => $sessionId
                         ]);
                     }
@@ -194,7 +195,83 @@ class IdeaController extends Controller
             ], 400);
         }
     }
-
+    public function iceBreaker(Request $request)
+    {
+        $request->validate([
+            'session_id' => 'required|exists:bf_sessions,id',
+            'contributor_id' => 'required|exists:bf_contributors,id',
+        ]);
+    
+        $apiKey = env('OPENAI_API_KEY');
+        $client = new Client();
+        $sessionId = $request->input('session_id');
+        $contributorId = $request->input('contributor_id');
+    
+        // Filter Ideen nach session_id und ausschließen der Ideen des aktuellen Contributors
+        $ideas = Idea::where('session_id', $sessionId)
+            ->where('contributor_id', '!=', $contributorId)
+            ->select('id', 'text_input')
+            ->get();
+    
+        // Abrufen des Ziels der Sitzung
+        $sessionTarget = Session::where('id', $sessionId)->value('target');
+    
+        // Standardnachricht
+        $userContent = 'Es gibt noch keine Ideen, aber das Thema des Brainstorming Prozesses ist: ' . $sessionTarget . ". Sei also kreativ und denk um die Ecke.";
+    
+        if (!$ideas->isEmpty()) {
+            // Formatieren der Ideen für die API-Anfrage
+            $ideasFormatted = $ideas->map(function ($idea) {
+                return ['id' => $idea->id, 'text' => $idea->text_input];
+            })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    
+            $userContent = "Sei kreativ und denk um die Ecke. Das sind die bisherigen Ideen der anderen Teilnehmer zum Thema " . $sessionTarget . " ." . $ideasFormatted;
+        }
+    
+        try {
+            // Anfrage an die OpenAI API
+            $response = $client->post('https://api.openai.com/v1/chat/completions', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'model' => "gpt-4",
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'Deine Aufgabe ist es, mir auf Grundlage der dir gezeigten Ideen einen einzigen kurzen Eisbrecher zu geben, damit ich inspiriert werde, weitere Ideen zu entwickeln. Antworte mit maximal 20 Worten, bestehend aus 2 Teilsätzen wobei der zweite Satz mit "z.B" beginnt um eine mögliche Idee zu nennen. Nenne auf keinen Fall eine bereits vorhandene Idee.'
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $userContent,
+                        ],
+                    ],
+                    'temperature' => 0.3,
+                ],
+            ]);
+    
+            $responseBody = json_decode($response->getBody(), true);
+    
+            // Extrahiere die relevante Nachricht aus der API-Antwort
+            $iceBreakerMsg = $responseBody['choices'][0]['message']['content'] ?? 'Keine Antwort erhalten';
+    
+            \Log::info('API Response:', ['iceBreaker_msg' => $iceBreakerMsg]);
+    
+            return response()->json(['iceBreaker_msg' => $iceBreakerMsg]);
+    
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $responseBodyAsString = $response->getBody()->getContents();
+            \Log::error('ClientException: ' . $responseBodyAsString);
+            return response()->json(['iceBreaker_msg' => 'Fehler: ' . $responseBodyAsString], 500);
+        } catch (\Exception $e) {
+            \Log::error('General Exception: ' . $e->getMessage());
+            return response()->json(['iceBreaker_msg' => 'Fehler: ' . $e->getMessage()], 500);
+        }
+    }
+    
+     
     public function store(Request $request)
     {
         // Validierung der eingehenden Anfrage
@@ -205,7 +282,8 @@ class IdeaController extends Controller
             'contributor_id' => 'required|exists:bf_contributors,id',
             'round' => 'required|integer'
         ]);
-
+        $contributorId = $request->input('contributor_id');
+        $sessionId = $request->input('session_id');
         // Verarbeite die Datei, falls vorhanden
         $imageFileUrl = null;
         $aiResponse = null;
