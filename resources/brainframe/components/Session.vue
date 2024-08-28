@@ -3,7 +3,7 @@
     <h1 class="headline__session-target" @input="adjustHeadline" :style="{ height: headlineHeight }">
     {{ sessionDetails.target }}
   </h1>
-    <div class="session_headline__details" v-if="sessionDetails && personalContributor" >
+    <div class="session_headline__details" v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'" >
       <div>
       <ProfileIcon />
       <p v-if="personalContributor.role_name != 'Default'"> {{ contributorsCount }} | {{ contributorsAmount }} </p>
@@ -21,10 +21,9 @@
 
     <CollectingPhase @switchPhase="switchPhase" v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' " :method="method" :sessionHostId="sessionHostId"
       :contributors="contributors" :sessionId="sessionId" :personalContributor="personalContributor" />
-    <VotingPhase v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' " :sessionId="sessionId" :sessionHostId="sessionHostId"
+    <VotingPhase  @switchPhase="switchPhase" v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' " :sessionId="sessionId" :sessionHostId="sessionHostId"
       :personalContributor="personalContributor" :contributorsCount="contributorsCount"/>
-    <ClosingPhase v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' " :sessionId="sessionId" :sessionHostId="sessionHostId"
-      :personalContributor="personalContributor" />
+    <ClosingPhase v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' " :sessionId="sessionId" :sessionHostId="sessionHostId" />
     </main>
 </template>
 

@@ -64,6 +64,14 @@ class IdeaController extends Controller
                 ],
             ]);
             $responseBody = json_decode($response->getBody(), true);
+            $inputToken = $responseBody['usage']['prompt_tokens'] ?? 0;
+            $outputToken = $responseBody['usage']['completion_tokens'] ?? 0;
+            $session = Session::find($sessionId);
+            if ($session) {
+                $session->input_token += $inputToken;
+                $session->output_token += $outputToken;
+                $session->save();
+            }
             \Log::info('API Response:', $responseBody);
 
             if (isset($responseBody['choices'][0]['message']['content'])) {
@@ -141,7 +149,7 @@ class IdeaController extends Controller
                     return $idea;
                 })->sortByDesc('averageVote');
                 $ideasCount = $ideas->count();
-            Log::info("else ideasCount: " . $ideasCount);
+                Log::info("else ideasCount: " . $ideasCount);
             }
 
             $ideasCount = $ideas->count();
@@ -201,33 +209,33 @@ class IdeaController extends Controller
             'session_id' => 'required|exists:bf_sessions,id',
             'contributor_id' => 'required|exists:bf_contributors,id',
         ]);
-    
+
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
         $sessionId = $request->input('session_id');
         $contributorId = $request->input('contributor_id');
-    
+
         // Filter Ideen nach session_id und ausschließen der Ideen des aktuellen Contributors
         $ideas = Idea::where('session_id', $sessionId)
             ->where('contributor_id', '!=', $contributorId)
             ->select('id', 'text_input')
             ->get();
-    
+
         // Abrufen des Ziels der Sitzung
         $sessionTarget = Session::where('id', $sessionId)->value('target');
-    
+
         // Standardnachricht
         $userContent = 'Es gibt noch keine Ideen, aber das Thema des Brainstorming Prozesses ist: ' . $sessionTarget . ". Sei also kreativ und denk um die Ecke.";
-    
+
         if (!$ideas->isEmpty()) {
             // Formatieren der Ideen für die API-Anfrage
             $ideasFormatted = $ideas->map(function ($idea) {
                 return ['id' => $idea->id, 'text' => $idea->text_input];
             })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    
+
             $userContent = "Sei kreativ und denk um die Ecke. Das sind die bisherigen Ideen der anderen Teilnehmer zum Thema " . $sessionTarget . " ." . $ideasFormatted;
         }
-    
+
         try {
             // Anfrage an die OpenAI API
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
@@ -250,16 +258,25 @@ class IdeaController extends Controller
                     'temperature' => 0.3,
                 ],
             ]);
-    
+
             $responseBody = json_decode($response->getBody(), true);
-    
+
             // Extrahiere die relevante Nachricht aus der API-Antwort
             $iceBreakerMsg = $responseBody['choices'][0]['message']['content'] ?? 'Keine Antwort erhalten';
-    
+
             \Log::info('API Response:', ['iceBreaker_msg' => $iceBreakerMsg]);
-    
+            // Update the database with the new token counts
+            $responseData = json_decode($response->getBody(), true);
+            $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
+            $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
+            $session = Session::find($sessionId);
+            if ($session) {
+                $session->input_token += $inputToken;
+                $session->output_token += $outputToken;
+                $session->save();
+            }
             return response()->json(['iceBreaker_msg' => $iceBreakerMsg]);
-    
+
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             $response = $e->getResponse();
             $responseBodyAsString = $response->getBody()->getContents();
@@ -270,8 +287,8 @@ class IdeaController extends Controller
             return response()->json(['iceBreaker_msg' => 'Fehler: ' . $e->getMessage()], 500);
         }
     }
-    
-     
+
+
     public function store(Request $request)
     {
         // Validierung der eingehenden Anfrage
@@ -347,7 +364,15 @@ class IdeaController extends Controller
             'contributor_id' => $contributorId,
             'round' => $request->input('round')
         ]);
-
+        $responseData = json_decode($response->getBody(), true);
+        $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
+        $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
+        $session = Session::find($sessionId);
+        if ($session) {
+            $session->input_token += $inputToken;
+            $session->output_token += $outputToken;
+            $session->save();
+        }
         // Rückgabe einer erfolgreichen Antwort
         return response()->json(['message' => 'Idea stored successfully', 'idea' => $idea], 201);
     }

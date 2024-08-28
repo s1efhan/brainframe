@@ -31,3 +31,4 @@ Route::post('/vote', [VoteController::class, 'vote']);
 Route::get('user/{userId}', [UserController::class, 'get']);
 Route::post('/logout', [UserController::class, 'logout']);
 Route::post('/ice-breaker', [IdeaController::class, 'iceBreaker']);
+Route::get('/{sessionId}/details', [SessionController::class, 'getClosingDetails']);

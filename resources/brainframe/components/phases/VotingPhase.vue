@@ -49,6 +49,7 @@ const props = defineProps({
     required: true
   }
 });
+const emit = defineEmits(['switchPhase']);
 const personalContributor = ref(props.personalContributor);
 const sessionHostId = ref(null);
 const sessionId = ref(null)
@@ -69,8 +70,15 @@ const getIdeas = () => {
 }
 const finishedVoting = () =>{
   console.log("finishedVoting", votingPhase.value);
-  votingPhase.value++;
-  getIdeas();
+  if(votingMethod.value != 'RankingVote'){
+    votingPhase.value++;
+    getIdeas();
+    console.log("votingMethod != RankingVote")
+  }
+  else {
+    console.log("switchPhase to closing")
+    emit('switchPhase', 'closingPhase');
+  }
 }
 onMounted(() => {
   sessionId.value = props.sessionId;
