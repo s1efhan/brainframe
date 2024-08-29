@@ -16,8 +16,9 @@
       <p>{{ personalContributor.role_name }}</p>
     </div>
   </div>
-  <Rollenwahl v-if="!personalContributor || personalContributor.role_name === 'Default'" :userId="userId"
-    @contributorAdded="handleContributorAdded" />
+
+  <Rollenwahl v-if="!personalContributor || personalContributor.role_name === 'Default' && methodName" :userId="userId"
+    @contributorAdded="handleContributorAdded" :methodName="methodName"/>
 
     <CollectingPhase @switchPhase="switchPhase" v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' " :method="method" :sessionHostId="sessionHostId"
       :contributors="contributors" :sessionId="sessionId" :personalContributor="personalContributor" />

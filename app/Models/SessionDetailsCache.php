@@ -50,5 +50,5 @@ class SessionDetailsCache extends Model
     ];
 
     // Standard-Timestamps werden nicht benötigt, da wir diese manuell setzen
-    public $timestamps = false;
+    public $timestamps = true;
 }

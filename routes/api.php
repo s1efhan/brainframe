@@ -32,3 +32,5 @@ Route::get('user/{userId}', [UserController::class, 'get']);
 Route::post('/logout', [UserController::class, 'logout']);
 Route::post('/ice-breaker', [IdeaController::class, 'iceBreaker']);
 Route::get('/{sessionId}/details', [SessionController::class, 'getClosingDetails']);
+Route::get('/{sessionId}/pdf', [SessionController::class, 'downloadSessionPDF']);
+Route::get('/ideas/6-3-5/{sessionId}/{personalContributorId}/{round}', [IdeaController::class, 'getPassedIdeas']);

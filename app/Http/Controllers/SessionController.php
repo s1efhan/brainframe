@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Session;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\User;
 use App\Models\Method;
 use App\Models\Contributor;
 use App\Models\Idea;
 use App\Models\SessionDetailsCache;
 use App\Models\Vote;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Role;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +23,32 @@ use GuzzleHttp\Client;
 
 class SessionController extends Controller
 {
+    public function downloadSessionPDF($sessionId)
+    {
+        Log::info('download PDF: ' . $sessionId);
+        $sessionDetails = SessionDetailsCache::findOrFail($sessionId);
+       // Log::info($sessionDetails);
+       $ideas = $sessionDetails->ideas;
+       // Gruppiere die Ideen nach `round`
+       $groupedIdeas = array_reduce($ideas, function ($result, $idea) {
+           $round = $idea['round']; // Angenommene Struktur der Idee
+           if (!isset($result[$round])) {
+               $result[$round] = [];
+           }
+           $result[$round][] = $idea;
+           return $result;
+       }, []);
+        //Log::info($groupedIdeas);
+        $html = view('pdf.session_details', ['sessionDetails' => $sessionDetails, 'groupedIdeas' => $groupedIdeas])->render();
+        Log::info('HTML generiert');
+        
+        $pdf = Pdf::loadHTML($html);
+        $filename = $sessionDetails->target ?? 'session_details';
+        $filename .= '.pdf';
+        
+        return $pdf->download($filename);
+    }
+
     public function get($sessionId)
     {
         if (!$sessionId) {
@@ -308,7 +336,6 @@ class SessionController extends Controller
             return response()->json($cachedDetails);
         }
     }
-
     private function generateWordCloud($ideas, $sessionId)
     {
         $client = new Client();
@@ -325,7 +352,18 @@ class SessionController extends Controller
                     'messages' => [
                             [
                                 'role' => 'system',
-                                'content' => 'Generiere eine Wortcloud basierend auf den folgenden Ideen. Antworte in JSON mit word: und word_count:'
+                                'content' => 'Generiere eine Wortcloud basierend auf den folgenden Ideen. Antworte in JSON.
+                                Beispiel:
+                    "{
+                      "word": "Kinderbücher",
+                      "count": "2",
+                      },
+                      {
+                      "word": "Baum",
+                      "count": "1",
+                      }
+                      "
+                                '
                             ],
                             [
                                 'role' => 'user',
@@ -337,7 +375,10 @@ class SessionController extends Controller
             ]);
 
             $responseData = json_decode($response->getBody(), true);
-
+            $content = $responseData['choices'][0]['message']['content'];
+            // Entferne mögliche JSON-Codeblock-Markierungen
+            $content = preg_replace('/```json\s*|\s*```/', '', $content);
+            $content = json_decode($content, true);
             // Extract the tokens
             $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
             $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
@@ -349,15 +390,15 @@ class SessionController extends Controller
                 $session->output_token += $outputToken;
                 $session->save();
             }
-
-            // Log the word cloud content and tokens
+          
+            // Log the next steps content and tokens
             $wordCloud = [
-                'content' => $responseData['choices'][0]['message']['content'] ?? 'N/A',
+                'content' => $content,
                 'input_token' => $inputToken,
                 'output_token' => $outputToken
             ];
             Log::info(json_encode($wordCloud));
-
+           
             return $wordCloud;
         } catch (\Exception $e) {
             Log::error('Error generating word cloud: ' . $e->getMessage());
@@ -381,7 +422,7 @@ class SessionController extends Controller
                     'messages' => [
                             [
                                 'role' => 'system',
-                                'content' => 'Du sollst die next Steps für die Gruppe nennen'
+                                'content' => 'Du sollst die next Steps für die Gruppe nennen. Maximal 3, antworte kurz und in einer HTML Liste'
                             ],
                             [
                                 'role' => 'user',

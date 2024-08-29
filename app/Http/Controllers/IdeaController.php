@@ -10,14 +10,85 @@ use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 class IdeaController extends Controller
 {
+
+
+    public function getPassedIdeas($sessionId, $personalContributorId, $round)
+    {
+        // Log::info('sessionId', ['sessionId' => $sessionId]);
+        // Log::info('personalContributorId', ['personalContributorId' => $personalContributorId]);
+        Log::info('round', ['round' => $round]);
+
+        // Alle Contributors der Session abrufen und nach ID sortieren
+        $contributors = Contributor::where('session_id', $sessionId)
+            ->orderBy('id')
+            ->get();
+        //  Log::info('contributors', ['contributors' => $contributors]);
+
+        $contributorCount = $contributors->count();
+        // Log::info('contributorCount', ['contributorCount' => $contributorCount]);
+
+        // Eigene Position des $personalContributorId herausfinden
+        $ownPosition = $contributors->search(function ($contributor) use ($personalContributorId) {
+            return $contributor->id == $personalContributorId;
+        });
+        // Log::info('ownPosition', ['ownPosition' => $ownPosition]);
+
+        if ($ownPosition === false) {
+            return response()->json(['error' => 'Persönlicher Contributor nicht gefunden'], 404);
+        }
+
+        $passedIdeas = collect();
+
+        for ($i = 1; $i < $round; $i++) {
+            // Position des Nachbarn berechnen
+            $neighbourPosition = ($ownPosition - $i + $contributorCount) % $contributorCount;
+            $neighbourContributor = $contributors[$neighbourPosition];
+
+            // Log::info('i', ['i' => $i]);
+            Log::info('neighbourContributor', ['neighbourContributor' => $neighbourContributor->id]);
+            //  Log::info('neighbourPosition', ['neighbourPosition' => $neighbourPosition]);
+
+            // Ideas des Nachbarn aus der entsprechenden Runde abrufen
+            $ideas = Idea::where('session_id', $sessionId)
+                ->where('round', $round - $i)
+                ->whereNotNull('tag')
+                ->where('contributor_id', $neighbourContributor->id)
+                ->get();
+            Log::info('round', ['round' => $round - $i]);
+            Log::info('ideas', ['ideas' => $ideas]);
+            // Füge das contributor_icon für jede Idee hinzu
+            $ideasWithIcon = $ideas->map(function ($idea) {
+                $idea->contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
+                return $idea;
+            });
+
+            Log::info('round', ['round' => $round - $i]);
+            Log::info('ideas', ['ideas' => $ideasWithIcon]);
+
+            $passedIdeas = $passedIdeas->concat($ideasWithIcon);
+        }
+
+        return response()->json($passedIdeas);
+    }
     public function sendIdeasToGPT(Request $request)
     {
+        $methodName = $request->input("method_name");
+        $round = $request->input("round");
+        $sessionId = $request->input('session_id');
+
+        if ($methodName == "6-3-5") {
+            $ideas = Idea::where('session_id', $sessionId)
+                ->where('round', $round)
+                ->select('id', 'text_input', 'contributor_id')
+                ->get();
+            Log::info('6-3-5 Ideas', ['ideas' => $ideas->toArray()]);
+        } else {
+            $ideas = Idea::where('session_id', $sessionId)
+                ->select('id', 'text_input', 'contributor_id')
+                ->get();
+        }
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
-        $sessionId = $request->input('session_id');
-        $ideas = Idea::where('session_id', $sessionId)
-            ->select('id', 'text_input', 'contributor_id')
-            ->get();
         //nur id, text_input, contributor_id ins Objekt packen
         \Log::info($ideas);
         $ideasFormatted = $ideas->map(function ($idea) {
@@ -50,6 +121,7 @@ class IdeaController extends Controller
                        Beispiel:
                     {
                       "contributor_id": 1",
+                      "round": 2,
                       "ideaTitle": "Lifestyle-Marken spielen gegeneinander",
                       "ideaDescription": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
                       "tag": "Gesellschaftskritik"
@@ -341,11 +413,28 @@ class IdeaController extends Controller
 
                 $responseBody = json_decode($response->getBody(), true);
                 $aiResponse = $responseBody['choices'][0]['message']['content'] ?? null;
-
+                $responseData = json_decode($response->getBody(), true);
+                $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
+                $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
+                $session = Session::find($sessionId);
+                if ($session) {
+                    $session->input_token += $inputToken;
+                    $session->output_token += $outputToken;
+                    $session->save();
+                }
             } catch (\GuzzleHttp\Exception\ClientException $e) {
                 $response = $e->getResponse();
                 $responseBodyAsString = $response->getBody()->getContents();
                 \Log::error('ClientException: ' . $responseBodyAsString);
+                $responseData = json_decode($response->getBody(), true);
+                $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
+                $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
+                $session = Session::find($sessionId);
+                if ($session) {
+                    $session->input_token += $inputToken;
+                    $session->output_token += $outputToken;
+                    $session->save();
+                }
                 return response()->json(['message' => 'Fehler: ' . $responseBodyAsString], 500);
             } catch (\Exception $e) {
                 \Log::error('General Exception: ' . $e->getMessage());
@@ -364,15 +453,7 @@ class IdeaController extends Controller
             'contributor_id' => $contributorId,
             'round' => $request->input('round')
         ]);
-        $responseData = json_decode($response->getBody(), true);
-        $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
-        $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
-        $session = Session::find($sessionId);
-        if ($session) {
-            $session->input_token += $inputToken;
-            $session->output_token += $outputToken;
-            $session->save();
-        }
+
         // Rückgabe einer erfolgreichen Antwort
         return response()->json(['message' => 'Idea stored successfully', 'idea' => $idea], 201);
     }

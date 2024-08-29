@@ -10,14 +10,47 @@
           </div>
         </div>
       </div>
-    
     </div>
+    <div v-if="showInfo && methods" class="info__text__container">
+    <div class="info__text">
+  <h3>Erstelle eine {{currentMethod.name}} Session </h3>
+  <ul v-if="currentMethod.name == '6-3-5'">
+    <li>Brainstorming mit <strong>Weiterreichen</strong></li>
+    <li><strong>3 Ideen pro Runde</strong> pro Teilnehmer</li>
+    <li>5 Minuten pro Runde</li>
+    <li><strong>Vorteile:</strong> Schnelle Ideenfindung.</li>
+</ul>
+
+<ul v-if="currentMethod.name == 'Walt Disney'">
+    <li>Rollenwechsel (Träumer, Realist, Kritiker) zur Ideenbewertung.</li>
+    <li><strong>Vorteile:</strong> Umfassende Perspektiven. <strong><br>Nachteile:</strong> Zeitaufwendig, erfordert Engagement.</li>
+</ul>
+
+<ul v-if="currentMethod.name == 'Crazy 8'">
+    <li>In 8 Minuten 8 Ideen pro Person skizzieren.</li>
+    <li><strong>Vorteile:</strong> Schnelle Ideenfindung. <strong><br>Nachteile:</strong> Kann oberflächlich sein.</li>
+</ul>
+
+<ul v-if="currentMethod.name == '6 Thinking Hats'">
+    <li>Verschiedene Denkrichtungen (Hüte) für umfassende Analyse.</li>
+    <li>Unterschiedliche Rollen mit spezifischen <strong>Perspektiven</strong>
+      <br>
+   z.B: Emotional, Kritisch, Optimistisch, Sachlich, Kreativ oder mit Übersicht
+</li>
+</ul>
+
+</div>
+</div>
   </template>
   
 <script setup>
 import axios from 'axios';
 import { ref, onMounted, watch, toRef, computed} from 'vue';
 const props = defineProps({
+  showInfo: {
+    type: Boolean,
+    required: true
+  },
     userId: {
         type: [String, Number],
         required: true

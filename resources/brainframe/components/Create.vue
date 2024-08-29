@@ -1,20 +1,29 @@
 <template>
-           <main>
-    <textarea class="headline__session-target" v-model="sessionTarget" placeholder="< Zielfrage der Session >"
-        :rows="rows" @input="adjustTextarea"></textarea>
- 
-        <div class="join__contributors__count">
-            <ProfileIcon />
-            <p>{{ contributorsCount }} | {{ contributorsAmount ? contributorsAmount : "?" }}</p>
-            <input @change="generateQRCode" id="contributorsAmount" type="range" min="3" max="12"
-                v-model="contributorsAmount" />
+    <main>
+        <textarea class="headline__session-target" v-model="sessionTarget" placeholder="< Zielfrage der Session >"
+            :rows="rows" @input="adjustTextarea"></textarea>
+        <div class="join__contributors__info__container">
+            <div class="join__contributors__count">
+                <ProfileIcon />
+                <p>{{ contributorsCount }} | {{ contributorsAmount ? contributorsAmount : "?" }}</p>
+                <input @change="generateQRCode" id="contributorsAmount" type="range" min="3" max="12"
+                    v-model="contributorsAmount" />
+            </div>
+            <div @click="showInfo = !showInfo" class="create__info__containerr">
+                <div class="info__container">
+                    <div class="join__info">
+                        <p>i</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <SessionSettings v-if="userId && sessionId && contributorsAmount" :contributorsAmount="contributorsAmount" :userId="userId" :sessionId="sessionId"
-        :contributorEmailAddresses="contributorEmailAddresses" :sessionTarget="sessionTarget" />
+        <SessionSettings v-if="userId && sessionId && contributorsAmount" :showInfo="showInfo" :contributorsAmount="contributorsAmount"
+            :userId="userId" :sessionId="sessionId" :contributorEmailAddresses="contributorEmailAddresses"
+            :sessionTarget="sessionTarget" />
         <div v-if="contributorsAmount" class="qr-code-container">
             <canvas class="qr-code" v-if="sessionLink" ref="qrcodeCanvas"></canvas>
         </div>
-        
+
         <div @click="copyToClipboard(sessionLink)" class="session-link" v-if="sessionLink && contributorsAmount">
             <router-link :to="'/brainframe/' + sessionId">{{ sessionLink }} </router-link>
             <p>
@@ -47,6 +56,7 @@ const props = defineProps({
         required: true
     }
 });
+const showInfo = ref(true);
 const showQRCode = ref(false);
 const sessionTarget = ref('');
 const sessionLink = ref(null);
@@ -63,7 +73,9 @@ const generateLink = () => {
     nextTick(generateQRCode);
     updateSessionId(sessionId.value)
 };
-
+const copyToClipboard = (copyText) => {
+  navigator.clipboard.writeText(copyText);
+};
 
 const adjustTextarea = (event) => {
     const textarea = event.target;
