@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class User extends Model
 { 
     public $incrementing = false;
-    protected $table = 'bf_users';
+    protected $table = 'users';
     protected $fillable = ['id', 'email', 'password', 'token'];
 
     public function sessions()
