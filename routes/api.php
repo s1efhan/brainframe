@@ -20,7 +20,6 @@ Route::get('contributors/{sessionId}/{userId}', [ContributorController::class, '
 Route::post('/session', [SessionController::class, 'update']);
 Route::post('/session/invite', [SessionController::class, 'invite']);
 Route::post('/idea', [IdeaController::class, 'store']);
-Route::get('/session/{sessionId}', [SessionController::class, 'get']);
 Route::post('/phase', [MethodController::class, 'switchPhase']);
 Route::get('/ideas/{sessionId}/{votingPhase}/{contributorId}', [IdeaController::class, 'get']);
 Route::post('/collecting/start', [SessionController::class, 'startCollecting']);
@@ -34,3 +33,8 @@ Route::post('/ice-breaker', [IdeaController::class, 'iceBreaker']);
 Route::get('/{sessionId}/details', [SessionController::class, 'getClosingDetails']);
 Route::get('/{sessionId}/pdf', [SessionController::class, 'downloadSessionPDF']);
 Route::get('/ideas/6-3-5/{sessionId}/{personalContributorId}/{round}', [IdeaController::class, 'getPassedIdeas']);
+Route::post('/session/join', [SessionController::class, 'sessionJoin']);
+Route::post('/session/leave', [SessionController::class, 'sessionLeave']);
+Route::post('/session/ping', [SessionController::class, 'sessionPing']);
+Route::get('/session/{sessionId}', [SessionController::class, 'get'])
+     ->where('sessionId', '[0-9]+');

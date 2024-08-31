@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 class IdeaController extends Controller
 {
-
-
     public function getPassedIdeas($sessionId, $personalContributorId, $round)
     {
         // Log::info('sessionId', ['sessionId' => $sessionId]);
@@ -91,6 +89,7 @@ class IdeaController extends Controller
         $client = new Client();
         //nur id, text_input, contributor_id ins Objekt packen
         \Log::info($ideas);
+        if($ideas){
         $ideasFormatted = $ideas->map(function ($idea) {
             return [
                 'contributor_id' => $idea->contributor_id,
@@ -180,7 +179,7 @@ class IdeaController extends Controller
         } catch (\Exception $e) {
             \Log::error('General Exception: ' . $e->getMessage());
             return response()->json(['message' => 'Fehler: ' . $e->getMessage()], 500);
-        }
+        }}
     }
 
     public function get($sessionId, $votingPhase, $contributorId)

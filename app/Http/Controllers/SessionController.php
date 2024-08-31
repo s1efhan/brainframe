@@ -18,34 +18,127 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Events\StartCollecting;
 use App\Events\StopCollecting;
+use App\Events\UserJoinedSession;
+use App\Events\UserLeftSession;
 use Log;
 use GuzzleHttp\Client;
 
 class SessionController extends Controller
 {
+    public function sessionJoin(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $userId = $request->input('user_id');
+        if ($sessionId && $userId) {
+            Contributor::where('session_id', $sessionId)
+                ->where('user_id', $userId)
+                ->update(['is_active' => true, 'last_ping' => now()]);
+
+            $newContributorsCount = $this->getActiveContributorsCount($sessionId);
+
+            event(new UserJoinedSession($sessionId, $userId, $newContributorsCount));
+
+            return response()->json([
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'contributors_count' => $newContributorsCount,
+                'event' => 'join'
+            ]);
+        } else {
+            return response()->json(['message' => 'Session or User not found'], 404);
+        }
+    }
+
+    public function sessionLeave(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $userId = $request->input('user_id');
+        if ($sessionId && $userId) {
+            Contributor::where('session_id', $sessionId)
+                ->where('user_id', $userId)
+                ->update(['is_active' => false]);
+
+            $newContributorsCount = $this->getActiveContributorsCount($sessionId);
+
+            event(new UserLeftSession($sessionId, $userId, $newContributorsCount));
+
+            return response()->json([
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'contributors_count' => $newContributorsCount,
+                'event' => 'leave'
+            ]);
+        } else
+        return response()->json(['message' => 'Session or User not found'], 404);
+    }
+
+    public function sessionPing(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $userId = $request->input('user_id');
+        if ($sessionId && $userId) {
+        Contributor::where('session_id', $sessionId)
+            ->where('user_id', $userId)
+            ->update(['is_active' => true, 'last_ping' => now()]);
+
+        $this->checkInactiveUsers($sessionId);
+
+        $newContributorsCount = $this->getActiveContributorsCount($sessionId);
+
+        return response()->json([
+            'session_id' => $sessionId,
+            'user_id' => $userId,
+            'contributors_count' => $newContributorsCount,
+            'event' => 'ping'
+        ]);}
+        return response()->json(['message' => 'Session or User not found'], 404);
+    }
+
+    private function getActiveContributorsCount($sessionId)
+    {
+        return Contributor::where('session_id', $sessionId)
+            ->where('is_active', true)
+            ->count();
+    }
+
+    private function checkInactiveUsers($sessionId)
+    {
+        $inactiveThreshold = now()->subSeconds(35);
+
+        $inactiveUsers = Contributor::where('session_id', $sessionId)
+            ->where('is_active', true)
+            ->where('last_ping', '<', $inactiveThreshold)
+            ->get();
+
+        foreach ($inactiveUsers as $user) {
+            $user->update(['is_active' => false]);
+            event(new UserLeftSession($sessionId, $user->user_id, $this->getActiveContributorsCount($sessionId)));
+        }
+    }
+
     public function downloadSessionPDF($sessionId)
     {
         Log::info('download PDF: ' . $sessionId);
         $sessionDetails = SessionDetailsCache::findOrFail($sessionId);
-       // Log::info($sessionDetails);
-       $ideas = $sessionDetails->ideas;
-       // Gruppiere die Ideen nach `round`
-       $groupedIdeas = array_reduce($ideas, function ($result, $idea) {
-           $round = $idea['round']; // Angenommene Struktur der Idee
-           if (!isset($result[$round])) {
-               $result[$round] = [];
-           }
-           $result[$round][] = $idea;
-           return $result;
-       }, []);
+        // Log::info($sessionDetails);
+        $ideas = $sessionDetails->ideas;
+        // Gruppiere die Ideen nach `round`
+        $groupedIdeas = array_reduce($ideas, function ($result, $idea) {
+            $round = $idea['round']; // Angenommene Struktur der Idee
+            if (!isset($result[$round])) {
+                $result[$round] = [];
+            }
+            $result[$round][] = $idea;
+            return $result;
+        }, []);
         //Log::info($groupedIdeas);
         $html = view('pdf.session_details', ['sessionDetails' => $sessionDetails, 'groupedIdeas' => $groupedIdeas])->render();
         Log::info('HTML generiert');
-        
+
         $pdf = Pdf::loadHTML($html);
         $filename = $sessionDetails->target ?? 'session_details';
         $filename .= '.pdf';
-        
+
         return $pdf->download($filename);
     }
 
@@ -55,8 +148,9 @@ class SessionController extends Controller
             return response()->json(['message' => 'Session ID is required'], 400);
         }
 
-        $session = Session::with(['host', 'method'])->find($sessionId);
-
+        if (is_numeric($sessionId)) {
+            $session = Session::with(['host', 'method'])->find($sessionId);
+        }
         if (!$session) {
             return response()->json(['message' => 'Session not found'], 404);
         }
@@ -350,9 +444,9 @@ class SessionController extends Controller
                 'json' => [
                     'model' => "gpt-4o-mini",
                     'messages' => [
-                            [
-                                'role' => 'system',
-                                'content' => 'Generiere eine Wortcloud basierend auf den folgenden Ideen. Antworte in JSON.
+                        [
+                            'role' => 'system',
+                            'content' => 'Generiere eine Wortcloud basierend auf den folgenden Ideen. Antworte in JSON.
                                 Beispiel:
                     "{
                       "word": "Kinderbücher",
@@ -364,12 +458,12 @@ class SessionController extends Controller
                       }
                       "
                                 '
-                            ],
-                            [
-                                'role' => 'user',
-                                'content' => $ideas->toJson(),
-                            ],
                         ],
+                        [
+                            'role' => 'user',
+                            'content' => $ideas->toJson(),
+                        ],
+                    ],
                     'temperature' => 0.3,
                 ],
             ]);
@@ -390,7 +484,7 @@ class SessionController extends Controller
                 $session->output_token += $outputToken;
                 $session->save();
             }
-          
+
             // Log the next steps content and tokens
             $wordCloud = [
                 'content' => $content,
@@ -398,7 +492,7 @@ class SessionController extends Controller
                 'output_token' => $outputToken
             ];
             Log::info(json_encode($wordCloud));
-           
+
             return $wordCloud;
         } catch (\Exception $e) {
             Log::error('Error generating word cloud: ' . $e->getMessage());
@@ -420,15 +514,15 @@ class SessionController extends Controller
                 'json' => [
                     'model' => "gpt-4o-mini",
                     'messages' => [
-                            [
-                                'role' => 'system',
-                                'content' => 'Du sollst die next Steps für die Gruppe nennen. Maximal 3, antworte kurz und in einer HTML Liste'
-                            ],
-                            [
-                                'role' => 'user',
-                                'content' => $topIdeas->toJson(),
-                            ],
+                        [
+                            'role' => 'system',
+                            'content' => 'Du sollst die next Steps für die Gruppe nennen. Maximal 3, antworte kurz und in einer HTML Liste'
                         ],
+                        [
+                            'role' => 'user',
+                            'content' => $topIdeas->toJson(),
+                        ],
+                    ],
                     'temperature' => 0.3,
                 ],
             ]);

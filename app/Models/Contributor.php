@@ -8,13 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class Contributor extends Model
 {
     use HasFactory;
+    protected $table = 'bf_contributors';
 
-    protected $table = 'bf_contributors'; // Name der Tabelle in der Datenbank
-//id soll automatisch inkrementiert werden
     protected $fillable = [
-       'session_id', 'role_id', 'user_id'
+        'session_id', 'role_id', 'user_id', 'is_active', 'last_ping'
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+        'last_ping' => 'datetime',
+    ];
     // Beziehungen
 
     /**
@@ -28,5 +31,14 @@ class Contributor extends Model
         {
             return $this->belongsTo(Role::class, 'role_id');
         }
+        public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
     
 }
