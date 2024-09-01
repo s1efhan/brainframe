@@ -81,13 +81,15 @@
 .selectRole__head {
   display: flex;
   align-items: center;
+
   h2 {
     padding: 0.25em;
     color: var(--accent);
-    font-size:1.4em;
+    font-size: 1.4em;
     font-family: 'Nohemi-Regular', sans-serif;
   }
 }
+
 .headline__session-target {
   font-size: 1.4em;
   display: inline-block;
@@ -111,10 +113,12 @@
     color: var(--accent);
   }
 }
+
 .info__container {
   margin-left: auto;
   margin-right: 1em;
 }
+
 .join__contributors__count,
 .ideasCount {
   background-color: var(--text);
@@ -125,8 +129,11 @@
   align-items: center;
   width: auto;
   display: inline-flex;
-  max-width: auto;
   margin-top: 0.5em;
+
+  p {
+    width: 3em;
+  }
 
   input {
     margin-left: 1em;
@@ -213,15 +220,20 @@
   margin: 0.5em;
 }
 
-.headline__sessions, .headline__login{
+.headline__sessions,
+.headline__login {
   margin-top: 1em;
   display: inline-block;
   border: solid var(--accent)thick;
   background-color: var(--text);
   padding: 1em;
   width: 100%;
-  box-sizing:border-box;
-  .response{color:var(--accent)}
+  box-sizing: border-box;
+
+  .response {
+    color: var(--accent)
+  }
+
   h1 {
     color: var(--accent);
   }
@@ -230,6 +242,7 @@
 .session_headline__details {
   display: flex;
   justify-content: space-between;
+
   div {
     min-width: 6em;
     background-color: var(--text);
@@ -240,9 +253,11 @@
     justify-content: center;
     display: inline-flex;
     padding: 0.25em;
+
     p {
       padding: 0.2em;
     }
+
     svg {
       margin-right: 1em;
       width: 1.2em;

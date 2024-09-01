@@ -33,6 +33,7 @@ button.secondary {
     background-color: var(--text);
     border: solid var(--accent);
     font-size: 1.1em;
+    cursor:pointer;
 
     &:hover {
         background-color: var(--accent);

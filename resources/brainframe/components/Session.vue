@@ -13,7 +13,7 @@
         <p>{{ methodName }} Methode</p>
       </div>
       <div>
-        <p v-if="personalContributor.role_name != 'Default'" class="contributor-icon">{{ personalContributor.icon }}</p>
+        <p v-if="personalContributor.role_name != 'Default'" class="contributor-icon"> <component :is="getIconComponent(personalContributor.icon)" /></p>
         <p>{{ personalContributor.role_name }}</p>
       </div>
     </div>
@@ -41,18 +41,23 @@ import { sessionId } from '../js/eventBus.js'
 import axios from 'axios';
 import Rollenwahl from './Rollenwahl.vue';
 import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 const route = useRoute();
+const router = useRouter();
 import ProfileIcon from '../components/icons/ProfileIcon.vue';
 import VotingPhase from '../components/phases/VotingPhase.vue';
 import CollectingPhase from '../components/phases/CollectingPhase.vue';
 import ClosingPhase from '../components/phases/ClosingPhase.vue';
+import IconComponents from '../components/IconComponents.vue';
 const props = defineProps({
   userId: {
     type: [String, Number],
     required: true
   }
 });
-
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
 const updateSessionId = () => {
   sessionId.value = route.params.id;
   emit('updateSessionId', sessionId.value);
@@ -61,13 +66,9 @@ const headlineHeight = ref('auto');
 
 const adjustHeadline = (event) => {
   const headline = event.target;
-
-  // Begrenzen Sie die Eingabe auf maximal 50 Zeichen
   if (headline.textContent.length > 60) {
     headline.textContent = headline.textContent.slice(0, 60);
   }
-
-  // Passen Sie die Höhe des Headline an
   headlineHeight.value = `${headline.scrollHeight}px`;
 };
 const collectingTimer = ref(360);
@@ -112,6 +113,7 @@ const getSessionDetails = () => {
       })
     .catch(error => {
       console.error('Error fetching Session Details', error);
+      router.push('/brainframe/join')
     });
 };
 const emit = defineEmits(['updateSessionId']);

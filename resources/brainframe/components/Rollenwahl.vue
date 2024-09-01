@@ -9,37 +9,43 @@
   </div>
   <div v-if="showInfo" class="info__text__container">
     <div class="info__text">
-  <h3>Rollenwahl:</h3>
-  <ul v-if="props.methodName =='6 Thinking Hats'">
-    <li>Die Wahl deiner "Rolle" hat <strong>großen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel Session. <br>Sie bestimmt deine <strong>Perspektive beim Sammeln und Bewerten </strong>und ermöglicht es anonym über Ideen zu sprechen.</li>
-  <ul>
-    <li><strong>Roter Hut:</strong> Emotionale Sichtweise, Gefühle und Intuition.</li>
-        <li><strong>Schwarzer Hut:</strong> Kritische Sichtweise, Risiken und Probleme.</li>
-        <li><strong>Gelber Hut:</strong> Positive Sichtweise, Vorteile und Chancen.</li>
-        <li><strong>Weißer Hut:</strong> Faktenbasierte Sichtweise, objektive Informationen.</li>
-        <li><strong>Grüner Hut:</strong> Kreative Sichtweise, neue Ideen und Alternativen.</li>
-        <li><strong>Blauer Hut:</strong> Organisatorische Sichtweise, Prozesskontrolle und Zusammenfassung.</li>
-  </ul>
-  </ul>
-  <ul v-else>
-    <li>Die Wahl deiner "Rolle" hat <strong>keinen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel Session. <br>Sie ist rein <strong>ästhetischer Natur </strong>und dient dazu vereinfacht und anonym über Ideen zu sprechen.</li>
-  </ul>
-</div>
-</div>
+      <h3>Rollenwahl:</h3>
+      <ul v-if="props.methodName =='6 Thinking Hats'">
+        <li>Die Wahl deiner "Rolle" hat <strong>großen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel Session. <br>Sie bestimmt deine <strong>Perspektive beim Sammeln und Bewerten </strong>und ermöglicht es anonym über Ideen zu sprechen.</li>
+        <ul>
+          <li><strong>Roter Hut:</strong> Emotionale Sichtweise, Gefühle und Intuition.</li>
+          <li><strong>Schwarzer Hut:</strong> Kritische Sichtweise, Risiken und Probleme.</li>
+          <li><strong>Gelber Hut:</strong> Positive Sichtweise, Vorteile und Chancen.</li>
+          <li><strong>Weißer Hut:</strong> Faktenbasierte Sichtweise, objektive Informationen.</li>
+          <li><strong>Grüner Hut:</strong> Kreative Sichtweise, neue Ideen und Alternativen.</li>
+          <li><strong>Blauer Hut:</strong> Organisatorische Sichtweise, Prozesskontrolle und Zusammenfassung.</li>
+        </ul>
+      </ul>
+      <ul v-else>
+        <li>Die Wahl deiner "Rolle" hat <strong>keinen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel Session. <br>Sie ist rein <strong>ästhetischer Natur </strong>und dient dazu vereinfacht und anonym über Ideen zu sprechen.</li>
+      </ul>
+    </div>
+  </div>
   <form class="selectRole" v-if="showSelectRole" @submit.prevent="handleSubmit">
-    <select id="roleSelect" v-model="selectedRole.id" @change="updateSelectedRole">
-      <option v-for="role in roles" :key="role.id" :value="role.id">
-        {{ role.icon }} {{ role.name}}
-      </option>
-    </select>
-    <button class="primary" type="button" @click="addContributor">Rolle Wählen</button>
+    <div class="role-select__container">
+      <select id="roleSelect" v-model="selectedRole.id" @change="updateSelectedRole">
+        <option v-for="role in roles" :key="role.id" :value="role.id">
+          {{ role.name }}
+        </option>
+      </select>
+      <div v-if="selectedRole.icon" class="role-icon">
+      <component :is="getIconComponent(selectedRole.icon)" /> {{ selectedRole.name }}
+      </div>
+    </div>
+    <button class="primary" type="submit">Rolle Wählen</button>
   </form>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
+import IconComponents from '../components/IconComponents.vue';
 
 const props = defineProps({
   userId: {
@@ -51,11 +57,12 @@ const props = defineProps({
     required: true
   }
 });
+
 const showInfo = ref(false);
 const emit = defineEmits(['contributorAdded']);
 const showSelectRole = ref(true);
 const sessionId = ref('');
-const selectedRole = ref({ id: null, name: '', description: '' });
+const selectedRole = ref({ id: null, name: '', description: '', icon: '' });
 const roles = ref([]);
 const userId = ref('');
 
@@ -66,6 +73,10 @@ const updateSelectedRole = () => {
   if (role) {
     selectedRole.value = { ...role };
   }
+};
+
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
 };
 
 const getRoles = () => {
@@ -83,6 +94,10 @@ const getRoles = () => {
     });
 };
 
+const handleSubmit = () => {
+  addContributor();
+};
+
 const addContributor = () => {
   axios.post('/api/contributor', {
     session_id: sessionId.value,
@@ -92,7 +107,7 @@ const addContributor = () => {
     .then(response => {
       console.log('Server response:', response.data);
       showSelectRole.value = false;
-      emit('contributorAdded'); // Emittieren Sie ein Event
+      emit('contributorAdded');
     })
     .catch(error => {
       showSelectRole.value = false;
