@@ -174,27 +174,28 @@ class SessionController extends Controller
     }
 
     public function getUserSessions($userId)
-    {
-        $contributors = Contributor::where('user_id', $userId)->get();
+  {
+    $contributors = Contributor::where('user_id', $userId)->get();
+    $sessions = $contributors->map(function ($contributor) {
+        $session = Session::find($contributor->session_id);
+        $method = Method::find($session->method_id);
+        $role = Role::find($contributor->role_id);
+        return [
+            'session_id' => $contributor->session_id,
+            'target' => $session->target,
+            'role' => $role->name,
+            'updated_at' => $session->updated_at,
+            'method_name' => $method->name,
+            'method_id' => $method->id,
+            'host_id' => $session->host_id,
+            'active_phase' => $session->active_phase,
+            'active_round' => $session->active_round
+        ];
+    })->sortByDesc('updated_at')->values();
 
-        $sessions = $contributors->map(function ($contributor) {
-            $session = Session::find($contributor->session_id);
-            $method = Method::find($session->method_id);
-            $role = Role::find($contributor->role_id);
-
-            return [
-                'session_id' => $contributor->session_id,
-                'target' => $session->target,
-                'role' => $role->name,
-                'updated_at' => $session->updated_at,
-                'method_name' => $method->name,
-            ];
-        });
-
-        Log::info('User Sessions:', $sessions->toArray());
-
-        return response()->json($sessions, 200);
-    }
+    Log::info('User Sessions:', $sessions->toArray());
+    return response()->json($sessions, 200);
+}
 
 
     public function update(Request $request)
@@ -555,4 +556,34 @@ class SessionController extends Controller
             return null;
         }
     }
+
+    public function deleteSession(Request $request)
+{
+    $sessionId = $request->input('session_id');
+    $userId = $request->input('user_id');
+    $session = Session::find($sessionId);
+
+    if ($userId == $session->host_id) {
+        $session->delete();
+        return response()->json(['message' => 'Session erfolgreich gelöscht'], 200);
+    }
+    return response()->json(['message' => 'Keine Berechtigung zum Löschen'], 403);
+}
+public function alterSession(Request $request)
+{
+    $sessionId = $request->input('session_id');
+    $userId = $request->input('user_id');
+    $newMethod = $request->input('new_method');
+    $newTarget = $request->input('new_target');
+    $session = Session::find($sessionId);
+
+    if ($userId == $session->host_id && ($session->active_phase === null || $session->active_phase === 'collectingPhase')) {
+        $session->update([
+            'method_id' => $newMethod,
+            'target' => $newTarget
+        ]);
+        return response()->json(['message' => 'Session erfolgreich aktualisiert'], 200);
+    }
+    return response()->json(['message' => 'Keine Berechtigung zum Aktualisieren'], 403);
+}
 }

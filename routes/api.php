@@ -38,3 +38,5 @@ Route::post('/session/leave', [SessionController::class, 'sessionLeave']);
 Route::post('/session/ping', [SessionController::class, 'sessionPing']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get'])
      ->where('sessionId', '[0-9]+');
+Route::post('/session/delete', [SessionController::class, 'deleteSession']);
+Route::post('/session/put', [SessionController::class, 'alterSession']);

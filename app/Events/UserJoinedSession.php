@@ -23,8 +23,6 @@ class UserJoinedSession implements ShouldBroadcast
         public string $userId,
         public string $newContributorsCount
     ) {
-        Log::info('Event: UserJoinedSession');
-        Log::info($sessionId.'-'.$userId.'-'.$newContributorsCount);
     }
 
     public function broadcastOn(): Channel

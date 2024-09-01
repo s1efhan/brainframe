@@ -23,8 +23,6 @@ class UserLeftSession implements ShouldBroadcast
         public string $userId,
         public string $newContributorsCount
     ) {
-        Log::info('Event: UserLeftSession');
-        Log::info($sessionId . '-' . $userId . '-' . $newContributorsCount);
     }
 
     public function broadcastOn(): Channel

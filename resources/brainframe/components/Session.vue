@@ -117,7 +117,6 @@ const getSessionDetails = () => {
 const emit = defineEmits(['updateSessionId']);
 const switchPhase = (switchedPhase) => {
   sessionPhase.value = switchedPhase;
-  console.log('switching to phase: ', switchedPhase)
   console.log(personalContributor.value.id, sessionHostId.value);
   if (personalContributor.value.id == sessionHostId.value) {
     axios.post('/api/phase', {
@@ -144,7 +143,6 @@ const getMethodDetails = () => {
 };
 const joinSession = () => {
   if(sessionId.value > 0 && userId){
-  console.log('joinSession()', userId.value, sessionId.value);
   axios.post('/api/session/join', {
     session_id: sessionId.value,
     user_id: userId.value
@@ -158,7 +156,6 @@ const joinSession = () => {
   }
 };
 const leaveSession = () => {
-  console.log('leaveSession()', userId.value, sessionId.value);
   if(sessionId.value > 0 && userId)
   // Option 1: Using Fetch API
   fetch('/api/session/leave', {
@@ -177,7 +174,6 @@ const leaveSession = () => {
 
 const handleVisibilityChange = () => {
   if(sessionId.value > 0 && userId)
-  console.log('Visibility Change')
   if (document.hidden) {
     leaveSession();
   } else {
@@ -185,19 +181,22 @@ const handleVisibilityChange = () => {
   }
 };
 const ping = () => {
-  if(sessionId.value > 0 && userId)
-  console.log('ping');
-  axios.post('/api/session/ping', {
-    session_id: sessionId.value,
-    user_id: userId.value
-  })
-    .then(response => {
-      console.log('Server response:', response.data);
+  if (sessionId.value > 0 && userId.value) {
+    console.log('ping');
+    axios.post('/api/session/ping', {
+      session_id: sessionId.value,
+      user_id: userId.value,
     })
-    .catch(error => {
-      console.error('Error pinging', error);
-    })
-    };
+      .then(response => {
+        console.log('Server response:', response.data);
+      })
+      .catch(error => {
+        console.error('Error pinging', error);
+      });
+  }
+};
+
+let pingInterval;
 
 onMounted(() => {
   joinSession();
@@ -219,7 +218,7 @@ onMounted(() => {
   getSessionDetails();
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('beforeunload', leaveSession);
-  const pingInterval = setInterval(ping, 30000);
+  pingInterval = setInterval(ping, 30000);
 });
 
 onUnmounted(() => {
