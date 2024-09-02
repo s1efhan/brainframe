@@ -112,6 +112,10 @@ const props = defineProps({
   contributors: {
     type: [Object, null],
     required: true
+  },
+  currentRound: {
+    type: Number,
+    required: true
   }
 });
 import LightbulbIcon from '../icons/LightbulbIcon.vue';
@@ -148,7 +152,6 @@ const getIdeasPassed = () => {
 }
 const callStartCollecting = () => {
   axios.post('/api/collecting/start', {
-    current_round: currentRound.value,
     session_id: sessionId.value
   })
     .then(response => {
@@ -259,7 +262,7 @@ const apiAntwort = ref(null);
 const callStopCollecting = () => {
   if(sessionHostId.value === personalContributor.value.id){
   axios.post('/api/collecting/stop', {
-    current_round: currentRound.value,
+    current_round: currentRound.value + 1,
     session_id: sessionId.value
   })
     .then(response => {
@@ -458,10 +461,11 @@ onMounted(() => {
   method.value = props.method;
   sessionHostId.value = props.sessionHostId;
   setMethodParameters();
+  currentRound.value = props.currentRound;
   Echo.channel('session.' + sessionId.value)
     .listen('StartCollecting', (e) => {
       console.log('StartCollecting Event empfangen:', e);
-      if (currentRound.value > 1) {
+      if (currentRound.value > 1 && method.name === "6-3-5") {
         getIdeasPassed();
       }
       startCollecting();

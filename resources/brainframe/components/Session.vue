@@ -23,7 +23,7 @@
 
     <CollectingPhase @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
-      :method="method" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
+      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
       :personalContributor="personalContributor" />
     <VotingPhase @switchPhase="switchPhase"
       v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
@@ -93,6 +93,7 @@ const getContributors = () => {
 const methodId = ref(null);
 const methodName = ref(null);
 const sessionHostId = ref(null);
+const currentRound = ref(null);
 const sessionDetails = ref([]);
 const contributorsCount = ref(null);
 const contributorsAmount = ref(null);
@@ -108,6 +109,8 @@ const getSessionDetails = () => {
         sessionPhase.value = sessionDetails.value.session_phase || 'collectingPhase';
         contributorsAmount.value = sessionDetails.value.contributors_amount;
         sessionHostId.value = sessionDetails.value.session_host;
+        currentRound.value = sessionDetails.value.current_round;
+        console.log('currentRound.value',currentRound.value)
         getMethodDetails();
         getContributors();
       })
