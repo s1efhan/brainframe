@@ -210,11 +210,9 @@ onMounted(() => {
       sessionPhase.value = e.phase;
     })
     .listen('UserJoinedSession', (e) => {
-      console.log('UserJoinedSession Event empfangen:', e);
       contributorsCount.value = e.newContributorsCount;
     })
     .listen('UserLeftSession', (e) => {
-      console.log('UserLeftSession Event empfangen:', e);
       contributorsCount.value = e.newContributorsCount;
     });
   getSessionDetails();

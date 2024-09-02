@@ -12,24 +12,19 @@ class IdeaController extends Controller
 {
     public function getPassedIdeas($sessionId, $personalContributorId, $round)
     {
-        // Log::info('sessionId', ['sessionId' => $sessionId]);
-        // Log::info('personalContributorId', ['personalContributorId' => $personalContributorId]);
         Log::info('round', ['round' => $round]);
 
         // Alle Contributors der Session abrufen und nach ID sortieren
         $contributors = Contributor::where('session_id', $sessionId)
             ->orderBy('id')
             ->get();
-        //  Log::info('contributors', ['contributors' => $contributors]);
 
         $contributorCount = $contributors->count();
-        // Log::info('contributorCount', ['contributorCount' => $contributorCount]);
 
         // Eigene Position des $personalContributorId herausfinden
         $ownPosition = $contributors->search(function ($contributor) use ($personalContributorId) {
             return $contributor->id == $personalContributorId;
         });
-        // Log::info('ownPosition', ['ownPosition' => $ownPosition]);
 
         if ($ownPosition === false) {
             return response()->json(['error' => 'Persönlicher Contributor nicht gefunden'], 404);
@@ -42,9 +37,7 @@ class IdeaController extends Controller
             $neighbourPosition = ($ownPosition - $i + $contributorCount) % $contributorCount;
             $neighbourContributor = $contributors[$neighbourPosition];
 
-            // Log::info('i', ['i' => $i]);
             Log::info('neighbourContributor', ['neighbourContributor' => $neighbourContributor->id]);
-            //  Log::info('neighbourPosition', ['neighbourPosition' => $neighbourPosition]);
 
             // Ideas des Nachbarn aus der entsprechenden Runde abrufen
             $ideas = Idea::where('session_id', $sessionId)
@@ -54,12 +47,15 @@ class IdeaController extends Controller
                 ->get();
             Log::info('round', ['round' => $round - $i]);
             Log::info('ideas', ['ideas' => $ideas]);
+
             // Füge das contributor_icon für jede Idee hinzu
             $ideasWithIcon = $ideas->map(function ($idea) {
                 $idea->contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
                 return $idea;
             });
-
+            if ($ideas->isEmpty()) {
+                return response()->json(['error' => 'Keine Ideen für diese Runde gefunden'], 404);
+            }
             Log::info('round', ['round' => $round - $i]);
             Log::info('ideas', ['ideas' => $ideasWithIcon]);
 
@@ -87,29 +83,32 @@ class IdeaController extends Controller
         }
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
-        //nur id, text_input, contributor_id ins Objekt packen
+        // Überprüfen, ob Ideen gefunden wurden
+        if ($ideas->isEmpty()) {
+            return response()->json(['error' => 'Keine Ideen zum Senden gefunden'], 404);
+        }
         \Log::info($ideas);
-        if($ideas){
-        $ideasFormatted = $ideas->map(function ($idea) {
-            return [
-                'contributor_id' => $idea->contributor_id,
-                'ideaTitle' => $idea->text_input, // angenommen, text_input ist der Titel
-                'ideaDescription' => "<ul><li>" . implode("</li><li>", explode("\n", $idea->text_input)) . "</li></ul>",
-            ];
-        })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        try {
+        if ($ideas) {
+            $ideasFormatted = $ideas->map(function ($idea) {
+                return [
+                    'contributor_id' => $idea->contributor_id,
+                    'ideaTitle' => $idea->text_input, // angenommen, text_input ist der Titel
+                    'ideaDescription' => "<ul><li>" . implode("</li><li>", explode("\n", $idea->text_input)) . "</li></ul>",
+                ];
+            })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            try {
 
-            $response = $client->post('https://api.openai.com/v1/chat/completions', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'model' => "gpt-4o-mini",
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'Du bist verantwortlich für die Verarbeitung und Filterung von Brainstorming-Ergebnissen. Dein Ziel ist die Qualität und Verständlichkeit der eingesandten Ideen sicherzustellen.
+                $response = $client->post('https://api.openai.com/v1/chat/completions', [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Content-Type' => 'application/json',
+                    ],
+                    'json' => [
+                        'model' => "gpt-4o-mini",
+                        'messages' => [
+                            [
+                                'role' => 'system',
+                                'content' => 'Du bist verantwortlich für die Verarbeitung und Filterung von Brainstorming-Ergebnissen. Dein Ziel ist die Qualität und Verständlichkeit der eingesandten Ideen sicherzustellen.
                                     Folge diesen Anweisungen strikt:
                     
                        1) Erstelle einen umfassenden ideaTitle, der die Konzepte und Grundidee widerspiegelt.
@@ -125,61 +124,62 @@ class IdeaController extends Controller
                       "ideaDescription": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
                       "tag": "Gesellschaftskritik"
                     '
+                            ],
+                            [
+                                'role' => 'user',
+                                'content' => $ideasFormatted,
+                            ],
                         ],
-                        [
-                            'role' => 'user',
-                            'content' => $ideasFormatted,
-                        ],
+                        'temperature' => 0.3,
                     ],
-                    'temperature' => 0.3,
-                ],
-            ]);
-            $responseBody = json_decode($response->getBody(), true);
-            $inputToken = $responseBody['usage']['prompt_tokens'] ?? 0;
-            $outputToken = $responseBody['usage']['completion_tokens'] ?? 0;
-            $session = Session::find($sessionId);
-            if ($session) {
-                $session->input_token += $inputToken;
-                $session->output_token += $outputToken;
-                $session->save();
-            }
-            \Log::info('API Response:', $responseBody);
-
-            if (isset($responseBody['choices'][0]['message']['content'])) {
-                $content = $responseBody['choices'][0]['message']['content'];
-                // Entferne mögliche JSON-Codeblock-Markierungen
-                $content = preg_replace('/```json\s*|\s*```/', '', $content);
-                $newIdeas = json_decode($content, true);
-
-                if (is_array($newIdeas)) {
-                    foreach ($newIdeas as $idea) {
-                        Idea::create([
-                            'idea_title' => $idea['ideaTitle'] ?? '',
-                            'idea_description' => $idea['ideaDescription'] ?? '',
-                            'tag' => $idea['tag'] ?? '',
-                            'contributor_id' => $idea['contributor_id'] ?? 0,
-                            'session_id' => $sessionId
-                        ]);
-                    }
-                    \Log::info('New ideas saved successfully');
-                } else {
-                    \Log::error('Invalid format for new ideas', ['content' => $content]);
+                ]);
+                $responseBody = json_decode($response->getBody(), true);
+                $inputToken = $responseBody['usage']['prompt_tokens'] ?? 0;
+                $outputToken = $responseBody['usage']['completion_tokens'] ?? 0;
+                $session = Session::find($sessionId);
+                if ($session) {
+                    $session->input_token += $inputToken;
+                    $session->output_token += $outputToken;
+                    $session->save();
                 }
-            } else {
-                \Log::error('Unexpected API response format', $responseBody);
+                \Log::info('API Response:', $responseBody);
+
+                if (isset($responseBody['choices'][0]['message']['content'])) {
+                    $content = $responseBody['choices'][0]['message']['content'];
+                    // Entferne mögliche JSON-Codeblock-Markierungen
+                    $content = preg_replace('/```json\s*|\s*```/', '', $content);
+                    $newIdeas = json_decode($content, true);
+
+                    if (is_array($newIdeas)) {
+                        foreach ($newIdeas as $idea) {
+                            Idea::create([
+                                'idea_title' => $idea['ideaTitle'] ?? '',
+                                'idea_description' => $idea['ideaDescription'] ?? '',
+                                'tag' => $idea['tag'] ?? '',
+                                'contributor_id' => $idea['contributor_id'] ?? 0,
+                                'session_id' => $sessionId
+                            ]);
+                        }
+                        \Log::info('New ideas saved successfully');
+                    } else {
+                        \Log::error('Invalid format for new ideas', ['content' => $content]);
+                    }
+                } else {
+                    \Log::error('Unexpected API response format', $responseBody);
+                }
+
+                return response()->json($responseBody);
+
+            } catch (\GuzzleHttp\Exception\ClientException $e) {
+                $response = $e->getResponse();
+                $responseBodyAsString = $response->getBody()->getContents();
+                \Log::error('ClientException: ' . $responseBodyAsString);
+                return response()->json(['message' => 'Fehler: ' . $responseBodyAsString], 500);
+            } catch (\Exception $e) {
+                \Log::error('General Exception: ' . $e->getMessage());
+                return response()->json(['message' => 'Fehler: ' . $e->getMessage()], 500);
             }
-
-            return response()->json($responseBody);
-
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            $response = $e->getResponse();
-            $responseBodyAsString = $response->getBody()->getContents();
-            \Log::error('ClientException: ' . $responseBodyAsString);
-            return response()->json(['message' => 'Fehler: ' . $responseBodyAsString], 500);
-        } catch (\Exception $e) {
-            \Log::error('General Exception: ' . $e->getMessage());
-            return response()->json(['message' => 'Fehler: ' . $e->getMessage()], 500);
-        }}
+        }
     }
 
     public function get($sessionId, $votingPhase, $contributorId)

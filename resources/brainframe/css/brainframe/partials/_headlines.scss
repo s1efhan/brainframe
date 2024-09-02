@@ -190,26 +190,61 @@
   }
 }
 
-.timer {
+.collecting__header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  margin: 0;
+  padding: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+
+  svg {
+    font-size: 2em;
+    padding: 0.3em;
+    fill: var(--accent);
+  }
+}
+
+.collecting__bottom__container {
+  display: flex;
   position: fixed;
-  bottom: 15vh;
-  right: 1em;
+  width: 100%;
+  align-items: center;
+  bottom: 7em;
+  justify-content: space-between;
+}
+.timer__container{
+  padding: 1em;
+  justify-content: center;
+  align-items: center;
+  display:flex;
+  flex-direction: row;
+  svg {fill:var(--secondary);}
+}
+
+.timer {
+  margin-left: 1em;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 2.5em;
   width: 2.5em;
   color: var(--secondary);
-  background: transparent;
+  background-color: var(--text);
   border-radius: 50%;
   box-sizing: border-box;
 }
 
 .timer::before {
+  position:absolute;
   content: '';
-  position: absolute;
-  inset: -3px;
+  height: 2.5em;
   padding: 3px;
+  width: 2.5em;
   border-radius: 50%;
   background: conic-gradient(var(--secondary) var(--progress), transparent 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
