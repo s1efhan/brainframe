@@ -10,58 +10,53 @@ use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 class IdeaController extends Controller
 {
-    public function getPassedIdeas($sessionId, $personalContributorId, $round)
+    public function getPassedIdeas($sessionId, $personalContributorId, $currentRound)
     {
-        Log::info('round', ['round' => $round]);
+        Log::info("Start getPassedIdeas", ['sessionId' => $sessionId, 'personalContributorId' => $personalContributorId, 'currentRound' => $currentRound]);
 
-        // Alle Contributors der Session abrufen und nach ID sortieren
-        $contributors = Contributor::where('session_id', $sessionId)
-            ->orderBy('id')
-            ->get();
-
+        $contributors = Contributor::where('session_id', $sessionId)->orderBy('id')->get();
         $contributorCount = $contributors->count();
-
-        // Eigene Position des $personalContributorId herausfinden
         $ownPosition = $contributors->search(function ($contributor) use ($personalContributorId) {
             return $contributor->id == $personalContributorId;
         });
 
         if ($ownPosition === false) {
+            Log::warning("Personal Contributor not found", ['personalContributorId' => $personalContributorId]);
             return response()->json(['error' => 'Persönlicher Contributor nicht gefunden'], 404);
         }
 
         $passedIdeas = collect();
 
-        for ($i = 1; $i < $round; $i++) {
-            // Position des Nachbarn berechnen
+        for ($i = 1; $i < $currentRound; $i++) {
             $neighbourPosition = ($ownPosition - $i + $contributorCount) % $contributorCount;
             $neighbourContributor = $contributors[$neighbourPosition];
 
-            Log::info('neighbourContributor', ['neighbourContributor' => $neighbourContributor->id]);
+            $ideaRound = $currentRound - $i;
 
-            // Ideas des Nachbarn aus der entsprechenden Runde abrufen
+            Log::info("Processing neighbour", ['currentRound' => $currentRound, 'ideaRound' => $ideaRound, 'neighbourId' => $neighbourContributor->id]);
+
             $ideas = Idea::where('session_id', $sessionId)
-                ->where('round', $round - $i)
+                ->where('round', $ideaRound)
                 ->whereNotNull('tag')
                 ->where('contributor_id', $neighbourContributor->id)
                 ->get();
-            Log::info('round', ['round' => $round - $i]);
-            Log::info('ideas', ['ideas' => $ideas]);
 
-            // Füge das contributor_icon für jede Idee hinzu
+            Log::info("Ideas found for neighbour", ['count' => $ideas->count(), 'neighbour'=>$neighbourContributor->id]);
+
             $ideasWithIcon = $ideas->map(function ($idea) {
                 $idea->contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
                 return $idea;
             });
-            if ($ideas->isEmpty()) {
-                return response()->json(['error' => 'Keine Ideen für diese Runde gefunden'], 404);
-            }
-            Log::info('round', ['round' => $round - $i]);
-            Log::info('ideas', ['ideas' => $ideasWithIcon]);
 
             $passedIdeas = $passedIdeas->concat($ideasWithIcon);
         }
 
+        if ($passedIdeas->isEmpty()) {
+            Log::warning("No ideas found for session", ['sessionId' => $sessionId]);
+            return response()->json(['error' => 'Keine Ideen gefunden'], 404);
+        }
+
+        Log::info("Finished getPassedIdeas", ['totalIdeasPassed' => $passedIdeas->count()]);
         return response()->json($passedIdeas);
     }
     public function sendIdeasToGPT(Request $request)
@@ -69,11 +64,11 @@ class IdeaController extends Controller
         $methodName = $request->input("method_name");
         $round = $request->input("round");
         $sessionId = $request->input('session_id');
-
+        $session = Session::find($sessionId);
         if ($methodName == "6-3-5") {
             $ideas = Idea::where('session_id', $sessionId)
                 ->where('round', $round)
-                ->select('id', 'text_input', 'contributor_id')
+                ->select('id', 'text_input', 'contributor_id', 'round')
                 ->get();
             Log::info('6-3-5 Ideas', ['ideas' => $ideas->toArray()]);
         } else {
@@ -85,15 +80,18 @@ class IdeaController extends Controller
         $client = new Client();
         // Überprüfen, ob Ideen gefunden wurden
         if ($ideas->isEmpty()) {
-            return response()->json(['error' => 'Keine Ideen zum Senden gefunden'], 404);
+            Log::info('Keine ideen Fehler');
+            return response()->json(['error' => 'Keine Ideen zum Senden gefunden'], 400);
         }
         \Log::info($ideas);
         if ($ideas) {
-            $ideasFormatted = $ideas->map(function ($idea) {
+            $ideasFormatted = $ideas->map(function ($idea) use ($session) {
                 return [
+                    'target' => $session->target,
                     'contributor_id' => $idea->contributor_id,
-                    'ideaTitle' => $idea->text_input, // angenommen, text_input ist der Titel
+                    'ideaTitle' => $idea->text_input,
                     'ideaDescription' => "<ul><li>" . implode("</li><li>", explode("\n", $idea->text_input)) . "</li></ul>",
+                    'round' => $idea->round ?? null
                 ];
             })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             try {
@@ -110,7 +108,7 @@ class IdeaController extends Controller
                                 'role' => 'system',
                                 'content' => 'Du bist verantwortlich für die Verarbeitung und Filterung von Brainstorming-Ergebnissen. Dein Ziel ist die Qualität und Verständlichkeit der eingesandten Ideen sicherzustellen.
                                     Folge diesen Anweisungen strikt:
-                    
+                    Die Ideen verfolgen alle das Ziel des "target".
                        1) Erstelle einen umfassenden ideaTitle, der die Konzepte und Grundidee widerspiegelt.
                        2) Fülle ideaDescription mit mindestens 2 bis zu 3 Stichpunkten, die verschiedene Aspekte der Ideen abdecken.
                        3) Wähle einen thematischen tag, der die Kernessenz der Ideen erfasst und die Ideen zu Gruppen zuordnen lässt.
@@ -119,10 +117,11 @@ class IdeaController extends Controller
                        Beispiel:
                     {
                       "contributor_id": 1",
-                      "round": 2,
                       "ideaTitle": "Lifestyle-Marken spielen gegeneinander",
                       "ideaDescription": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
-                      "tag": "Gesellschaftskritik"
+                      "tag": "Gesellschaftskritik",
+                      "round": "2"
+                    }
                     '
                             ],
                             [
@@ -157,7 +156,8 @@ class IdeaController extends Controller
                                 'idea_description' => $idea['ideaDescription'] ?? '',
                                 'tag' => $idea['tag'] ?? '',
                                 'contributor_id' => $idea['contributor_id'] ?? 0,
-                                'session_id' => $sessionId
+                                'session_id' => $sessionId,
+                                'round' => $idea['round'] ?? 0
                             ]);
                         }
                         \Log::info('New ideas saved successfully');

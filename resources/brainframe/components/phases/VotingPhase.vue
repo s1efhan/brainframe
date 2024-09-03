@@ -2,7 +2,6 @@
   <button class="primary" @click="finishedVoting">finishedVoting</button>
   <p>{{ votingPhase }}</p>
   <p>{{ votingMethod }}</p>
-  <input type="range" min="5" max="30" v-model="ideasCount">
   <component 
   :is="votingMethods[votingMethod]" 
   v-if="personalContributor && sessionId" 
@@ -37,7 +36,7 @@ const props = defineProps({
     required: true
   },
   contributorsCount: {
-    type: [String, Number],
+    type: [String, Number, null],
     required: true
   },
   sessionId: {
@@ -49,7 +48,7 @@ const props = defineProps({
     required: true
   }
 });
-const emit = defineEmits(['switchPhase']);
+const emit = defineEmits(['finishedVoting']);
 const personalContributor = ref(props.personalContributor);
 const sessionHostId = ref(null);
 const sessionId = ref(null)
@@ -69,6 +68,7 @@ const getIdeas = () => {
     });
 }
 const finishedVoting = () =>{
+  if(personalContributor.value.id == sessionHostId.value){
   console.log("finishedVoting", votingPhase.value);
   if(votingMethod.value != 'RankingVote'){
     votingPhase.value++;
@@ -77,8 +77,9 @@ const finishedVoting = () =>{
   }
   else {
     console.log("switchPhase to closing")
-    emit('switchPhase', 'closingPhase');
+    emit('finishedVoting');
   }
+}
 }
 onMounted(() => {
   sessionId.value = props.sessionId;

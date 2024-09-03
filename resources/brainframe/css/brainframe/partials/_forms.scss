@@ -221,8 +221,12 @@ input:focus {
     .Input__container {
         display: flex;
         justify-content: center;
-        align-items:stretch;
+        align-items: center;
         width: 100%;
+
+        textarea {
+            color: var(--background);
+        }
 
         textarea::placeholder {
             color: var(--secondary);
@@ -236,19 +240,30 @@ input:focus {
         align-items: center;
         justify-content: center;
         font-size: 4em;
+
         button {
-            border:none;
-            border:solid var(--secondary);
+            border: none;
+            border: solid var(--secondary);
             background-color: var(--text);
-            border-radius:15px;
-            margin:0;
+            border-radius: 15px;
+            margin: 0;
             color: var(--secondary);
             padding: 0.5em;
-            margin:0.2em;
-            cursor:pointer;
+            margin: 0.2em;
+            cursor: pointer;
             font-size: 0.5em;
-            svg {width: 1em; height: 1em;}
-            &:hover, &:focus {  border:solid var(--accent);color: var(--accent); fill: var(--accent);}
+
+            svg {
+                width: 1em;
+                height: 1em;
+            }
+
+            &:hover,
+            &:focus {
+                border: solid var(--accent);
+                color: var(--accent);
+                fill: var(--accent);
+            }
         }
     }
 
@@ -261,6 +276,7 @@ input:focus {
     }
 
     textarea {
+        color: var(--background);
         font-size: 1em;
         display: inline-block;
         flex-basis: 70%;
@@ -664,20 +680,29 @@ input:focus {
 
 .passed-ideas__container {
     display: flex;
+    margin: 4em;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background-color: var(--text);
+    box-sizing: border-box;
+    color: var(--secondary);
+    overflow: hidden;
+    border-radius: 15px;
+    border: solid var(--secondary);
 
     h3 {
+        margin-top:2em;
         color: var(--accent);
-        border: solid var(--secondary);
-        width: 20em;
-        padding: 0.3em;
+        border: solid var(--accent);
+        padding: 0.5em;
+        border-radius:5px;
         margin-bottom: 0.3em;
+        box-sizing: border-box;
     }
 
     ul {
+        box-sizing: border-box;
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -685,49 +710,74 @@ input:focus {
         text-align: left;
 
         li {
+            box-sizing: border-box;
+            padding: 0.5em 2em;
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            svg {
+                background-color: var(--background);
+                fill: var(--accent);
+                border:solid var(--accent);
+                padding: 0.5em;
+                border-radius:15px;
+            }
         }
 
         .round-1,
         .round-7,
         .round-13 {
-            background-color: blue;
-            color: white;
+            svg{
+                fill: rgb(101, 104, 152);
+            border-color:rgb(101, 104, 152);
+            }
         }
 
         .round-2,
         .round-8,
         .round-14 {
-            background-color: red;
-            color: white;
+            svg{
+                fill: rgb(144, 101, 152);
+                border-color:rgb(144, 101, 152);
+                }
         }
 
         .round-3,
         .round-9,
         .round-15 {
-            background-color: yellow;
-            color: white;
+            svg{
+                fill: rgb(101, 152, 124);
+                border-color:rgb(101, 152, 124);;
+                }
         }
 
         .round-4,
         .round-10,
         .round-16 {
-            background-color: green;
-            color: white;
+            svg{
+                fill: rgb(152, 126, 101);;
+                border-color:rgb(152, 126, 101);
+                }
         }
 
         .round-5,
         .round-11,
         .round-17 {
-            background-color: purple;
-            color: white;
+            svg{
+                fill: rgb(152, 101, 101);
+                border-color:rgb(152, 101, 101);
+                }
         }
 
         .round-6,
         .round-12,
         .round-18 {
-            background-color: orange;
-            color: white;
+            svg{
+                fill: rgb(152, 101, 125);
+                border-color:rgb(152, 101, 125);
+                }
         }
     }
 }
@@ -789,9 +839,12 @@ input:focus {
 
 .role-select__container {
     position: relative;
-    background-color: var(--secondary);
+    background-color: var(--text);
     border-radius: 15px;
+    border: solid var(--secondary);
     cursor: pointer;
+    color: var(--accent);
+    margin: 1em;
 
     select {
         opacity: 0;
@@ -820,7 +873,7 @@ input:focus {
         }
 
         .snowflake-inner {
-            fill: var(--text);
+            fill: var(--secondary);
         }
 
         .snowflake-outer {

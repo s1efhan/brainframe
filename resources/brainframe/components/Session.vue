@@ -13,7 +13,9 @@
         <p>{{ methodName }} Methode</p>
       </div>
       <div>
-        <p v-if="personalContributor.role_name != 'Default'" class="contributor-icon"> <component :is="getIconComponent(personalContributor.icon)" /></p>
+        <p v-if="personalContributor.role_name != 'Default'" class="contributor-icon">
+          <component :is="getIconComponent(personalContributor.icon)" />
+        </p>
         <p>{{ personalContributor.role_name }}</p>
       </div>
     </div>
@@ -23,20 +25,20 @@
 
     <CollectingPhase @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
-      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
-      :personalContributor="personalContributor" />
-    <VotingPhase @switchPhase="switchPhase"
+      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
+      :sessionId="sessionId" :personalContributor="personalContributor" />
+    <VotingPhase @finishedVoting="finishedVoting"
       v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"
       :contributorsCount="contributorsCount" />
-    <ClosingPhase
+    <ClosingPhase @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
-      :sessionId="sessionId" :sessionHostId="sessionHostId" />
+      :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
   </main>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { sessionId } from '../js/eventBus.js'
 import axios from 'axios';
 import Rollenwahl from './Rollenwahl.vue';
@@ -49,15 +51,16 @@ import VotingPhase from '../components/phases/VotingPhase.vue';
 import CollectingPhase from '../components/phases/CollectingPhase.vue';
 import ClosingPhase from '../components/phases/ClosingPhase.vue';
 import IconComponents from '../components/IconComponents.vue';
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
 const props = defineProps({
   userId: {
     type: [String, Number],
     required: true
   }
 });
-const getIconComponent = (iconName) => {
-  return IconComponents[iconName] || null;
-};
+
 const updateSessionId = () => {
   sessionId.value = route.params.id;
   emit('updateSessionId', sessionId.value);
@@ -110,7 +113,7 @@ const getSessionDetails = () => {
         contributorsAmount.value = sessionDetails.value.contributors_amount;
         sessionHostId.value = sessionDetails.value.session_host;
         currentRound.value = sessionDetails.value.current_round;
-        console.log('currentRound.value',currentRound.value)
+        console.log('currentRound.value', currentRound.value)
         getMethodDetails();
         getContributors();
       })
@@ -147,53 +150,53 @@ const getMethodDetails = () => {
     });
 };
 const joinSession = () => {
-  if(sessionId.value > 0 && userId){
-  axios.post('/api/session/join', {
-    session_id: sessionId.value,
-    user_id: userId.value
-  })
-    .then(response => {
-      console.log('Server response:', response.data);
-    })
-    .catch(error => {
-      console.error('Error adding Contributor', error);
-    })
-  }
-};
-const leaveSession = () => {
-  if(sessionId.value > 0 && userId)
-  // Option 1: Using Fetch API
-  fetch('/api/session/leave', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  if (sessionId.value > 0 && userId) {
+    axios.post('/api/session/join', {
       session_id: sessionId.value,
       user_id: userId.value
-    }),
-    keepalive: true
-  }).catch(error => console.error('Error leaving session:', error));
+    })
+      .then(response => {
+      })
+      .catch(error => {
+        console.error('Error adding Contributor', error);
+      })
+  }
+};
+const finishedVoting =() =>{
+  sessionPhase.value = 'closingPhase';
+}
+const leaveSession = () => {
+  if (sessionId.value > 0 && userId)
+    // Option 1: Using Fetch API
+    fetch('/api/session/leave', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId.value,
+        user_id: userId.value
+      }),
+      keepalive: true
+    }).catch(error => console.error('Error leaving session:', error));
 };
 
 
 const handleVisibilityChange = () => {
-  if(sessionId.value > 0 && userId)
-  if (document.hidden) {
-    leaveSession();
-  } else {
-    joinSession();
-  }
+  if (sessionId.value > 0 && userId)
+    if (document.hidden) {
+      leaveSession();
+    } else {
+      joinSession();
+    }
 };
 const ping = () => {
   if (sessionId.value > 0 && userId.value) {
-    console.log('ping');
     axios.post('/api/session/ping', {
       session_id: sessionId.value,
       user_id: userId.value,
     })
       .then(response => {
-        console.log('Server response:', response.data);
       })
       .catch(error => {
         console.error('Error pinging', error);
@@ -204,7 +207,6 @@ const ping = () => {
 let pingInterval;
 
 onMounted(() => {
-  joinSession();
   updateSessionId();
   console.log('Listening on channel:', 'session.' + sessionId.value);
   Echo.channel('session.' + sessionId.value)
@@ -218,6 +220,9 @@ onMounted(() => {
     .listen('UserLeftSession', (e) => {
       contributorsCount.value = e.newContributorsCount;
     });
+  nextTick(() => {
+    joinSession();
+  });
   getSessionDetails();
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('beforeunload', leaveSession);

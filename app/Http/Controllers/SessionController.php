@@ -238,9 +238,7 @@ class SessionController extends Controller
     public function startCollecting(Request $request)
     {
         $sessionId = $request->input('session_id');
-        $session = Session::findOrFail($sessionId);
-        $round = $session->active_round + 1;
-    
+        $round =$request->input('current_round');
         event(new StartCollecting($sessionId, $round));
     
         return response()->json(['message' => 'Collecting successfully started']);
@@ -251,13 +249,13 @@ class SessionController extends Controller
     {
         $sessionId = $request->input('session_id');
         $round = $request->input('current_round');
-
-        // Aktualisiere den Wert der Spalte `active_round` für die Session
         $session = Session::find($sessionId);
         if ($session) {
             $session->active_round = $round;
+            $session->active_phase = 'collectingPhase';
             $session->save();
         }
+        // Aktualisiere den Wert der Spalte `active_round` für die Session
         // Event auslösen
         event(new StopCollecting($sessionId, $round));
 
@@ -371,9 +369,9 @@ class SessionController extends Controller
 
 
             $response = [
-                'id' => $session->id,
+                'session_id' => $session->id,
                 'target' => $session->target,
-                'topIdeas' => $topIdeas,
+                'top_ideas' => $topIdeas,
                 'ideas' => $ideas->map(function ($idea) {
                     return [
                         'id' => $idea->id,
@@ -383,16 +381,16 @@ class SessionController extends Controller
                         'contributor_icon' => $idea->contributor->role->icon,
                     ];
                 }),
-                'contributorsCount' => $contributorsCount,
-                'ideasCount' => $ideasCount,
+                'contributors_count' => $contributorsCount,
+                'ideas_count' => $ideasCount,
                 'duration' => $duration,
                 'date' => $session->created_at->toDateString(),
                 'method' => $method ? $method->name : 'N/A',
-                'inputToken' => $session->input_token,
-                'outputToken' => $session->output_token,
-                'wordCloudData' => $wordCloudData,
-                'tagList' => $tagList,
-                'nextSteps' => $nextSteps,
+                'input_token' => $session->input_token,
+                'output_token' => $session->output_token,
+                'word_cloud_data' => $wordCloudData,
+                'tag_list' => $tagList,
+                'next_steps' => $nextSteps,
             ];
 
             $sessionDetailsCache = SessionDetailsCache::create([

@@ -12,7 +12,7 @@
     <div class="idea-card__bottom">
       <button @click="undoLastDecision" class="secondary undo":disabled="!previousIdea">↺</button>
       <div class="tag">#{{ currentIdea.tag }}</div>
-      <div class="contributor__icon"> <ProfileIcon/>{{currentIdea.contributorIcon}}</div>
+      <div class="contributor__icon"> <ProfileIcon/><component :is="getIconComponent(currentIdea.contributorIcon)" /></div>
     </div>
   </div>
   <p v-else>Fertig. Du musst warten, bis der Rest fertig mit Voten ist.</p>
@@ -55,7 +55,10 @@ const props = defineProps({
     required:true
   }
 });
-
+import IconComponents from '../IconComponents.vue';
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
 const sessionId = toRef(props, 'sessionId');
 const contributorId = toRef(props, 'contributorId');
 const votingPhase = toRef(props, 'votingPhase');

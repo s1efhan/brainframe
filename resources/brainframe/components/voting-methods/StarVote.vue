@@ -16,7 +16,7 @@
       <button @click="undoLastDecision" class="secondary undo" :disabled="!previousIdea">↺</button>
       <div class="tag">#{{ currentIdea.tag }}</div>
       <div class="contributor__icon">
-        <ProfileIcon />{{ currentIdea.contributorIcon }}
+        <ProfileIcon /><component :is="getIconComponent(currentIdea.contributorIcon)" />
       </div>
     </div>
   </div>
@@ -29,6 +29,7 @@
 <script setup>
 import { ref, onMounted, toRef } from 'vue';
 import axios from 'axios';
+import IconComponents from '../IconComponents.vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
 const currentIdea = ref(null);
 const previousIdea = ref(null);
@@ -59,7 +60,9 @@ const props = defineProps({
     required: true,
   },
 });
-
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
 const sessionId = toRef(props, 'sessionId');
 const contributorId = toRef(props, 'contributorId');
 const votingPhase = toRef(props, 'votingPhase');

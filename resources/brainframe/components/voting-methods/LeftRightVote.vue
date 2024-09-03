@@ -12,7 +12,7 @@
         <button class="primary" @click="selectIdea(0)">L</button>
       </div>
       <div class="idea-card__bottom tag">
-        <p>{{currentPair[0].contributorIcon }}</p>
+        <p><component :is="getIconComponent(currentPair[0].contributorIcon)" /></p>
         <p>#{{ currentPair[0].tag }}</p>
       </div>
     </div>
@@ -39,6 +39,10 @@
 <script setup>
 import { ref, onMounted, toRef} from 'vue';
 import axios from 'axios';
+import IconComponents from '../IconComponents.vue';
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
 
 const props = defineProps({
   ideasCount: {

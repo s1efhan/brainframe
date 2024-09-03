@@ -1,6 +1,5 @@
 <template>
-<header v-if="sessionId && route.path !== '/brainframe/join'" class="headline">
-    <h1 class="headline__session-pin">
+<header v-if="sessionId && (route.path === '/brainframe/create' || route.name === 'session')" class="headline"><h1 class="headline__session-pin">
       Session-PIN
       <p @click="copyToClipboard(sessionId)">
         {{ sessionId }}

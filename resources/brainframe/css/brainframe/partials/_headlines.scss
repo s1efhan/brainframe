@@ -225,7 +225,6 @@
   flex-direction: row;
   svg {fill:var(--secondary);}
 }
-
 .timer {
   margin-left: 1em;
   display: flex;
@@ -256,7 +255,7 @@
 }
 
 .headline__sessions,
-.headline__login {
+.headline__login, .knowledge__headline {
   margin-top: 1em;
   display: inline-block;
   border: solid var(--accent)thick;
@@ -273,7 +272,13 @@
     color: var(--accent);
   }
 }
-
+.headline__session-pin{
+  p{
+    display:flex;
+    align-items:center;
+    justify-content: center;
+  }
+}
 .session_headline__details {
   display: flex;
   justify-content: space-between;

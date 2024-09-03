@@ -17,7 +17,7 @@
           </td>
           <td @click="toggleShowIdeaDetails(idea.id)" class="title">{{ idea.ideaTitle }}</td>
           <td class="contributor__tag">
-            <div class="contributor">{{idea.contributorIcon}}</div>
+            <div class="contributor"><component :is="getIconComponent(idea.contributorIcon)" /></div>
             <div class="tag">#{{ idea.tag ? idea.tag : "ideaTag" }}</div>
           </td>
           <td class="buttons">
@@ -62,7 +62,10 @@ const props = defineProps({
     required:true
   }
 });
-
+import IconComponents from '../IconComponents.vue';
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
 const activeIdeaId = ref(null);
 const ideasCount = toRef(props, 'ideasCount');
 const ideas = toRef(props, 'ideas');

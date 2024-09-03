@@ -103,19 +103,30 @@ table.sessions__table {
         svg {
             fill: white
         }
+
         .settings {
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: space-evenly;
-            cursor:pointer;
+            cursor: pointer;
+
+            button {
+                background: transparent;
+                border:none;
+                font-size: 0.8em;
+                color: var(--accent);
+            }
         }
+
         td {
             color: var(--accent);
             background-color: var(--secondary);
+
             svg {
                 fill: var(--accent)
             }
+
             .x {
                 font-size: 1.3em;
                 color: red;
@@ -147,6 +158,65 @@ svg {
 
         li {
             padding: 1em;
+        }
+    }
+}
+
+.knowledge__container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin: 1em;
+    box-sizing: border-box;
+
+    div {
+        margin: 0.25em;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
+
+        h2 {
+            box-sizing: border-box;
+            display: flex;
+            border-color: var(--secondary);
+            justify-content: space-between;
+            align-items: center;
+
+            :nth-child(2) {
+                color: var(--secondary);
+            }
+
+            div {
+                box-sizing: border-box;
+                width: fit-content;
+                display: inline-block;
+                margin: 0;
+                padding: 0;
+            }
+        }
+
+
+
+
+        a {
+            color: var(--accent);
+        }
+
+        ul {
+            box-sizing: border-box;
+            border: solid var(--secondary);
+            width: 100%;
+
+            li {
+                margin: 0.25em 1.5em;
+                color: var(--accent);
+                padding: 0.25em;
+                border-collapse: collapse;
+            }
         }
     }
 }
