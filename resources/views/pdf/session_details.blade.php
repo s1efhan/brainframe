@@ -14,37 +14,15 @@
             Session: {{ $sessionDetails['session_id'] }} - {{ $sessionDetails['target'] }}
         </div>
         <h1 class="headline__join">
-            <div class="headline__join__icon">
-                <svg width="100%" height="100%" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg"
-                    xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/"
-                    style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-                    <g transform="matrix(1,0,0,1,-14.4443,-18.9271)">
-                        <rect x="308.03" y="308.955" width="175.573" height="175.573" />
-                    </g>
-                    <g transform="matrix(1,0,0,1,-211.467,29.3211)">
-                        <circle cx="354.726" cy="353.379" r="99.07" />
-                    </g>
-                    <g transform="matrix(1.38209,0,0,1.2008,-28.3493,-23.4736)">
-                        <path d="M125.267,61.946L199.68,210.772L50.854,210.772L125.267,61.946Z" />
-                    </g>
-                    <g transform="matrix(1.13862,0,0,1.13862,-109.533,40.5074)">
-                        <path
-                            d="M429.686,-25.008L453.309,47.697L529.756,47.697L467.909,92.631L491.532,165.336L429.686,120.402L367.839,165.336L391.463,92.631L329.616,47.697L406.063,47.697L429.686,-25.008Z"
-                            style="fill:rgb(51,210,203);" />
-                    </g>
-                </svg>
-            </div>
-            <div class="headline__join__text">
-                <p class="headline__join__brain">Brain</p>
-                <p class="headline__join__frame">Frame</p>
-            </div>
+            <p class="headline__join__brain">Brain</p>
+            <p class="headline__join__frame">Frame</p>
         </h1>
     </header>
     <div class="collecting-pdf">
         <table class="session-data">
             <thead>
                 <tr>
-                <th>Methode</th>
+                    <th>Methode</th>
                     <th>Teilnehmer</th>
                     <th>Ideen</th>
                     <th>Token</th>
@@ -54,11 +32,12 @@
             </thead>
             <tbody>
                 <tr>
-                <td class="center">{{ $sessionDetails['method'] }}</td>
+                    <td class="center">{{ $sessionDetails['method'] }}</td>
                     <td class="center">{{ $sessionDetails['contributors_count'] }}</td>
                     <td class="center">{{ $sessionDetails['ideas_count'] }}</td>
                     <td class="center">
-                        {{ $sessionDetails['input_token'] }} (input) <br>{{ $sessionDetails['output_token'] }} (output) <br> =>
+                        {{ $sessionDetails['input_token'] }} (input) <br>{{ $sessionDetails['output_token'] }} (output)
+                        <br> =>
                         {{ number_format((($sessionDetails['input_token'] * 0.000015 + $sessionDetails['output_token'] * 0.000060) * 100), 2) }}
                         ct
                     </td>
@@ -160,193 +139,187 @@
 
 <style>
     body {
-    margin: 1cm;
-}
+        margin: 1cm;
+    }
 
-.session-data {
-    margin-top: 2vh;
-    width: 100%;
-}
+    .session-data {
+        margin-top: 2vh;
+        width: 100%;
+    }
 
-.collecting-process {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+    header h1 p {
+        display: inline;
+        margin: 0;
+        padding: 0;
+        font-size: 0.8em;
+    }
+header div, header h1 {display:inline; margin: 0.5em;}
+header {margin-bottom: 4em;}
+    h2 {
+        text-align: center;
+        border: solid;
+        border-radius: 5px;
+        padding: 0.25em 1em;
+        width: 25vw;
+        margin-left: auto;
+        margin-right: auto;
+    }
 
-h2 {
-    text-align: center;
-    border: solid;
-    border-radius: 5px;
-    padding: 0.25em 1em;
-    width: 25vw;
-}
+    header div,
+    .timeline div,
+    .word-cluster,
+    .tags-list,
+    .next-steps {
+        border: solid;
+        border-radius: 5px;
+        padding: 1em;
+    }
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+    .headline__join__brain {
+        color: #33d2ca;
+    }
 
-header div, .timeline div, .word-cluster, .tags-list, .next-steps {
-    border: solid;
-    border-radius: 5px;
-    padding: 1em;
-}
+    .timeline {
+        width: 100%;
+        display: flex;
+        justify-content: space-evenly;
+        flex-wrap: wrap;
+        align-items: stretch;
+    }
 
-.headline__join {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-weight: bold;
-    font-family: 'Nohemi-Bold', sans-serif;
-    font-size: 1em;
-}
+    .timeline div {
+        margin: 0.4em;
+        display: flex;
+        flex-direction: column;
+        min-width: 25%;
+        align-items: center;
+        justify-content: start;
+        padding: 0.25em;
+    }
 
-.headline__join div {
-    border: none;
-    padding: 0;
-}
+    .timeline .round {
+        border: solid 2px;
+        border-radius: 50%;
+        text-align: center;
+        width: 2em;
+        height: 2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1em;
+    }
 
-.headline__join__icon {
-    width: 10vw;
-}
+    .timeline ul {
+        display: flex;
+        flex-wrap: wrap;
+        list-style-type: none;
+        margin: 0;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25em;
+        max-width: 6em;
+    }
 
-.headline__join__text {
-    margin-top: 0.5em;
-    display: flex;
-}
+    .timeline li {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-.headline__join__brain {
-    color: #33d2ca;
-}
+    .timeline li svg {
+        font-size: 0.4em;
+        padding: 1em;
+        width: 3em;
+        height: 3em;
+    }
 
-.headline__join p {
-    margin: 0;
-}
+    .collecting-pdf table {
+        border-collapse: collapse;
+        font-size: 0.9em;
+        width: 100%;
+    }
 
-.timeline {
-    width: 100%;
-    display: flex;
-    justify-content: space-evenly;
-    flex-wrap: wrap;
-    align-items: stretch;
-}
+    .collecting-pdf th,
+    .collecting-pdf td {
+        padding: 0.5em 0.8em;
+        border-bottom: solid;
+        word-wrap: break-word;
+    }
 
-.timeline div {
-    margin: 0.4em;
-    display: flex;
-    flex-direction: column;
-    min-width: 25%;
-    align-items: center;
-    justify-content: start;
-    padding: 0.25em;
-}
+    .collecting-pdf th {
+        border-top: solid;
+    }
 
-.timeline .round {
-    border: solid 2px;
-    border-radius: 50%;
-    text-align: center;
-    width: 2em;
-    height: 2em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1em;
-}
+    .collecting-pdf .center {
+        text-align: center;
+    }
 
-.timeline ul {
-    display: flex;
-    flex-wrap: wrap;
-    list-style-type: none;
-    margin: 0;
-    align-items: center;
-    justify-content: center;
-    padding: 0.25em;
-    max-width: 6em;
-}
+    .collecting-pdf .top-ideas table {
+        table-layout: fixed;
+    }
 
-.timeline li {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+    .collecting-pdf .top-ideas th:nth-child(1),
+    .collecting-pdf .top-ideas td:nth-child(1) {
+        width: 10%;
+    }
 
-.timeline li svg {
-    font-size: 0.4em;
-    padding: 1em;
-    width: 3em;
-    height: 3em;
-}
+    .collecting-pdf .top-ideas th:nth-child(2),
+    .collecting-pdf .top-ideas td:nth-child(2) {
+        width: 25%;
+    }
 
-.collecting-pdf table {
-    border-collapse: collapse;
-    font-size: 0.9em;
-    width: 100%;
-}
+    .collecting-pdf .top-ideas th:nth-child(3),
+    .collecting-pdf .top-ideas td:nth-child(3) {
+        width: 40%;
+    }
 
-.collecting-pdf th, .collecting-pdf td {
-    padding: 0.5em 0.8em;
-    border-bottom: solid;
-    word-wrap: break-word;
-}
+    .collecting-pdf .top-ideas th:nth-child(4),
+    .collecting-pdf .top-ideas td:nth-child(4) {
+        width: 10%;
+    }
 
-.collecting-pdf th {
-    border-top: solid;
-}
+    .collecting-pdf .top-ideas th:nth-child(5),
+    .collecting-pdf .top-ideas td:nth-child(5) {
+        width: 15%;
+    }
 
-.collecting-pdf .center {
-    text-align: center;
-}
+    .top-ideas {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 
-.collecting-pdf .top-ideas table {
-    table-layout: fixed;
-}
+    .top-ideas svg {
+        fill: var(--secondary);
+    }
 
-.collecting-pdf .top-ideas th:nth-child(1), 
-.collecting-pdf .top-ideas td:nth-child(1) { width: 10%; }
-.collecting-pdf .top-ideas th:nth-child(2), 
-.collecting-pdf .top-ideas td:nth-child(2) { width: 25%; }
-.collecting-pdf .top-ideas th:nth-child(3), 
-.collecting-pdf .top-ideas td:nth-child(3) { width: 40%; }
-.collecting-pdf .top-ideas th:nth-child(4), 
-.collecting-pdf .top-ideas td:nth-child(4) { width: 10%; }
-.collecting-pdf .top-ideas th:nth-child(5), 
-.collecting-pdf .top-ideas td:nth-child(5) { width: 15%; }
+    .word-cluster,
+    .tags-list {
+        margin-top: 2vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
 
-.top-ideas {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+    .word-cluster ul,
+    .tags-list ul {
+        width: 100%;
+        list-style-type: none;
+        padding: 0;
+        margin: 0 0 2vh;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 
-.top-ideas svg {
-    fill: var(--secondary);
-}
+    .word-cluster li,
+    .tags-list li {
+        margin: 0.5rem;
+        display: inline-block;
+    }
 
-.word-cluster, .tags-list {
-    margin-top: 2vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.word-cluster ul, .tags-list ul {
-    width: 100%;
-    list-style-type: none;
-    padding: 0;
-    margin: 0 0 2vh;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.word-cluster li, .tags-list li {
-    margin: 0.5rem;
-    display: inline-block;
-}
-.word-cluster li {
+    .word-cluster li {
         margin: 0.5rem;
         display: inline-block;
     }
@@ -439,60 +412,63 @@ header div, .timeline div, .word-cluster, .tags-list, .next-steps {
         padding: 2em;
     }
 
-.next-steps {
-    margin: 2vh 0;
-}
+    .next-steps {
+        margin: 2vh 0;
+    }
 
-.next-steps h2, .tags-list h2, .word-cluster h2 {
-    width: 100%;
-    border: none;
-    border-bottom: solid;
-    box-sizing: border-box;
-    padding: 0.25em;
-}
+    .next-steps h2,
+    .tags-list h2,
+    .word-cluster h2 {
+        width: 100%;
+        border: none;
+        border-bottom: solid;
+        box-sizing: border-box;
+        padding: 0.25em;
+    }
 
-.next-steps ul {
-    padding: 1.5em;
-}
+    .next-steps ul {
+        padding: 1.5em;
+    }
 
-.next-steps li {
-    margin-left: 1em;
-    margin-bottom: 0.3em;
-}
+    .next-steps li {
+        margin-left: 1em;
+        margin-bottom: 0.3em;
+    }
 
-.newSession__buttons,
-.summary__buttons {
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
-}
+    .newSession__buttons,
+    .summary__buttons {
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+    }
 
-.newSession__buttons button,
-.summary__buttons button {
-    border-radius: 15px;
-    margin: 1vh;
-    font-size: 1em;
-    width: 50%;
-    padding: 0.5em;
-}
+    .newSession__buttons button,
+    .summary__buttons button {
+        border-radius: 15px;
+        margin: 1vh;
+        font-size: 1em;
+        width: 50%;
+        padding: 0.5em;
+    }
 
-.newSession__buttons .accent,
-.summary__buttons .accent,
-.newSession__buttons .secondary,
-.summary__buttons .secondary {
-    border: solid;
-}
+    .newSession__buttons .accent,
+    .summary__buttons .accent,
+    .newSession__buttons .secondary,
+    .summary__buttons .secondary {
+        border: solid;
+    }
 
-.newSession__buttons .primary,
-.summary__buttons .primary {
-    border: solid 4px;
-}
+    .newSession__buttons .primary,
+    .summary__buttons .primary {
+        border: solid 4px;
+    }
 
-.newSession__buttons .primary:hover,
-.summary__buttons .primary:hover {
-    color: white;
-}
-.timeline div .round {
+    .newSession__buttons .primary:hover,
+    .summary__buttons .primary:hover {
+        color: white;
+    }
+
+    .timeline div .round {
         border: solid 2px;
         border-radius: 50%;
         text-align: center;

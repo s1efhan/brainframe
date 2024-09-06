@@ -92,10 +92,10 @@
       </div>
     </div>
 
-    <div class="word-cluster" v-if="sessionDetails.word_cloud_data.content">
+    <div class="word-cluster" v-if="sessionDetails.word_cloud_data">
       <h2>Wort-Cluster</h2>
       <ul>
-        <li :class="'count-' + item.count" v-for="item in sessionDetails.word_cloud_data.content" :key="item.word">
+        <li :class="'count-' + item.count" v-for="item in sessionDetails.word_cloud_data" :key="item.word">
           {{ item.word }}
         </li>
       </ul>
@@ -114,9 +114,9 @@
       <button class="secondary" @click="sendSummary">Zusammenfassung senden</button>
       <button class="accent" @click="downloadPDF">PDF herunterladen</button>
     </div>
-    <div class="next-steps" v-if="sessionDetails.next_steps.content">
+    <div class="next-steps" v-if="sessionDetails.next_steps">
       <h2>Nächste Schritte und Empfehlungen</h2>
-      <p v-html="sessionDetails.next_steps.content"></p>
+      <p v-html="sessionDetails.next_steps"></p>
     </div>
     <div class="newSession__buttons">
       <button class="accent" @click="router.push('/brainframe/create')">Neue Session Starten</button>
@@ -185,12 +185,13 @@ const getSessionDetails = () => {
     })
     .finally(() => {
       isLoading.value = false;
+      console.log('getSessionDetails', sessionDetails.value);
       emit('switchPhase', 'closingPhase');
     });
 };
 
 const downloadPDF = () => {
-  const format = 'pdf'; // Ändern Sie dies zu 'pdf' für den finalen Download
+  const format = 'html'; // Ändern Sie dies zu 'pdf' für den finalen Download
   const url = `/api/${props.sessionId}/pdf?format=${format}`;
   
   if (format === 'html') {

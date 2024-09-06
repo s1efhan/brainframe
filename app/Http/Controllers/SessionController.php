@@ -243,9 +243,9 @@ class SessionController extends Controller
     public function startCollecting(Request $request)
     {
         $sessionId = $request->input('session_id');
-        $round =$request->input('current_round');
+        $round = $request->input('current_round');
         event(new StartCollecting($sessionId, $round));
-    
+
         return response()->json(['message' => 'Collecting successfully started']);
     }
 
@@ -346,15 +346,20 @@ class SessionController extends Controller
                 'topIdeas' => $topIdeas
             ]);
 
-            $ideas = Idea::where('session_id', $session->id)->get();
-            $wordCloudData = $this->generateWordCloud($ideas, $sessionId);
+            $ideas = Idea::where('session_id', $session->id)
+                ->whereNotNull('tag')
+                ->get();
+
             $tagList = Idea::where('session_id', $session->id)
                 ->whereNotNull('tag')
                 ->groupBy('tag')
                 ->selectRaw('tag, COUNT(*) as count')
                 ->get();
 
-            $nextSteps = $this->generateNextSteps($topIdeas, $sessionId);
+            $WordCloudandNextSteps = $this->generateWordCloudandNextSteps($topIdeas, $ideas, $sessionId);
+            $wordCloudData = $WordCloudandNextSteps['wordCloudData'] ?? [];
+            $nextSteps = $WordCloudandNextSteps['nextSteps'] ?? '';
+            $session = Session::find($sessionId)->fresh();
             $firstIdeaTime = Carbon::parse(Idea::where('session_id', $session->id)->min('created_at'));
             $lastVoteTime = Carbon::parse(Vote::whereIn('idea_id', $ideas->pluck('id'))->max('updated_at'));
             $duration = abs($lastVoteTime->diffInMinutes($firstIdeaTime));
@@ -362,6 +367,7 @@ class SessionController extends Controller
             $method = Method::where('id', $session->method_id)->first();
             $contributorsCount = Contributor::where('session_id', $sessionId)->count();
             $ideasCount = Idea::where('session_id', $sessionId)
+                ->whereNull('tag')
                 ->count();
             Log::info('contributorsCount: ' . $contributorsCount);
             Log::info('ideasCount: ' . $ideasCount);
@@ -391,8 +397,8 @@ class SessionController extends Controller
                 'duration' => $duration,
                 'date' => $session->created_at->toDateString(),
                 'method' => $method ? $method->name : 'N/A',
-                'input_token' => $session->input_token,
-                'output_token' => $session->output_token,
+                'input_token' => $session->input_token ?? 0,
+                'output_token' => $session->output_token ?? 0,
                 'word_cloud_data' => $wordCloudData,
                 'tag_list' => $tagList,
                 'next_steps' => $nextSteps,
@@ -428,10 +434,11 @@ class SessionController extends Controller
             return response()->json($cachedDetails);
         }
     }
-    private function generateWordCloud($ideas, $sessionId)
+    private function generateWordCloudandNextSteps($topIdeas, $ideas, $sessionId)
     {
         $client = new Client();
         $apiKey = env('OPENAI_API_KEY');
+        Log::info('Logging top ideas and ideas', ['topideas' => $topIdeas, 'ideas' => $ideas]);
 
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
@@ -444,34 +451,49 @@ class SessionController extends Controller
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'Generiere eine Wortcloud basierend auf den folgenden Ideen. Antworte in JSON.
+                            'content' => 'Generiere eine Wortcloud basierend auf den folgenden Ideen. Antworte in JSON. 
+                            Danach sollst du die next Steps für die Gruppe nennen nach dem Ideen Sammeln und Auswerten der Voting Ergebnosse. Maximal 3, antworte kurz im imperativ plural und in einer HTML Liste
                                 Beispiel:
-                    "{
+                    "wordcloud": {
                       "word": "Kinderbücher",
                       "count": "2",
                       },
                       {
                       "word": "Baum",
                       "count": "1",
-                      }
+                      }, 
+                      "nextSteps": {
+                      "html": "<ul>
+<li>Ziele & Aufgaben definieren: Konkrete Ergebnisse festlegen, Verantwortlichkeiten zuweisen.</li>
+<li>Zeitplan & Ressourcen planen: Meilensteine setzen, benötigte Mittel zuordnen.</li>
+<li>Umsetzung & Kontrolle: Start der Implementierung, regelmäßige Fortschrittsprüfung.</li>
+</ul>"
+                        }
                       "
                                 '
                         ],
                         [
                             'role' => 'user',
-                            'content' => $ideas->toJson(),
+                            'content' => 'alle Ideen: ' . $ideas->toJson() .
+                                'Top 5 Ideen: ' . $topIdeas->toJson()
                         ],
                     ],
                     'temperature' => 0.3,
                 ],
             ]);
-
             $responseData = json_decode($response->getBody(), true);
             $content = $responseData['choices'][0]['message']['content'];
-            // Entferne mögliche JSON-Codeblock-Markierungen
-            $content = preg_replace('/```json\s*|\s*```/', '', $content);
-            $content = json_decode($content, true);
-            // Extract the tokens
+            $content = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $content);
+            $decodedContent = json_decode(trim($content), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('JSON decoding error: ' . json_last_error_msg());
+                $wordCloudData = [];
+                $nextSteps = '';
+            } else {
+                $wordCloudData = $decodedContent['wordcloud'] ?? [];
+                $nextSteps = $decodedContent['nextSteps']['html'] ?? '';
+            }
             $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
             $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
 
@@ -483,73 +505,14 @@ class SessionController extends Controller
                 $session->save();
             }
 
-            // Log the next steps content and tokens
-            $wordCloud = [
-                'content' => $content,
-                'input_token' => $inputToken,
-                'output_token' => $outputToken
+            Log::info($wordCloudData);
+            Log::info($nextSteps);
+            return [
+                'wordCloudData' => $wordCloudData,
+                'nextSteps' => $nextSteps
             ];
-            Log::info(json_encode($wordCloud));
-
-            return $wordCloud;
         } catch (\Exception $e) {
             Log::error('Error generating word cloud: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    private function generateNextSteps($topIdeas, $sessionId)
-    {
-        $client = new Client();
-        $apiKey = env('OPENAI_API_KEY');
-
-        try {
-            $response = $client->post('https://api.openai.com/v1/chat/completions', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'model' => "gpt-4o-mini",
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'Du sollst die next Steps für die Gruppe nennen. Maximal 3, antworte kurz und in einer HTML Liste'
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => $topIdeas->toJson(),
-                        ],
-                    ],
-                    'temperature' => 0.3,
-                ],
-            ]);
-
-            $responseData = json_decode($response->getBody(), true);
-
-            // Extract the tokens
-            $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
-            $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
-
-            // Update the database with the new token counts
-            $session = Session::find($sessionId);
-            if ($session) {
-                $session->input_token += $inputToken;
-                $session->output_token += $outputToken;
-                $session->save();
-            }
-
-            // Log the next steps content and tokens
-            $nextSteps = [
-                'content' => $responseData['choices'][0]['message']['content'] ?? 'N/A',
-                'input_token' => $inputToken,
-                'output_token' => $outputToken
-            ];
-            Log::info(json_encode($nextSteps));
-
-            return $nextSteps;
-        } catch (\Exception $e) {
-            Log::error('Error generating next steps: ' . $e->getMessage());
             return null;
         }
     }

@@ -1,73 +1,74 @@
 nav {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    background-color: var(--text);
-    z-index: 1000;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: var(--text);
+  z-index: 1000;
+  padding: 0;
+  margin: 0;
+  ul {
+    display: flex;
+    justify-content: space-around;
     padding: 0;
     margin: 0;
-  
-    ul {
-      display: flex;
-      justify-content: space-around;
-      padding: 0;
+    list-style: none;
+    width: 100%;
+
+    li {
+      flex: 1;
+      text-align: center;
+      padding: 1.5rem 0;
       margin: 0;
-      list-style: none;
-      width: 100%;
-  
-      li {
-        flex: 1;
-        text-align: center;
-        padding: 1.5rem 0;
-        margin: 0;
-  
-        // Hover-Effekt für Text und Icons
-        &:hover {
-          a {
-            color: white;
-  
-            svg,
-            img {
-              fill: white;
-            }
+      .black {
+        fill: black;
+      }
+
+      // Hover-Effekt für Text und Icons
+      &:hover {
+        a {
+          color: white;
+
+          svg,
+          img {
+            fill: white;
           }
         }
-  
-        a {
-          text-decoration: none;
-          color: var(--secondary);
+      }
+
+      a {
+        text-decoration: none;
+        color: var(--secondary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        padding-top: 0.5em;
+
+        div {
           display: flex;
-          flex-direction: column;
+          justify-content: center;
           align-items: center;
-          justify-content: space-between;
-          height: 100%;
           padding: 0;
           margin: 0;
-          padding-top:0.5em;
-  
-          div {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-            margin: 0;
-          }
-  
-          svg {
-            width: 5vw;
-            height: auto;
-            fill: var(--secondary);
-            margin: 0;
-          }
-  
-          img {
-            width: 6vw;
-            height: auto;
-            fill: var(--secondary);
-            margin: 0;
-          }
+        }
+
+        svg {
+          width: 5vw;
+          height: auto;
+          fill: var(--secondary);
+          margin: 0;
+        }
+
+        img {
+          width: 6vw;
+          height: auto;
+          fill: var(--secondary);
+          margin: 0;
         }
       }
     }
   }
-  
+}
