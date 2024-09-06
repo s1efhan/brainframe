@@ -5,7 +5,7 @@
     </div>
   </div>
   <div v-else class="collecting-pdf">
-    <table class="session-data">
+    <table class="session-data" id="first-table">
       <thead>
         <tr>
           <th>Ziel</th>
@@ -37,10 +37,10 @@
         <tr>
           <td class="center">{{ sessionDetails.method }}</td>
           <td class="center"><a :href="'https://stefan-theissen.de/brainframe/' + sessionDetails.session_id">
-            {{ sessionDetails.session_id }}
+              {{ sessionDetails.session_id }}
             </a>
           </td>
-          <td >
+          <td>
             {{ sessionDetails.input_token }} (input) {{ sessionDetails.output_token }} (output) =>
             {{ calculateCost }} ct
           </td>
@@ -71,7 +71,7 @@
             <td class="center">
               <component :is="getIconComponent(idea.contributor_icon)" />
             </td>
-           <!-- <td class="center">#{{ idea.tag }}</td>-->
+            <!-- <td class="center">#{{ idea.tag }}</td>-->
             <td class="center">{{ parseFloat(idea.avg_vote_value).toFixed(1) }} /5.0</td>
           </tr>
         </tbody>
@@ -111,18 +111,33 @@
       </ul>
     </div>
     <div class="summary__buttons">
-      <button class="secondary" @click="sendSummary">Zusammenfassung senden</button>
+      <button class="secondary" @click="toggleshowSendContainer">Zusammenfassung senden</button>
       <button class="accent" @click="downloadPDF">PDF herunterladen</button>
     </div>
+    <div v-if="showSendContainer" class="send__container">
+      <div class="email-list">
+        <div v-for="email in validatedEmails" :key="email" class="validated-email">
+          {{ email }} <span @click="removeEmail(email)" class="remove-email">x</span>
+        </div>
+      </div>
+      <div class="email-input__container">
+        <input type="email" v-model="newEmail" @keyup.enter="addEmail" @blur="addEmail"
+          placeholder="E-Mail-Adresse eingeben">
+        <button class="secondary" @click="sendSummary">PDF Senden</button>
+      </div>
+    </div>
+    <div v-if="errorMsg" class="error">{{ errorMsg }}</div>
     <div class="next-steps" v-if="sessionDetails.next_steps">
       <h2>Nächste Schritte und Empfehlungen</h2>
       <p v-html="sessionDetails.next_steps"></p>
     </div>
+
     <div class="newSession__buttons">
       <button class="accent" @click="router.push('/brainframe/create')">Neue Session Starten</button>
       <button class="primary" @click="router.push('/brainframe/profile')">Account anlegen & Session speichern!</button>
     </div>
   </div>
+
 </template>
 
 <script setup>
@@ -132,7 +147,7 @@ import { useRoute } from 'vue-router';
 import 'ldrs/dotPulse';
 const route = useRoute();
 const sessionDetails = ref(null);
-
+const showSendContainer = ref(false);
 const props = defineProps({
   sessionHostId: {
     type: [String, Number],
@@ -147,10 +162,65 @@ const props = defineProps({
     required: true
   }
 });
+const newEmail = ref('');
+const validatedEmails = ref([]);
+const contributorEmailAddresses = ref(['']);
+const addEmail = () => {
+  const email = newEmail.value.trim();
+  if (isValidEmail(email) && !validatedEmails.value.includes(email)) {
+    validatedEmails.value.push(email);
+    newEmail.value = '';
+  }
+};
+
+const validateEmail = (index, event) => {
+  const email = contributorEmailAddresses.value[index];
+  if (isValidEmail(email) && (event.key === 'Enter' || event.type === 'blur')) {
+    if (!validatedEmails.value.includes(email)) {
+      validatedEmails.value.push(email);
+    }
+    contributorEmailAddresses.value[index] = '';
+    if (index === contributorEmailAddresses.value.length - 1) {
+      contributorEmailAddresses.value.push('');
+    }
+  }
+};
+
 const personalContributor = ref(null);
 import IconComponents from '../IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
+};
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const toggleshowSendContainer = () => {
+  showSendContainer.value = !showSendContainer.value;
+  errorMsg.value = null;
+  if (showSendContainer.value && sessionDetails.value && sessionDetails.value.contributor_emails) {
+    sessionDetails.value.contributor_emails.forEach(email => {
+      if (isValidEmail(email) && !validatedEmails.value.includes(email)) {
+        validatedEmails.value.push(email);
+      }
+    });
+  }
+};
+
+const removeEmail = (email) => {
+  validatedEmails.value = validatedEmails.value.filter(e => e !== email);
+};
+
+const errorMsg = ref(null);
+const sendSummary = () => {
+  axios.post(`/api/session/summary/send`, {
+    contributor_emails: validatedEmails.value,
+    session_id: props.sessionId
+  })
+    .then(response => {
+      showSendContainer.value = !showSendContainer.value;
+      errorMsg.value = "Zusammenfassung Erfolgreich versendet"
+    }).catch(error => {
+      console.error('Error sending the summary', error);
+    });
 };
 const groupedIdeasByRound = computed(() => {
   if (!sessionDetails.value || !sessionDetails.value.ideas) return {};
@@ -191,9 +261,9 @@ const getSessionDetails = () => {
 };
 
 const downloadPDF = () => {
-  const format = 'html'; // Ändern Sie dies zu 'pdf' für den finalen Download
+  const format = 'pdf'; // Ändern Sie dies zu 'pdf' für den finalen Download
   const url = `/api/${props.sessionId}/pdf?format=${format}`;
-  
+
   if (format === 'html') {
     // Öffnen Sie die HTML-Vorschau in einem neuen Tab
     window.open(url, '_blank');
@@ -211,17 +281,6 @@ const downloadPDF = () => {
         console.error('Error Downloading PDF', error);
       });
   }
-};
-
-const sendSummary = () => {
-  axios.post(`/api/${props.sessionId}/summary`)
-    .then(() => {
-      alert('Zusammenfassung erfolgreich an alle Teilnehmer gesendet!');
-    })
-    .catch(error => {
-      console.error('Error sending Summary to Contributors', error);
-      alert('Fehler beim Senden der Zusammenfassung. Bitte versuchen Sie es erneut.');
-    });
 };
 
 const formatDate = (dateString) => {

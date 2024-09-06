@@ -303,7 +303,6 @@ class SessionController extends Controller
         $cachedDetails = SessionDetailsCache::where('session_id', $sessionId)->first();
         if (!$cachedDetails) {
             $session = Session::findOrFail($sessionId);
-
             // Schritt 1: Berechne die durchschnittliche Bewertung für jede Idee und beschränke auf die Top 3
             $topVotes = Vote::where('session_id', $session->id)
                 ->where('voting_phase', Vote::where('session_id', $session->id)
@@ -378,6 +377,13 @@ class SessionController extends Controller
             Log::info('outputToken: ' . ($session->output_token ?? 'N/A'));
             Log::info('tagList: ' . json_encode($tagList, JSON_PRETTY_PRINT));
 
+            $contributor_emails = User::select('users.email')
+                ->join('bf_contributors', 'users.id', '=', 'bf_contributors.user_id')
+                ->where('bf_contributors.session_id', $sessionId)
+                ->whereNotNull('users.email')
+                ->where('users.email', '!=', '')
+                ->get()
+                ->pluck('email');
 
             $response = [
                 'session_id' => $session->id,
@@ -401,6 +407,7 @@ class SessionController extends Controller
                 'output_token' => $session->output_token ?? 0,
                 'word_cloud_data' => $wordCloudData,
                 'tag_list' => $tagList,
+                'contributor_emails' => $contributor_emails,
                 'next_steps' => $nextSteps,
             ];
 
@@ -426,6 +433,7 @@ class SessionController extends Controller
                 'output_token' => $session->output_token,
                 'word_cloud_data' => $wordCloudData,
                 'tag_list' => $tagList,
+                'contributor_emails' => $contributor_emails,
                 'next_steps' => $nextSteps,
             ]);
 
@@ -484,18 +492,19 @@ class SessionController extends Controller
             $responseData = json_decode($response->getBody(), true);
             $content = $responseData['choices'][0]['message']['content'];
             $content = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $content);
-            $decodedContent = json_decode(trim($content), true);
+            Log::info("Content: " . $content);
 
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON decoding error: ' . json_last_error_msg());
-                $wordCloudData = [];
-                $nextSteps = '';
-            } else {
-                $wordCloudData = $decodedContent['wordcloud'] ?? [];
-                $nextSteps = $decodedContent['nextSteps']['html'] ?? '';
-            }
+            // Decode the JSON string into an associative array
+            $decodedContent = json_decode($content, true);
+
+            // Now use $decodedContent instead of $content
+            $wordCloudData = $decodedContent['wordcloud'] ?? [];
+            $nextSteps = $decodedContent['nextSteps']['html'] ?? '';
             $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
             $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
+
+            Log::info("wordCloudData: " . json_encode($wordCloudData));
+            Log::info("nextSteps: " . $nextSteps);
 
             // Update the database with the new token counts
             $session = Session::find($sessionId);
@@ -516,7 +525,45 @@ class SessionController extends Controller
             return null;
         }
     }
-
+    public function sendPDF(Request $request)
+    {
+        $contributorEmails = $request->input('contributor_emails', []);
+        if (empty($contributorEmails)) {
+            return response()->json(['error' => 'Keine E-Mail-Adressen angegeben.'], 400);
+        }
+        $sessionId = $request->input('session_id');
+        $sessionDetails = SessionDetailsCache::findOrFail($sessionId);
+        $ideas = $sessionDetails->ideas;
+        
+        $groupedIdeasByRound = collect($ideas)->groupBy('round')->toArray();
+    
+        $html = view('pdf.session_details', [
+            'sessionDetails' => $sessionDetails,
+            'groupedIdeasByRound' => $groupedIdeasByRound
+        ])->render();
+    
+        $pdf = PDF::loadHTML($html);
+        $filename = ($sessionDetails->target ?? 'session_details') . '.pdf';
+    
+        $emailMessage = "Hallo,<br><br>
+            Du hast erfolgreich an der Ideen-Session \"{$sessionDetails->target}\" teilgenommen.<br><br>
+            Hier ist dein Abschluss PDF mit allen wichtigen Informationen über die Session.<br><br>
+            Viele Grüße<br>
+            BrainFrame";
+    
+        foreach ($contributorEmails as $email) {
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Mail::send([], [], function ($message) use ($email, $emailMessage, $pdf, $filename) {
+                    $message->to($email)
+                        ->subject("BrainFrame - Abschluss PDF zur Ideen-Session")
+                        ->html($emailMessage)
+                        ->attachData($pdf->output(), $filename);
+                });
+            }
+        }
+    
+        return response()->json(['info' => 'Emails erfolgreich versendet.'], 200);
+    }
     public function deleteSession(Request $request)
     {
         $sessionId = $request->input('session_id');

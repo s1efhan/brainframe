@@ -13,13 +13,15 @@
         <div>
             Session: {{ $sessionDetails['session_id'] }} - {{ $sessionDetails['target'] }}
         </div>
-        <h1 class="headline__join">
-            <p class="headline__join__brain">Brain</p>
-            <p class="headline__join__frame">Frame</p>
-        </h1>
+        <div><strong class="headline__join__brain">Brain</strong><strong>Frame</strong></div>
     </header>
+    <div class="placeholder"></div>
     <div class="collecting-pdf">
+        <div class="session-data">
+            <h2>Session Infos</h2>
+        </div>
         <table class="session-data">
+
             <thead>
                 <tr>
                     <th>Methode</th>
@@ -65,10 +67,14 @@
                     <tbody>
                         @foreach(array_reverse($sessionDetails['top_ideas']) as $index => $idea)
                             <tr>
-                                <td class="center">{{ $index + 1 }}</td>
+                                <td class="center">
+                                    <div class="placement">{{ $index + 1 }}</div>
+                                </td>
                                 <td>{{ $idea['idea_title'] }}</td>
                                 <td>{!! $idea['idea_description'] !!}</td>
-                                <td class="center">{{ number_format($idea['avg_vote_value'], 1) }} /5.0</td>
+                                <td class="center">
+                                    <div class="voting-value">{{ number_format($idea['avg_vote_value'], 1) }} /5.0 </div>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -80,20 +86,11 @@
             <h2>{{ $sessionDetails['method'] }}</h2>
             <div class="timeline">
                 @foreach($groupedIdeasByRound as $round => $groupedIdeas)
-                    <div class="tag">
+                    <div>
                         <div class="round">{{ $round }}</div>
                         <ul>
                             @foreach($groupedIdeas as $idea)
                                 <li>
-
-                                    <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 114.1 122.88">
-                                        <defs></defs>
-                                        <title>bulb</title>
-                                        <path class="cls-1"
-                                            d="M75.84,27.1a35.68,35.68,0,0,1,8.61,7.09,32.45,32.45,0,0,1,5.76,9.26h0a36.84,36.84,0,0,1,1.85,6,34.64,34.64,0,0,1,.24,14,38.69,38.69,0,0,1-2.15,7.32l-.12.25c-2.06,5-5.59,9.86-9,14.66-1.75,2.42-3.48,4.82-4.94,7.15A4.69,4.69,0,0,1,71.73,95l-27.56,4.1A4.7,4.7,0,0,1,39,95.69a40.19,40.19,0,0,0-2.54-5.82,24.85,24.85,0,0,0-3-4.49c-1.43-1.63-2.88-3.29-4.29-5.2A40.42,40.42,0,0,1,25,73.24h0a41.08,41.08,0,0,1-2.81-8,35.84,35.84,0,0,1-.95-8.45v0A35.39,35.39,0,0,1,22.35,48a41.69,41.69,0,0,1,3.42-8.85l.2-.35a35.55,35.55,0,0,1,7.13-8.63,33.72,33.72,0,0,1,9.46-5.83l.28-.1a35.41,35.41,0,0,1,8-2.14,37.78,37.78,0,0,1,8.77-.2,39.14,39.14,0,0,1,8.4,1.71,38.44,38.44,0,0,1,7.79,3.49Zm-4,87.26a17.37,17.37,0,0,1-6.28,6.29,16.46,16.46,0,0,1-7.2,2.2A14.87,14.87,0,0,1,51,121.4a15.1,15.1,0,0,1-4.39-3.27l25.29-3.77Zm2.41-14.15,0,1.65,0,.58a22,22,0,0,1,0,3.25l-.49,2.39-30.64,4.56-.54-1.23-1.19-4.9,0-1.42,32.79-4.88ZM56.34,3.77A3.84,3.84,0,0,1,60.23,0h0l.27,0A3.84,3.84,0,0,1,64,3.89h0a1.27,1.27,0,0,1,0,.2l-.21,8.21h0a2.11,2.11,0,0,1,0,.26,3.84,3.84,0,0,1-3.87,3.54h0l-.27,0a3.84,3.84,0,0,1-3.53-3.88h0a1.09,1.09,0,0,1,0-.19l.2-8.25ZM14,18.15a3.84,3.84,0,0,1,2.47-6.66,3.83,3.83,0,0,1,2.76,1l6.16,5.73a3.91,3.91,0,0,1,1.22,2.68,3.82,3.82,0,0,1-1,2.76,3.86,3.86,0,0,1-2.67,1.22,3.8,3.8,0,0,1-2.76-1L14,18.15ZM3.92,60.48A3.86,3.86,0,0,1,0,56.75a3.84,3.84,0,0,1,3.73-4l8.41-.28a3.84,3.84,0,0,1,4,3.72v.06h0v.14a3.84,3.84,0,0,1-3.73,3.77h-.15l-8.3.27Zm106-11.92H110a3.84,3.84,0,0,1,2.66.86,3.81,3.81,0,0,1,1.4,2.59v0a.49.49,0,0,1,0,.13,3.84,3.84,0,0,1-3.44,4.06l-8.37.89a3.83,3.83,0,0,1-2.81-.85,3.84,3.84,0,0,1,2-6.8c2.79-.31,5.6-.63,8.4-.9ZM93.33,15.09A3.83,3.83,0,0,1,98.65,14h0a3.73,3.73,0,0,1,1.63,2.44,3.84,3.84,0,0,1-.58,2.88l-4.68,7A3.8,3.8,0,0,1,92.58,28a3.88,3.88,0,0,1-2.88-.57A3.92,3.92,0,0,1,88.06,25a3.84,3.84,0,0,1,.58-2.88l4.69-7ZM38.23,80.87A42.19,42.19,0,0,1,31,70.56,31.2,31.2,0,0,1,27.89,57,31.7,31.7,0,0,1,31.7,42.56a.47.47,0,0,0,.05-.1h0a27.5,27.5,0,0,1,13.4-11.71,29.65,29.65,0,0,1,13.93-2A32.09,32.09,0,0,1,72.39,33,27.43,27.43,0,0,1,84,46.2,28.85,28.85,0,0,1,84,68.45C81.31,75,75.15,82,71.11,88.4a1.67,1.67,0,0,0-.67,0L44.36,92.25a35,35,0,0,0-6.13-11.38Z" />
-                                    </svg>
-
                                 </li>
                             @endforeach
                         </ul>
@@ -102,11 +99,11 @@
             </div>
         </div>
 
-        @if(isset($sessionDetails['word_cloud_data']['content']))
+        @if(isset($sessionDetails['word_cloud_data']))
             <div class="word-cluster">
                 <h2>Wort-Cluster</h2>
                 <ul>
-                    @foreach($sessionDetails['word_cloud_data']['content'] as $item)
+                    @foreach($sessionDetails['word_cloud_data'] as $item)
                         <li class="count-{{ $item['count'] }}">
                             {{ $item['word'] }}
                         </li>
@@ -126,46 +123,70 @@
             </ul>
         </div>
 
-        @if(isset($sessionDetails['next_steps']['content']))
+        @if(isset($sessionDetails['next_steps']))
             <div class="next-steps">
                 <h2>Nächste Schritte und Empfehlungen</h2>
-                <p>{!! $sessionDetails['next_steps']['content'] !!}</p>
+                <p>{!! $sessionDetails['next_steps'] !!}</p>
             </div>
         @endif
     </div>
 </body>
 
 </html>
-
 <style>
     body {
         margin: 1cm;
     }
 
-    .session-data {
-        margin-top: 2vh;
+    .placeholder {
+        height: 2em;
         width: 100%;
     }
-
-    header h1 p {
-        display: inline;
-        margin: 0;
-        padding: 0;
-        font-size: 0.8em;
+strong {font-size: 1.5em; font-weight: bold}
+    svg {
+        height: 1em;
+        width: 1em;
     }
-header div, header h1 {display:inline; margin: 0.5em;}
-header {margin-bottom: 4em;}
+
+    header {
+        position: relative;
+        width: 100%;
+    }
+    .tags-list, .word-cluster, .top-ideas, .collecting-process, .next-steps {
+    page-break-inside: avoid;
+    break-inside: avoid; 
+}
+    header>div:first-child {
+        position: absolute;
+        left: 0;
+    }
+
+    header>div:last-child {
+        position: absolute;
+        right: 0;
+    }
+
+    .word-cluster,
+    .session-data,
+    .top-ideas,
+    .collecting-process {
+        text-align: center;
+    }
+
+    .word-cluster li {
+        text-align: left;
+    }
+
     h2 {
         text-align: center;
         border: solid;
         border-radius: 5px;
         padding: 0.25em 1em;
+        display: inline-block;
         width: 25vw;
-        margin-left: auto;
         margin-right: auto;
     }
 
-    header div,
     .timeline div,
     .word-cluster,
     .tags-list,
@@ -173,64 +194,16 @@ header {margin-bottom: 4em;}
         border: solid;
         border-radius: 5px;
         padding: 1em;
+        margin: 2em 0;
     }
 
     .headline__join__brain {
         color: #33d2ca;
     }
 
-    .timeline {
-        width: 100%;
-        display: flex;
-        justify-content: space-evenly;
-        flex-wrap: wrap;
-        align-items: stretch;
-    }
-
-    .timeline div {
-        margin: 0.4em;
-        display: flex;
-        flex-direction: column;
-        min-width: 25%;
-        align-items: center;
-        justify-content: start;
-        padding: 0.25em;
-    }
-
-    .timeline .round {
-        border: solid 2px;
-        border-radius: 50%;
-        text-align: center;
-        width: 2em;
-        height: 2em;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1em;
-    }
-
-    .timeline ul {
-        display: flex;
-        flex-wrap: wrap;
-        list-style-type: none;
-        margin: 0;
-        align-items: center;
-        justify-content: center;
-        padding: 0.25em;
-        max-width: 6em;
-    }
-
-    .timeline li {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .timeline li svg {
-        font-size: 0.4em;
-        padding: 1em;
-        width: 3em;
-        height: 3em;
+    li,
+    td {
+        text-align: left;
     }
 
     .collecting-pdf table {
@@ -265,107 +238,98 @@ header {margin-bottom: 4em;}
 
     .collecting-pdf .top-ideas th:nth-child(2),
     .collecting-pdf .top-ideas td:nth-child(2) {
-        width: 25%;
+        width: 20%;
     }
 
     .collecting-pdf .top-ideas th:nth-child(3),
     .collecting-pdf .top-ideas td:nth-child(3) {
-        width: 40%;
+        width: 50%;
     }
 
     .collecting-pdf .top-ideas th:nth-child(4),
     .collecting-pdf .top-ideas td:nth-child(4) {
-        width: 10%;
+        width: 20%;
     }
 
-    .collecting-pdf .top-ideas th:nth-child(5),
-    .collecting-pdf .top-ideas td:nth-child(5) {
-        width: 15%;
+    .placement,
+    .voting-value {
+        border: solid;
+        padding: 0.5em 1em;
+        border-radius: 5px;
     }
 
-    .top-ideas {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .timeline {
+        border: solid;
+        border-radius: 5px;
     }
 
-    .top-ideas svg {
-        fill: var(--secondary);
+    .timeline div {
+        display: inline-block;
+        width: auto;
+        min-width: 20%;
+        margin: 1em;
+        vertical-align: top;
     }
 
-    .word-cluster,
-    .tags-list {
-        margin-top: 2vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .word-cluster ul,
-    .tags-list ul {
-        width: 100%;
-        list-style-type: none;
+    .word-cluster ul {
         padding: 0;
-        margin: 0 0 2vh;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
+        margin: 0;
+        list-style-type: none;
+        text-align: center;
+        font-size: 0;
     }
 
-    .word-cluster li,
-    .tags-list li {
-        margin: 0.5rem;
+    .word-cluster ul li {
         display: inline-block;
-    }
-
-    .word-cluster li {
-        margin: 0.5rem;
-        display: inline-block;
+        margin: 0.5em;
+        vertical-align: middle;
+        font-size: 16px;
+        padding:0.5em;
     }
 
     .word-cluster li.count-1 {
-        font-size: 0.6em;
+        font-size: 12px;
     }
 
     .word-cluster li.count-2 {
-        font-size: 0.8em;
+        font-size: 14px;
     }
 
     .word-cluster li.count-3 {
-        font-size: 1em;
+        font-size: 16px;
     }
 
     .word-cluster li.count-4 {
-        font-size: 1.2em;
+        font-size: 18px;
     }
 
     .word-cluster li.count-5 {
-        font-size: 1.4em;
+        font-size: 20px;
     }
 
     .word-cluster li.count-6 {
-        font-size: 1.6em;
+        font-size: 22px;
     }
 
     .word-cluster li.count-7 {
-        font-size: 1.8em;
+        font-size: 24px;
     }
 
     .word-cluster li.count-8 {
-        font-size: 2em;
+        font-size: 26px;
     }
 
     .word-cluster li.count-9 {
-        font-size: 2.2em;
+        font-size: 28px;
     }
 
     .word-cluster li.count-10 {
-        font-size: 2.4em;
+        font-size: 30px;
     }
 
     .tags-list li {
-        margin: 0.5rem;
+        vertical-align: middle;
+        margin: 0.5em;
         display: inline-block;
         padding: 0.5em 1em;
         border-radius: 5px;
@@ -374,111 +338,96 @@ header {margin-bottom: 4em;}
 
     .tags-list li.count-1 {
         padding: 0.1em;
+        font-size: 0.6em;
     }
 
     .tags-list li.count-2 {
         padding: 0.3em;
+        font-size: 0.8em;
     }
 
     .tags-list li.count-3 {
         padding: 0.6em;
+        font-size: 1em;
     }
 
     .tags-list li.count-4 {
         padding: 0.8em;
+        font-size: 1.2em;
     }
 
     .tags-list li.count-5 {
         padding: 1em;
+        font-size: 1.4em;
     }
 
     .tags-list li.count-6 {
         padding: 1.2em;
+        font-size: 1.6em;
     }
 
     .tags-list li.count-7 {
         padding: 1.4em;
+        font-size: 1.8em;
     }
 
     .tags-list li.count-8 {
         padding: 1.6em;
+        font-size: 2em;
     }
 
     .tags-list li.count-9 {
         padding: 1.8em;
+        font-size: 2.2em;
     }
 
     .tags-list li.count-10 {
         padding: 2em;
-    }
-
-    .next-steps {
-        margin: 2vh 0;
+        font-size: 2.4em;
     }
 
     .next-steps h2,
     .tags-list h2,
     .word-cluster h2 {
-        width: 100%;
         border: none;
+        border-radius: 0;
         border-bottom: solid;
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0.5em 0;
+    }
+
+    .next-steps,
+    .tags-list,
+    .word-cluster {
         box-sizing: border-box;
-        padding: 0.25em;
+        margin: 2em 0;
+        padding: 0;
     }
 
-    .next-steps ul {
-        padding: 1.5em;
+    .collecting-process .timeline>div {
+        max-width: 20%;
     }
 
-    .next-steps li {
-        margin-left: 1em;
-        margin-bottom: 0.3em;
-    }
-
-    .newSession__buttons,
-    .summary__buttons {
-        display: flex;
-        justify-content: space-between;
-        align-items: stretch;
-    }
-
-    .newSession__buttons button,
-    .summary__buttons button {
-        border-radius: 15px;
-        margin: 1vh;
-        font-size: 1em;
-        width: 50%;
-        padding: 0.5em;
-    }
-
-    .newSession__buttons .accent,
-    .summary__buttons .accent,
-    .newSession__buttons .secondary,
-    .summary__buttons .secondary {
-        border: solid;
-    }
-
-    .newSession__buttons .primary,
-    .summary__buttons .primary {
-        border: solid 4px;
-    }
-
-    .newSession__buttons .primary:hover,
-    .summary__buttons .primary:hover {
-        color: white;
-    }
-
-    .timeline div .round {
-        border: solid 2px;
-        border-radius: 50%;
+    .collecting-process .timeline>div .round+ul {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        font-size: 0;
+        list-style-type: none;
         text-align: center;
-        width: 2em;
-        height: 2em;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1em;
-        padding: 0.25em;
-        border-radius: 5px;
+    }
+
+    .collecting-process .timeline>div .round+ul li {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        margin: 0.2em;
+        padding: 0;
+        border-radius: 50%;
+        background-color: black;
+        font-size: 16px;
+        vertical-align: top;
     }
 </style>

@@ -35,7 +35,8 @@ class SessionDetailsCache extends Model
         'word_cloud_data',
         'tag_list',
         'next_steps',
-        'data'
+        'data',
+        'contributor_emails'
     ];
 
     // Definiere, welche Attribute als JSON konvertiert werden sollen
@@ -47,6 +48,7 @@ class SessionDetailsCache extends Model
         'next_steps' => 'array',
         'data' => 'array',
         'date' => 'date',
+        'contributor_emails' => 'array',
     ];
 
     // Standard-Timestamps werden nicht benötigt, da wir diese manuell setzen

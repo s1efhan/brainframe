@@ -13,6 +13,7 @@ Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 Route::get('/method/{methodId}', [MethodController::class, 'getDetails']);
 Route::get('/methods', [MethodController::class, 'get']);
+Route::post('/session/summary/send', [SessionController::class, 'sendPDF']);
 Route::get('/sessions/{sessionId}/roles', [RoleController::class, 'get']);
 Route::get('/{userId}/sessions', [SessionController::class, 'getUserSessions']);
 Route::post('/contributor', [ContributorController::class, 'create']);
