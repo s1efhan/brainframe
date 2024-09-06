@@ -119,28 +119,33 @@ class SessionController extends Controller
 
     public function downloadSessionPDF($sessionId)
     {
-        Log::info('download PDF: ' . $sessionId);
         $sessionDetails = SessionDetailsCache::findOrFail($sessionId);
-        // Log::info($sessionDetails);
         $ideas = $sessionDetails->ideas;
-        // Gruppiere die Ideen nach `round`
-        $groupedIdeas = array_reduce($ideas, function ($result, $idea) {
-            $round = $idea['round']; // Angenommene Struktur der Idee
+        $groupedIdeasByRound = array_reduce($ideas, function ($result, $idea) {
+            $round = $idea['round'];
             if (!isset($result[$round])) {
                 $result[$round] = [];
             }
             $result[$round][] = $idea;
             return $result;
         }, []);
-        //Log::info($groupedIdeas);
-        $html = view('pdf.session_details', ['sessionDetails' => $sessionDetails, 'groupedIdeas' => $groupedIdeas])->render();
-        Log::info('HTML generiert');
-
-        $pdf = Pdf::loadHTML($html);
-        $filename = $sessionDetails->target ?? 'session_details';
-        $filename .= '.pdf';
-
-        return $pdf->download($filename);
+        // Fügen Sie einen Parameter hinzu, um zwischen HTML und PDF zu unterscheiden
+        $format = request('format', 'html');
+        if ($format === 'pdf') {
+            $html = view('pdf.session_details', [
+                'sessionDetails' => $sessionDetails,
+                'groupedIdeasByRound' => $groupedIdeasByRound
+            ])->render();
+            $pdf = Pdf::loadHTML($html);
+            $filename = $sessionDetails->target ?? 'session_details';
+            $filename .= '.pdf';
+            return $pdf->download($filename);
+        }
+        // Standardmäßig HTML zurückgeben
+        return view('pdf.session_details', [
+            'sessionDetails' => $sessionDetails,
+            'groupedIdeasByRound' => $groupedIdeasByRound
+        ]);
     }
 
     public function get($sessionId)

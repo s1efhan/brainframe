@@ -33,173 +33,189 @@ button {
 .collecting__buttons {
     button {
         margin: 0.5em;
-    }}
-
-    button.secondary {
-        color: var(--accent);
-        background-color: var(--text);
-        border: solid var(--accent);
-        font-size: 1.1em;
-        cursor: pointer;
-
-        &:hover {
-            background-color: var(--accent);
-            color: var(--background);
-        }
     }
+}
 
-    button.primary {
-        color: white;
-        background-color: var(--text);
-        border: solid var(--primary);
-        font-size: 1.1em;
+button.secondary {
+    color: var(--accent);
+    background-color: var(--text);
+    border: solid var(--accent);
+    font-size: 1.1em;
+    cursor: pointer;
 
-        &:hover {
-            background-color: var(--primary)
-        }
-    }
-
-    button.accent {
-        color: var(--secondary);
-        background-color: var(--text);
-        border: solid var(--text);
-        font-size: 1.1em;
-
-        &:hover {
-            color: var(--background);
-            background-color: var(--secondary);
-            border: solid var(--secondary);
-        }
-    }
-
-
-    .join__info {
-        border: solid var(--secondary);
-        width: 1.5em;
-        height: 1.5em;
-        border-radius: 50px;
-    }
-
-    .session-link {
-        margin: 1em 0 1em 0;
-        border: solid thin var(--secondary);
-        display: flex;
-        height: 3em;
-        justify-content: center;
-        align-items: center;
-
-        a {
-            color: var(--secondary);
-            text-decoration: none;
-        }
-
-        svg {
-            margin-left: 1em;
-            width: 1em;
-            fill: var(--secondary);
-
-            &:hover,
-            &:focus {
-                fill: var(--accent)
-            }
-        }
-    }
-
-    .ranking-vote__submit__container {
-        display: flex;
-        justify-content: center;
-
-        button {
-            margin: 0.5em;
-            padding: 0.3em;
-        }
-    }
-
-
-    .collectForm {
-        button {
-            display: inline-block;
-            padding: 0.5em;
-        }
-    }
-
-    button svg {
-        width: 5vw;
-        height: auto;
-        fill: var(--secondary);
-        margin: 0;
-    }
-
-    .roundCountInfo__container,
-    .join__info__containerr {
-        display: flex;
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    .roundCount {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: start;
-    }
-
-    .idea-card {
-        button {
-            border-radius: 15px;
-        }
-    }
-
-    .round-item {
-        display: flex;
-        align-items: center;
-    }
-
-    .undo.secondary {
-        height: 2em;
-        font-size: 1em;
-        padding: 0.2em 1em;
-        margin: 0.5em;
-        border-radius: 15px;
-        border-radius: 15px;
-        text-align: center;
-
-        &:disabled {
-            border-color: var(--secondary);
-            color: var(--secondary);
-        }
-    }
-
-    .round-circle {
-        padding: 0.4em;
-        width: 0.8em;
-        height: 0.8em;
-        border-radius: 50%;
-        background-color: var(--text);
-        display: flex;
+    &:hover {
+        background-color: var(--accent);
         color: var(--background);
-        justify-content: center;
+    }
+}
+
+button.primary {
+    color: white;
+    background-color: var(--text);
+    border: solid var(--primary);
+    font-size: 1.1em;
+
+    &:hover {
+        background-color: var(--primary)
+    }
+}
+
+button.accent {
+    color: var(--secondary);
+    background-color: var(--text);
+    border: solid var(--text);
+    font-size: 1.1em;
+
+    &:hover {
+        color: var(--background);
+        background-color: var(--secondary);
+        border: solid var(--secondary);
+    }
+}
+
+
+.join__info {
+    border: solid var(--secondary);
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50px;
+}
+
+.session-link {
+    margin: 1em 0 1em 0;
+    border: solid thin var(--secondary);
+    display: flex;
+    height: 3em;
+    justify-content: center;
+    align-items: center;
+
+    a {
+        color: var(--secondary);
+        text-decoration: none;
+    }
+
+    svg {
+        margin-left: 1em;
+        width: 1em;
+        fill: var(--secondary);
+
+        &:hover,
+        &:focus {
+            fill: var(--accent)
+        }
+    }
+}
+
+.ranking-vote__submit__container {
+    display: flex;
+    justify-content: center;
+
+    button {
+        margin: 0.5em;
+        padding: 0.3em;
+    }
+}
+
+
+.collectForm {
+    button {
+        display: inline-block;
+        padding: 0.5em;
+    }
+}
+
+button svg {
+    width: 5vw;
+    height: auto;
+    fill: var(--secondary);
+    margin: 0;
+}
+
+.roundCountInfo__container,
+.join__info__containerr {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.roundCount {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+}
+
+.idea-card {
+    button {
+        border-radius: 15px;
+    }
+}
+
+.round-item {
+    display: flex;
+    align-items: center;
+}
+
+.undo.secondary {
+    height: 2em;
+    font-size: 1em;
+    padding: 0.2em 1em;
+    margin: 0.5em;
+    border-radius: 15px;
+    border-radius: 15px;
+    text-align: center;
+
+    &:disabled {
+        border-color: var(--secondary);
+        color: var(--secondary);
+    }
+}
+
+.round-circle {
+    padding: 0.4em;
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 50%;
+    background-color: var(--text);
+    display: flex;
+    color: var(--background);
+    justify-content: center;
+    align-items: center;
+}
+
+.round-circle.completed {
+    background-color: var(--secondary);
+    ;
+    color: var(--text);
+    ;
+}
+
+.connecting-line {
+    width: 4vw;
+    height: 0.2em;
+    background-color: var(--text);
+    ;
+}
+
+.connecting-line.completed {
+    background-color: var(--secondary);
+    ;
+}
+
+.isLoading__container {
+    height: 100vw;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .isLoading {
+        width: 50vw;
+        height: 50vw;
+        display: flex;
         align-items: center;
+        justify-content: center;
     }
-
-    .round-circle.completed {
-        background-color: var(--secondary);
-        ;
-        color: var(--text);
-        ;
-    }
-
-    .connecting-line {
-        width: 4vw;
-        height: 0.2em;
-        background-color: var(--text);
-        ;
-    }
-
-    .connecting-line.completed {
-        background-color: var(--secondary);
-        ;
-    }
+}

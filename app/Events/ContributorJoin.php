@@ -20,8 +20,7 @@ class ContributorJoin implements ShouldBroadcast
      */
     public function __construct(
         public string $session,
-        public string $user,
-        public string $role
+        public string $user
     )
     {
         //

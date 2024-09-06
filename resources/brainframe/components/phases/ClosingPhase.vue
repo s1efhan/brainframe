@@ -1,29 +1,56 @@
 <template>
-  <div v-if="isLoading" class="isLoading">
-    <l-quantum size="45" speed="1.75" color="white"></l-quantum>
+  <div v-if="isLoading" class="isLoading__container">
+    <div class="isLoading">
+      <l-dot-pulse size="70" speed="1" color="#33d2ca"></l-dot-pulse>
+    </div>
   </div>
-  <div v-else>
+  <div v-else class="collecting-pdf">
     <table class="session-data">
       <thead>
         <tr>
           <th>Ziel</th>
           <th>Teilnehmerzahl</th>
           <th>Ideen</th>
-          <th>Dauer</th>
           <th>Datum</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>{{ sessionDetails.target }}</td>
-          <td>{{ sessionDetails.contributors_count }}</td>
-          <td>{{ sessionDetails.ideas_count }}</td>
-          <td>{{ sessionDetails.duration }} Minuten</td>
-          <td>{{ formatDate(sessionDetails.date) }}</td>
+          <td class="center">{{ sessionDetails.contributors_count }}</td>
+          <td class="center">{{ sessionDetails.ideas_count }}</td>
+          <td class="center">{{ formatDate(sessionDetails.date) }}</td>
         </tr>
       </tbody>
     </table>
 
+    <table class="session-data">
+      <thead>
+        <tr>
+          <th>Methode</th>
+          <th>Session ID</th>
+          <th>Token</th>
+          <th>Dauer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="center">{{ sessionDetails.method }}</td>
+          <td class="center"><a :href="'https://stefan-theissen.de/brainframe/' + sessionDetails.session_id">
+            {{ sessionDetails.session_id }}
+            </a>
+          </td>
+          <td >
+            {{ sessionDetails.input_token }} (input) {{ sessionDetails.output_token }} (output) =>
+            {{ calculateCost }} ct
+          </td>
+          <td class="center">
+            {{ Math.floor(sessionDetails.duration / 60) }}h
+            {{ Math.round(sessionDetails.duration % 60) }}min
+          </td>
+        </tr>
+      </tbody>
+    </table>
     <div class="top-ideas">
       <h2>Top Ideen</h2>
       <table v-if="sessionDetails && sessionDetails.top_ideas">
@@ -33,50 +60,23 @@
             <th>Idee</th>
             <th>Beschreibung</th>
             <th></th>
-            <th></th>
             <th>Punkte</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(idea, index) in [...sessionDetails.top_ideas].reverse()" :key="idea.id">
-            <td>{{ index + 1 }}</td>
+            <td class="center">{{ index + 1 }}</td>
             <td>{{ idea.idea_title }}</td>
             <td v-html="idea.idea_description"></td>
-            <td>
+            <td class="center">
               <component :is="getIconComponent(idea.contributor_icon)" />
             </td>
-            <td>#{{ idea.tag }}</td>
-            <td>{{ parseFloat(idea.avg_vote_value).toFixed(1) }} /5.0</td>
+           <!-- <td class="center">#{{ idea.tag }}</td>-->
+            <td class="center">{{ parseFloat(idea.avg_vote_value).toFixed(1) }} /5.0</td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <table class="session-data">
-      <thead>
-        <tr>
-          <th>Methode</th>
-          <th>Session ID</th>
-          <th>Link</th>
-          <th>Verbrauchte Token</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ sessionDetails.method }}</td>
-          <td>{{ sessionDetails.session_id }}</td>
-          <td>
-            <a :href="'https://stefan-theissen.de/brainframe/' + sessionDetails.session_id">
-              stefan-theissen.de/brainframe/{{ sessionDetails.session_id }}
-            </a>
-          </td>
-          <td>
-            {{ sessionDetails.input_token }} (input) {{ sessionDetails.output_token }} (output) =>
-            {{ calculateCost }} ct
-          </td>
-        </tr>
-      </tbody>
-    </table>
 
     <div class="collecting-process">
       <h2>{{ sessionDetails.method }}</h2>
@@ -85,7 +85,7 @@
           <div class="round">{{ round }}</div>
           <ul>
             <li v-for="idea in groupedIdeas" :key="idea.id">
-              <component :is="getIconComponent(idea.contributor_icon)" />{{ idea.contributor_icon }}
+              <component :is="getIconComponent(idea.contributor_icon)" />
             </li>
           </ul>
         </div>
@@ -103,7 +103,7 @@
 
 
     <div class="tags-list">
-      <h2>Tags</h2>
+      <h2>#Tags</h2>
       <ul>
         <li :class="'count-' + tag.count" v-for="tag in sessionDetails.tag_list" :key="tag.tag">
           #{{ tag.tag }}
@@ -115,7 +115,7 @@
       <button class="accent" @click="downloadPDF">PDF herunterladen</button>
     </div>
     <div class="next-steps" v-if="sessionDetails.next_steps.content">
-      <h3>Nächste Schritte und Empfehlungen</h3>
+      <h2>Nächste Schritte und Empfehlungen</h2>
       <p v-html="sessionDetails.next_steps.content"></p>
     </div>
     <div class="newSession__buttons">
@@ -129,7 +129,7 @@
 import { ref, onMounted, computed, nextTick } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
-import 'ldrs/quantum';
+import 'ldrs/dotPulse';
 const route = useRoute();
 const sessionDetails = ref(null);
 
@@ -175,7 +175,7 @@ const isLoading = ref(true);
 const getSessionDetails = () => {
   isLoading.value = true;
   console.log('getSessionDetails', props.sessionId);
-  
+
   axios.get(`/api/${props.sessionId}/details`)
     .then(response => {
       sessionDetails.value = response.data;
@@ -184,26 +184,32 @@ const getSessionDetails = () => {
       console.error('Error fetching session details', error);
     })
     .finally(() => {
-      isLoading.value=false;
+      isLoading.value = false;
       emit('switchPhase', 'closingPhase');
     });
 };
 
 const downloadPDF = () => {
-  console.log('downloadPDF: ', sessionDetails.value.target + '.pdf')
-  axios.get(`/api/${props.sessionId}/pdf`, { responseType: 'blob' })
-    .then(response => {
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', sessionDetails.value.target + ".pdf");
-      document.body.appendChild(link);
-      link.click();
-      console.log('download erfolgreich')
-    })
-    .catch(error => {
-      console.error('Error Downloading PDF', error);
-    });
+  const format = 'pdf'; // Ändern Sie dies zu 'pdf' für den finalen Download
+  const url = `/api/${props.sessionId}/pdf?format=${format}`;
+  
+  if (format === 'html') {
+    // Öffnen Sie die HTML-Vorschau in einem neuen Tab
+    window.open(url, '_blank');
+  } else {
+    // Behalten Sie die bestehende PDF-Download-Logik bei
+    axios.get(url, { responseType: 'blob' })
+      .then(response => {
+        const blob = new Blob([response.data]);
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `${sessionDetails.value.target}.pdf`;
+        link.click();
+      })
+      .catch(error => {
+        console.error('Error Downloading PDF', error);
+      });
+  }
 };
 
 const sendSummary = () => {
@@ -218,12 +224,12 @@ const sendSummary = () => {
 };
 
 const formatDate = (dateString) => {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
   return new Date(dateString).toLocaleDateString('de-DE', options);
 };
 
 onMounted(() => {
   personalContributor.value = props.personalContributor
-    getSessionDetails();
+  getSessionDetails();
 });
 </script>

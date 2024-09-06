@@ -2,8 +2,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+
   h2 {
     margin: 2vh;
+    background-color: var(--background);
+    width: 50%;
+    box-sizing: border-box;
+    padding: 0.25em;
   }
 }
 
@@ -12,9 +17,8 @@
   display: flex;
   justify-content: space-evenly;
   box-sizing: border-box;
-  background-color:var(--text);
-  width: 100%;
   flex-wrap: wrap;
+  align-items: stretch;
 
   div {
     margin: 0.4em;
@@ -22,11 +26,18 @@
     flex-direction: column;
     min-width: 25%;
     align-items: center;
+    justify-content: start;
+    background-color: var(--background);
+    padding: 0.25em;
+    border-radius: 5px;
+    padding: 0.25em;
+    border-radius: 5px;
+    border: solid var(--accent) 2px;
 
     .round {
       border: solid var(--accent) 2px;
       border-radius: 50%;
-      color: var(--secondary);
+      color: var(--accent);
       background-color: var(--text);
       text-align: center;
       width: 2em;
@@ -35,6 +46,9 @@
       align-items: center;
       justify-content: center;
       font-size: 1em;
+      background-color: var(--background);
+      padding: 0.25em;
+      border-radius: 5px;
     }
 
     ul {
@@ -46,21 +60,26 @@
       justify-content: center;
       padding: 0;
       max-width: 6em;
+      background-color: var(--background);
+      padding: 0.25em;
+      border-radius: 5px;
 
       li {
         height: calc(width);
         display: flex;
         align-items: center;
         justify-content: center;
+        background-color: var(--background);
 
-        div {
+        svg {
           font-size: 0.4em;
-          background-color: var(--text);
-          border-radius: 50%;
+          background-color: var(--background);
+          padding: 1em;
           text-align: center;
           width: 3em;
           height: 3em;
           display: flex;
+          fill: var(--secondary);
           align-items: center;
           justify-content: center;
         }
@@ -69,55 +88,42 @@
   }
 }
 
-.session-data {
-  font-size: 0.8em;
+.collecting-pdf {
   background-color: var(--text);
-  color: var(--secondary);
-  border: solid var(--secondary);
-  border-collapse: collapse;
-  box-sizing: border-box;
-  overflow: hidden;
-  color: var(--secondary);
-  height: 100%;
 
-  tr {
-    border-bottom: solid var(--secondary);
+  table {
+    border-collapse: collapse;
+    background-color: var(--background);
+    box-sizing: border-box;
+    overflow: hidden;
+    gap: 0;
+    font-size: 0.9em;
+
+    th {
+      color: var(--accent);
+      padding: 0.5em 0;
+      border-bottom: solid var(--accent);
+      border-top: solid var(--accent);
+    }
+
+    td {
+      color: var(--secondary);
+      padding: 0.8em;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      border-bottom: solid var(--accent);
+    }
+    .center {text-align:center;}
   }
-
-  td {
-    font-size: 0.8em;
-    text-align: center;
-    border: solid var(--secondary);
-  }
-
-  th {
-    border: solid var(--secondary);
-    text-align: center;
-  }
-
-  th:nth-child(1),
-  td:nth-child(1) {
-    width: 30%;
-  }
-
-  th:nth-child(2),
-  td:nth-child(2) {
-    width: 25%;
-  }
-
-  th:nth-child(3),
-  td:nth-child(3) {
-    width: 10%;
-  }
-
-  th:nth-child(4),
-  td:nth-child(4) {
-    width: 10%;
-  }
-
-  th:nth-child(5),
-  td:nth-child(5) {
-    width: 20%;
+  .top-ideas table {
+    table-layout: fixed;
+    th, td {
+      &:nth-child(1) { width: 10%; }
+      &:nth-child(2) { width: 25%; }
+      &:nth-child(3) { width: 40%; }
+      &:nth-child(4) { width: 10%; }
+      &:nth-child(5) { width: 15%; }
+    }
   }
 }
 
@@ -126,89 +132,48 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  h2 {
-    margin: 2vh;
+
+  svg {
+    fill: var(--secondary)
   }
-
-  table {
-    table-layout: auto;
+  h2 {
+    margin: 2vh 0;
     background-color: var(--background);
-    border-collapse: collapse;
+    width: 50%;
+    padding: 0;
     box-sizing: border-box;
-    overflow: hidden;
-    font-size: 0.8em;
-    border: solid var(--secondary);
-
-    th {
-      padding: 1em 0;
-      text-align: center;
-      background-color: var(--text);
-    }
-
-    th:nth-child(1),
-    td:nth-child(1) {
-      width: 10%;
-    }
-
-    th:nth-child(2),
-    td:nth-child(2) {
-      width: 20%;
-    }
-
-    th:nth-child(3),
-    td:nth-child(3) {
-      width: 30%;
-    }
-
-    th:nth-child(4),
-    td:nth-child(5) {
-      width: 5%;
-    }
-
-    th:nth-child(5),
-    td:nth-child(5) {
-      width: 10%;
-    }
-
-    th:nth-child(6),
-    td:nth-child(6) {
-      width: 10%;
-    }
-
-    tr {
-      border-bottom: solid var(--secondary);
-    }
-
-    td {
-      text-align: center;
-      border: solid var(--secondary);
-      background-color: var(--text);
-      font-size: 0.8em;
-
-      ul {
-        padding: 0.3em;
-        text-align: left;
-      }
-    }
+    padding: 0.25em;
+    border: none;
+    border: solid;
   }
 }
 
 .word-cluster {
+  margin-top: 2vh;
   display: flex;
+  border: solid var(--accent);
   flex-direction: column;
   align-items: center;
   text-align: center;
+  background-color: var(--background);
 
   h2 {
-    margin: 2vh;
+    margin-bottom: 2vh;
+    background-color: var(--background);
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.25em;
+    border: none;
+    border-bottom: solid;
   }
 
   ul {
-    background-color:var(--text);
+    background-color: var(--background);
     width: 100%;
     list-style-type: none;
     padding: 0;
     margin: 0;
+    margin-bottom: 2vh;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -217,7 +182,7 @@
   li {
     margin: 0.5rem;
     display: inline-block;
-    color: var(--accent);
+    color: var(--secondary);
 
     &.count-1 {
       font-size: 0.6em;
@@ -265,18 +230,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 2vh 0;
+  background-color: var(--background);
   text-align: center;
+  border: solid var(--accent);
 
   h2 {
-    margin: 2vh;
+    background-color: var(--background);
+    width: 100%;
+    border: none;
+    border-bottom: solid;
+    box-sizing: border-box;
+    padding: 0.25em;
   }
 
   ul {
-    background-color:var(--text);
+    background-color: var(--background);
     width: 100%;
     list-style-type: none;
     padding: 0;
-    margin: 0;
+    margin: 2vh 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -287,6 +260,8 @@
     margin: 0.5rem;
     display: inline-block;
     color: var(--accent);
+    padding: 0.5em 1em;
+    border-radius: 5px;
     border: solid var(--accent);
 
     &.count-1 {
@@ -332,15 +307,22 @@
 }
 
 .next-steps {
-  background-color: var(--text);
+  background-color: var(--background);
   color: var(--secondary);
-  border-radius: 15px;
-  margin: 0.5em;
-  padding: 0.5em;
+  border: solid var(--accent);
+  margin: 2vh 0;
 
-  h3 {
-    color: var(--accent);
-    margin-bottom: 0.3em;
+  h2 {
+    background-color: var(--background);
+    width: 100%;
+    border: none;
+    border-bottom: solid;
+    box-sizing: border-box;
+    padding: 0.25em;
+  }
+
+  ul {
+    padding: 1.5em;
   }
 
   li {
@@ -351,15 +333,53 @@
 
 .newSession__buttons,
 .summary__buttons {
-  display:flex;
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: stretch;
+
+  .accent {
+    border: solid var(--secondary);
+    background-color: var(--background);
+
+    &:hover {
+      background-color: var(--text);
+      border: solid var(--accent);
+      color: var(--accent);
+    }
+  }
+
+  .secondary {
+    background-color: var(--accent);
+    color: var(--text);
+    border: solid var(--accent);
+
+    &:hover {
+      background-color: var(--text);
+      color: var(--secondary);
+      border: solid var(--secondary);
+    }
+  }
+
+  .primary {
+    background-color: var(--secondary);
+    border: solid 4px var(--primary);
+    background-color: var(--text);
+
+    &:hover {
+      color: white;
+      border: solid 4px var(--primary);
+      background-color: var(--secondary);
+    }
+  }
+
   button {
+    background-color: var(--background);
     border-radius: 15px;
     margin: 0.25em;
     font-size: 1em;
     width: 50%;
-    padding: 0.3em;
+    padding: 0.5em;
+    margin: 1vh;
   }
 }
