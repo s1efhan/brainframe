@@ -83,10 +83,8 @@ const getRoles = () => {
   axios.get(`/api/sessions/${sessionId.value}/roles`)
     .then(response => {
       roles.value = response.data;
-      console.log('roles.value', roles.value);
       if (roles.value.length > 0) {
         selectedRole.value = { ...roles.value[0] };
-        console.log('selected Role:', selectedRole.value)
       }
     })
     .catch(error => {

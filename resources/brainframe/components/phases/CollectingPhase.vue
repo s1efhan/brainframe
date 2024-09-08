@@ -103,9 +103,6 @@
 import { ref, watch, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import IconComponents from '../IconComponents.vue';
-const getIconComponent = (iconName) => {
-  return IconComponents[iconName] || null;
-};
 import 'ldrs/quantum';
 const props = defineProps({
   personalContributor: {
@@ -131,41 +128,73 @@ const props = defineProps({
   currentRound: {
     type: [Number, null],
     required: true
+  },
+  ideasCount: {
+    type: [Object, null],
+    required: true
   }
 });
+
 import LightbulbIcon from '../icons/LightbulbIcon.vue';
 import DefaultimageIcon from '../icons/DefaultimageIcon.vue';
 import MicrophoneIcon from '../icons/MicrophoneIcon.vue';
 import SandclockIcon from '../icons/SandclockIcon.vue';
 import AiStarsIcon from '../icons/AiStarsIcon.vue';
-import SoundwaveIcon from '../icons/SoundwaveIcon.vue';
 import 'ldrs/waveform'
 const showInfo = ref(false);
 const collectingStarted = ref(false);
-const currentRound = ref(1);
+const currentRound = ref(props.currentRound || 1);
 const remainingTime = ref(0);
-const submittedIdeas = ref(0);
 const textInput = ref('');
 const errorMsg = ref('');
 const fileInput = ref(null);
-const sessionId = ref(null);
+const sessionId = ref(props.sessionId);
 const isListening = ref(false);
 const showStartButton = ref(true);
 const isLoading = ref(false);
 const personalContributor = ref(props.personalContributor);
 const passedIdeas = ref(null);
+const method = ref(props.method);
+const contributors = ref( props.contributors);
+const maxIdeaInput = ref(0);
+const collectingRounds = ref(null);
+const collectingTimer = ref(null);
+const imageFile = ref(null)
+const imageFileUrl = ref('')
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+const submittedIdeas = ref(props.ideasCount?.[currentRound.value]?.contributors?.[personalContributor.value.id] ?? 0);
+const sessionHostId = ref(props.sessionHostId);
 let timer = null;
-const getIdeasPassed = () => {
-  console.log("getIdeasPassed", sessionId.value, props.personalContributor.id, currentRound.value)
-  axios.get(`/api/ideas/6-3-5/${sessionId.value}/${props.personalContributor.id}/${currentRound.value}`)
-    .then(response => {
-      passedIdeas.value = response.data;
-      console.log('passedIdeas:', passedIdeas.value);
-    })
-    .catch(error => {
-      console.error('Error fetching passedIdeas', error);
-    });
-}
+const emit = defineEmits(['switchPhase','getContributors']);
+
+const setMethodParameters = () => {
+  switch (method.value.id) {
+    case 1: // 6-3-5
+      console.log("setMethodParameters", contributors.value.length)
+      collectingRounds.value = contributors.value.length;
+      maxIdeaInput.value = 3;
+      collectingTimer.value = 360;
+      break;
+    case 2: // Crazy 8
+      collectingRounds.value = 8;
+      maxIdeaInput.value = 1;
+      collectingTimer.value = 60;
+      break;
+    case 3: // Walt Disney
+      collectingRounds.value = 3;
+      maxIdeaInput.value = null;
+      collectingTimer.value = 360;
+      break;
+    case 4: // 6 Thinking Hats
+      collectingRounds.value = 6;
+      collectingTimer.value = 360;
+      break;
+    default:
+      console.warn('Unbekannte Methode ID:', method.value.id);
+  }
+};
+
 const callStartCollecting = () => {
   axios.post('/api/collecting/start', {
     session_id: sessionId.value,
@@ -181,23 +210,20 @@ const callStartCollecting = () => {
 const startCollecting = () => {
   collectingStarted.value = true;
   console.log("collectingStarted.value =true")
-  submittedIdeas.value = 0;
+  submittedIdeas.value =  props.ideasCount?.[currentRound.value]?.contributors?.[personalContributor.value.id] ?? 0;
   startTimer();
   showStartButton.value = false;
 };
-const emit = defineEmits(['switchPhase']);
+
 const stopCollecting = () => {
   collectingStarted.value = false;
   clearInterval(timer);
-  console.log("currentRound.value", currentRound.value);
-  console.log("collectingRounds.value", collectingRounds.value)
-  console.log('personalContributor.value.id', personalContributor.value.id)
-  console.log('sessionHostId.value', sessionHostId.value)
-  console.log('method.name', method.value.name);
   if (currentRound.value < collectingRounds.value) {
+    if(method.value.id === 4)// nur bei 6-Thinking Hats
+    { emit('getContributors');}
     if (personalContributor.value.id == sessionHostId.value && method.value.name == '6-3-5') {
   console.log('post /sendtoGPT');
-  isLoading.value = true; // Setze isLoading auf true vor der Anfrage
+  isLoading.value = true;
 
   axios.post('/api/ideas/sendToGPT', {
     session_id: sessionId.value,
@@ -206,26 +232,12 @@ const stopCollecting = () => {
   })
   .then(response => {
     console.log('Server response:', response.data);
-    // Extrahiere nur den Content aus der API-Antwort
-    if (response.data.choices && response.data.choices.length > 0) {
-      const content = response.data.choices[0].message.content;
-      try {
-        // Entferne die Markdown-Codeblöcke und parse als JSON
-        const cleanedContent = content.replace(/```json|\n```/g, '').trim();
-        apiAntwort.value = JSON.parse(cleanedContent);
-      } catch (error) {
-        console.error('Fehler beim Parsen des JSON:', error);
-        apiAntwort.value = 'Fehler beim Verarbeiten der Antwort';
-      }
-    }
   })
   .catch(error => {
     console.error('Fehler bei der API-Anfrage', error.message.error);
-    // Zeige den Fehler aus dem Backend an
-    apiAntwort.value = error.response?.data?.error || 'Ein unbekannter Fehler ist aufgetreten';
   })
   .finally(() => {
-    isLoading.value = false; // Setze isLoading auf false nach Abschluss der Anfrage
+    isLoading.value = false;
   });
 }
     currentRound.value++;
@@ -233,53 +245,26 @@ const stopCollecting = () => {
   } else {
     showStartButton.value = false;
     if (personalContributor.value.id == sessionHostId.value)
-    isLoading.value = true; // Setze isLoading auf true vor der Anfrage
+    isLoading.value = true; 
       axios.post('/api/ideas/sendToGPT', {
         session_id: sessionId.value,
         method_name: method.value.name
       })
         .then(response => {
           console.log('Server response:', response.data);
-          // Extrahiere nur den Content aus der API-Antwort
-          if (response.data.choices && response.data.choices.length > 0) {
-            const content = response.data.choices[0].message.content;
-            try {
-              // Entferne die Markdown-Codeblöcke und parse als JSON
-              const cleanedContent = content.replace(/```json|\n```/g, '').trim();
-              apiAntwort.value = JSON.parse(cleanedContent);
-            } catch (error) {
-              console.error('Fehler beim Parsen des JSON:', error);
-            }
-          }
+          emit('switchPhase', 'votingPhase');
         })
+  
         .catch(error => {
           console.error('Fehler bei der API-Anfrage', error);
+          emit('switchPhase', 'lobby');
         })
         .finally(() => {
-          emit('switchPhase', 'votingPhase');
           isLoading.value = false;
         });
        
   }
 };
-const iceBreakerMsg = ref('');
-const iceBreaker = () => {
-  axios.post('/api/ice-breaker',
-    {
-      session_id: sessionId.value,
-      contributor_id: personalContributor.value.id
-    })
-    .then(response => {
-      console.log(response.data);
-      iceBreakerMsg.value = response.data.iceBreaker_msg;
-      console.log(iceBreakerMsg.value);
-    })
-    .catch(error => {
-      console.error('Error fetching iceBreaker', error);
-      iceBreakerMsg.value = "Fehler beim IceBreaker!";
-    });
-}
-const apiAntwort = ref(null);
 const callStopCollecting = () => {
   if (sessionHostId.value === personalContributor.value.id) {
     axios.post('/api/collecting/stop', {
@@ -317,7 +302,9 @@ const startTimer = () => {
       clearInterval(timer);
       if (currentRound.value < collectingRounds.value) {
         currentRound.value++;
-        submittedIdeas.value = 0;
+        submittedIdeas.value = props.ideasCount?.[currentRound.value]?.contributors?.[personalContributor.value.id] ?? 0;
+        console.log('CurrentRound: ', currentRound.value)
+        console.log('submittedIdeas: ', submittedIdeas.value)
         startTimer();
       } else {
         callStopCollecting();
@@ -325,10 +312,41 @@ const startTimer = () => {
     }
   }, 1000);
 };
-const sessionHostId = ref(null);
+
 const openFileInput = () => {
   fileInput.value.click();
   //timer starten
+}
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
+const getIdeasPassed = () => {
+  console.log("getIdeasPassed", sessionId.value, props.personalContributor.id, currentRound.value)
+  axios.get(`/api/ideas/6-3-5/${sessionId.value}/${props.personalContributor.id}/${currentRound.value}`)
+    .then(response => {
+      passedIdeas.value = response.data;
+      console.log('passedIdeas:', passedIdeas.value);
+    })
+    .catch(error => {
+      console.error('Error fetching passedIdeas', error);
+    });
+}
+const iceBreakerMsg = ref('');
+const iceBreaker = () => {
+  axios.post('/api/ice-breaker',
+    {
+      session_id: sessionId.value,
+      contributor_id: personalContributor.value.id
+    })
+    .then(response => {
+      console.log(response.data);
+      iceBreakerMsg.value = response.data.iceBreaker_msg;
+      console.log(iceBreakerMsg.value);
+    })
+    .catch(error => {
+      console.error('Error fetching iceBreaker', error);
+      iceBreakerMsg.value = "Fehler beim IceBreaker!";
+    });
 }
 watch(() => props.personalContributor, (newVal) => {
   personalContributor.value = newVal;
@@ -339,38 +357,8 @@ watch(() => props.sessionHostId, (newVal) => {
 watch(() => props.method, (newVal) => {
   method.value = newVal;
 });
-const contributors = ref(null);
-const maxIdeaInput = ref(0);
-const collectingRounds = ref(null);
-const collectingTimer = ref(null);
 
-const setMethodParameters = () => {
-  switch (method.value.id) {
-    case 1: // 6-3-5
-      console.log("setMethodParameters", contributors.value.length)
-      collectingRounds.value = contributors.value.length;
-      maxIdeaInput.value = 3;
-      collectingTimer.value = 360;
-      break;
-    case 2: // Crazy 8
-      collectingRounds.value = 8;
-      maxIdeaInput.value = 1;
-      collectingTimer.value = 60;
-      break;
-    case 3: // Walt Disney
-      collectingRounds.value = 3;
-      collectingTimer.value = 360;
-      break;
-    case 4: // 6 Thinking Hats
-      collectingRounds.value = 6; //fraglich !!!!
-      collectingTimer.value = 360;
-      break;
-    default:
-      console.warn('Unbekannte Methode ID:', method.value.id);
-  }
-};
-const imageFile = ref(null)
-const imageFileUrl = ref('')
+
 const handleFileChange = (event) => {
   imageFile.value = event.target.files[0];
   imageFileUrl.value = URL.createObjectURL(imageFile.value)
@@ -449,10 +437,6 @@ const submitIdea = async () => {
     errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
   }
 };
-const method = ref(null);
-
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
 
 recognition.continuous = true;
 recognition.interimResults = true;
@@ -466,7 +450,6 @@ recognition.onresult = (event) => {
 
   textInput.value = transcript;
 };
-
 watch(isListening, () => {
   if (isListening.value) {
     recognition.start();
@@ -476,23 +459,16 @@ watch(isListening, () => {
 });
 
 onMounted(() => {
-  sessionId.value = props.sessionId;
-  contributors.value = props.contributors;
-  console.log(personalContributor.value)
-  method.value = props.method;
-  sessionHostId.value = props.sessionHostId;
   setMethodParameters();
-  if (props.currentRound) {
-    currentRound.value = props.currentRound;
-    console.log(currentRound.value, collectingRounds.value)
+/*
     if(currentRound.value >= collectingRounds.value){
       emit('switchPhase', 'votingPhase');
     }
-  }
+  */
   Echo.channel('session.' + sessionId.value)
     .listen('StartCollecting', (e) => {
       console.log('StartCollecting Event empfangen:', e);
-      console.log(currentRound.value)
+      console.log(currentRound.value);
       if (currentRound.value > 1 && method.value.name === "6-3-5") {
         getIdeasPassed();
       }
@@ -501,6 +477,7 @@ onMounted(() => {
     .listen('StopCollecting', (e) => {
       console.log('StopCollecting Event empfangen:', e);
       stopCollecting();
+      
       console.log("collectingStarted", collectingStarted.value)
     });
   if (personalContributor.value.id != sessionHostId.value) {

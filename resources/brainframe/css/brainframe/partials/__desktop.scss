@@ -1,0 +1,32 @@
+@media only screen and (min-width: 720px) {
+
+    nav {
+        font-size: 0.9em;
+
+        ul li a div svg {
+            width: 2em;
+            height: 2em;
+        }
+    }
+
+    div .join_buttons {
+        display: none;
+    }
+
+    .join__form {
+
+        .join__form__input,
+        .join__form__submit {
+            width: 20em;
+        }
+    }
+
+    .info__text {
+        width: 60%;
+    }
+
+    .info__container {
+        margin-right: 10%;
+    }
+
+}

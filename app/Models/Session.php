@@ -8,7 +8,7 @@ class Session extends Model
 { 
     public $incrementing = false;
     protected $table = 'bf_sessions';
-    protected $fillable = ['id', 'host_id', 'method_id', 'target', 'active_phase', 'active_round'];
+    protected $fillable = ['id', 'host_id', 'method_id', 'target', 'active_phase', 'active_round', 'previous_phase'];
       // Definiert die Beziehung zu User (host_id)
       public function host()
       {

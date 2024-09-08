@@ -282,7 +282,38 @@
 .session_headline__details {
   display: flex;
   justify-content: space-between;
+  .red-hat {
+    fill: red;
+}
 
+.blue-hat {
+    fill: rgb(1, 1, 255);
+}
+
+.yellow-hat {
+    fill: yellow;
+}
+
+.white-hat {
+    fill: white;
+}
+
+.green-hat {
+    fill: lime;
+}
+.black-hat {
+  fill: black;
+}
+.white-hat {fill:white;}
+
+
+.snowflake-inner {
+    fill: var(--secondary);
+}
+
+.snowflake-outer {
+    fill: var(--accent);
+}
   div {
     min-width: 6em;
     background-color: var(--text);

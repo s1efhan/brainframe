@@ -5,10 +5,12 @@
     </h1>
     <div class="session_headline__details"
       v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'">
-      <div>
-        <ProfileIcon />
+      <div  @click="showContributorsBoard = true">
+        <ProfileIcon/>
         <p v-if="personalContributor.role_name != 'Default'"> {{ contributorsCount }} | {{ contributorsAmount }} </p>
       </div>
+      <div v-if="sessionPhase != 'lobby' &&  personalContributor.id === sessionHostId" @click="switchPhase('lobby')">⏸</div>
+      <div v-if="sessionPhase === 'lobby' &&  personalContributor.id === sessionHostId" @click="switchPhase(previousPhase)">▶</div>
       <div>
         <p>{{ methodName }} Methode</p>
       </div>
@@ -22,11 +24,14 @@
 
     <Rollenwahl v-if="!personalContributor || personalContributor.role_name === 'Default' && methodName"
       :userId="userId" @contributorAdded="handleContributorAdded" :methodName="methodName" />
-
-    <CollectingPhase @switchPhase="switchPhase"
+    <Lobby
+      v-if="method && personalContributor && sessionPhase === 'lobby' && personalContributor.role_name != 'Default' "
+      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
+      :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"/>
+    <CollectingPhase  @getContributors="getContributors" @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
       :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-      :sessionId="sessionId" :personalContributor="personalContributor" />
+      :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"/>
     <VotingPhase @finishedVoting="finishedVoting"
       v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"
@@ -35,6 +40,8 @@
       v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
   </main>
+  <ContributorsBoard v-if="showContributorsBoard && method && personalContributor" @exit="handleExit" :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
+  :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"/>
 </template>
 
 <script setup>
@@ -49,7 +56,9 @@ const router = useRouter();
 import ProfileIcon from '../components/icons/ProfileIcon.vue';
 import VotingPhase from '../components/phases/VotingPhase.vue';
 import CollectingPhase from '../components/phases/CollectingPhase.vue';
+import Lobby from '../components/phases/Lobby.vue';
 import ClosingPhase from '../components/phases/ClosingPhase.vue';
+import ContributorsBoard from '../components/ContributorsBoard.vue';
 import IconComponents from '../components/IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
@@ -65,6 +74,9 @@ const updateSessionId = () => {
   sessionId.value = route.params.id;
   emit('updateSessionId', sessionId.value);
 }
+const handleExit = () => {
+  showContributorsBoard.value = false;
+};
 const headlineHeight = ref('auto');
 
 const adjustHeadline = (event) => {
@@ -74,20 +86,19 @@ const adjustHeadline = (event) => {
   }
   headlineHeight.value = `${headline.scrollHeight}px`;
 };
+const showContributorsBoard = ref(false);
 const collectingTimer = ref(360);
 const contributors = ref([]);
 const personalContributor = ref(null);
 const handleContributorAdded = () => {
   getContributors();
 };
-const sessionPhase = ref('collectingPhase');
+const sessionPhase = ref('lobby');
 const getContributors = () => {
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {
       contributors.value = response.data.contributors;
       personalContributor.value = response.data.personal_contributor;
-      console.log('Contributors:', contributors.value);
-      console.log('Personal Contributor:', personalContributor.value);
     })
     .catch(error => {
       console.error('Error fetching contributors', error);
@@ -102,6 +113,8 @@ const contributorsCount = ref(null);
 const contributorsAmount = ref(null);
 const method = ref(null);
 const userId = ref(props.userId);
+const ideasCount = ref(null);
+const previousPhase = ref('collectingPhase');
 const getSessionDetails = () => {
   axios.get(`/api/session/${sessionId.value}`)
     .then(
@@ -109,11 +122,12 @@ const getSessionDetails = () => {
         sessionDetails.value = response.data;
         methodId.value = sessionDetails.value.method_id;
         methodName.value = sessionDetails.value.method_name;
-        sessionPhase.value = sessionDetails.value.session_phase || 'collectingPhase';
+       sessionPhase.value = sessionDetails.value.session_phase || 'lobby';
+       previousPhase.value = sessionDetails.value.previous_phase || 'collectingPhase';
         contributorsAmount.value = sessionDetails.value.contributors_amount;
         sessionHostId.value = sessionDetails.value.session_host;
         currentRound.value = sessionDetails.value.current_round;
-        console.log('currentRound.value', currentRound.value)
+        ideasCount.value = sessionDetails.value.ideas_count;
         getMethodDetails();
         getContributors();
       })
@@ -125,8 +139,7 @@ const getSessionDetails = () => {
 const emit = defineEmits(['updateSessionId']);
 const switchPhase = (switchedPhase) => {
   sessionPhase.value = switchedPhase;
-  console.log(personalContributor.value.id, sessionHostId.value);
-  if (personalContributor.value.id == sessionHostId.value) {
+    if (personalContributor.value.id == sessionHostId.value) {
     axios.post('/api/phase', {
       switched_phase: switchedPhase,
       session_id: sessionId.value
@@ -136,6 +149,9 @@ const switchPhase = (switchedPhase) => {
       })
       .catch(error => {
         console.error('Error switching Phase', error);
+      })
+      .finally(() => {
+        getSessionDetails();
       });
   }
 };
@@ -143,7 +159,6 @@ const getMethodDetails = () => {
   axios.get(`/api/method/${methodId.value}`)
     .then(response => {
       method.value = response.data;
-      console.log(method.value);
     })
     .catch(error => {
       console.error('Error fetching Method Details', error);
@@ -156,6 +171,7 @@ const joinSession = () => {
       user_id: userId.value
     })
       .then(response => {
+        contributorsCount.value = response.data.contributors_count;
       })
       .catch(error => {
         console.error('Error adding Contributor', error);
@@ -209,9 +225,9 @@ let pingInterval;
 onMounted(() => {
   updateSessionId();
   console.log('Listening on channel:', 'session.' + sessionId.value);
+  getSessionDetails();
   Echo.channel('session.' + sessionId.value)
     .listen('SwitchPhase', (e) => {
-      console.log('SwitchPhase Event empfangen:', e);
       sessionPhase.value = e.phase;
     })
     .listen('UserJoinedSession', (e) => {
@@ -220,13 +236,12 @@ onMounted(() => {
     .listen('UserLeftSession', (e) => {
       contributorsCount.value = e.newContributorsCount;
     });
-  nextTick(() => {
-    joinSession();
-  });
-  getSessionDetails();
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('beforeunload', leaveSession);
   pingInterval = setInterval(ping, 30000);
+  nextTick(() => {
+    joinSession();
+  });
 });
 
 onUnmounted(() => {

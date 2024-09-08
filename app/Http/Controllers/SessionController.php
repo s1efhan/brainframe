@@ -165,6 +165,21 @@ class SessionController extends Controller
             ->where('session_id', $session->id)
             ->first();
 
+            $ideasCount = Idea::where('session_id', $session->id)
+            ->whereNull('tag')
+            ->selectRaw('round, contributor_id, count(*) as count')
+            ->groupBy('round', 'contributor_id')
+            ->get()
+            ->groupBy('round')
+            ->map(function ($roundGroup) {
+                return [
+                    'round' => $roundGroup->first()->round,
+                    'sum' => $roundGroup->sum('count'),
+                    'contributors' => $roundGroup->pluck('count', 'contributor_id')->toArray()
+                ];
+            })
+            ->values()
+            ->keyBy('round');
         $contributorsCount = Contributor::where('session_id', $session->id)->count();
         Log::info('ContributorsCount: ' . $contributorsCount);
         return response()->json([
@@ -175,8 +190,9 @@ class SessionController extends Controller
             'method_name' => $session->method->name,
             'session_phase' => $session->active_phase,
             'current_round' => $session->active_round,
-            'contributors_count' => $contributorsCount, // Anzahl der Contributors mit der Session_ID
-            'contributors_amount' => $session->contributors_amount // Erwartete Anzahl der Teilnehmer 
+            'contributors_count' => $contributorsCount,
+            'contributors_amount' => $session->contributors_amount,
+            'ideas_count'=> $ideasCount
         ], 200);
     }
 
@@ -244,8 +260,9 @@ class SessionController extends Controller
     {
         $sessionId = $request->input('session_id');
         $round = $request->input('current_round');
+       
         event(new StartCollecting($sessionId, $round));
-
+    
         return response()->json(['message' => 'Collecting successfully started']);
     }
 
@@ -259,6 +276,13 @@ class SessionController extends Controller
             $session->active_round = $round;
             $session->active_phase = 'collectingPhase';
             $session->save();
+        }
+        if ($session->method_id === 4 && $round >1) {
+            $contributors = Contributor::where('session_id', $session->id)->get();
+            foreach ($contributors as $contributor) {
+                $contributor->role_id = $contributor->role_id % 6 + 1;
+                $contributor->save();
+            }
         }
         // Aktualisiere den Wert der Spalte `active_round` für die Session
         // Event auslösen

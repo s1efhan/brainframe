@@ -55,17 +55,23 @@ class MethodController extends Controller
     public function switchPhase(Request $request)
     {
         $sessionId = $request->input('session_id');
-        $phase = $request->input('switched_phase');
-        // Aktualisiere den Wert der Spalte `active_round` für die Session
+        $newPhase = $request->input('switched_phase');
+    
         $session = Session::find($sessionId);
+    
         if ($session) {
-            $session->active_phase = $phase;
+            $session->previous_phase = $session->active_phase;
+            $session->active_phase = $newPhase;
             $session->save();
+            event(new SwitchPhase($sessionId, $newPhase));
+    
+            return response()->json([
+                'message' => 'Phase switched successfully',
+                'previous_phase' => $session->previous_phase,
+                'active_phase' => $session->active_phase
+            ]);
         }
-        
-        
-        event(new SwitchPhase($sessionId, $phase));
-        
-        return response()->json(['message' => 'Phase switched successfully']);
+    
+        return response()->json(['error' => 'Session not found'], 404);
     }
 }
