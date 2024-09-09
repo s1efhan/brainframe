@@ -156,7 +156,7 @@ const personalContributor = ref(props.personalContributor);
 const passedIdeas = ref(null);
 const method = ref(props.method);
 const contributors = ref( props.contributors);
-const maxIdeaInput = ref(0);
+const maxIdeaInput = ref(null);
 const collectingRounds = ref(null);
 const collectingTimer = ref(null);
 const imageFile = ref(null)
@@ -216,67 +216,77 @@ const startCollecting = () => {
 };
 
 const stopCollecting = () => {
-  collectingStarted.value = false;
-  clearInterval(timer);
-  if (currentRound.value < collectingRounds.value) {
-    if(method.value.id === 4)// nur bei 6-Thinking Hats
-    { emit('getContributors');}
-    if (personalContributor.value.id == sessionHostId.value && method.value.name == '6-3-5') {
-  console.log('post /sendtoGPT');
-  isLoading.value = true;
+ collectingStarted.value = false;
+ clearInterval(timer);
 
+ if (personalContributor.value.id == sessionHostId.value) {
+   if (currentRound.value < collectingRounds.value) {
+     if (method.value.id === 4) { // nur bei 6-Thinking Hats
+       emit('getContributors');
+     }
+     if (method.value.name == '6-3-5') {
+       sendToGPT(currentRound.value);
+     }
+     currentRound.value++;
+     showStartButton.value = true;
+   } else {
+     showStartButton.value = false;
+     if (method.value.name != '6-3-5') {
+       sendToGPT(null, true);
+     } else {
+       // Für 6-3-5 Methode: Sende nur, wenn nicht bereits in der letzten Runde gesendet wurde
+       if (currentRound.value === collectingRounds.value) {
+         sendToGPT(currentRound.value, true);
+       }
+     }
+   }
+ } else {
+   if (currentRound.value < collectingRounds.value) {
+     currentRound.value++;
+     showStartButton.value = true;
+   } else {
+     showStartButton.value = false;
+   }
+ }
+};
+
+const sendToGPT = (round = null, isLastRound = false) => {
+  isLoading.value = true;
+  console.log("API GPT");
   axios.post('/api/ideas/sendToGPT', {
     session_id: sessionId.value,
     method_name: method.value.name,
-    round: currentRound.value
+    round: round
   })
   .then(response => {
     console.log('Server response:', response.data);
+    if (isLastRound) {
+      emit('switchPhase', 'votingPhase');
+    }
   })
   .catch(error => {
-    console.error('Fehler bei der API-Anfrage', error.message.error);
+    console.error('Fehler bei der API-Anfrage', error);
+    if (isLastRound) {
+      emit('switchPhase', 'lobby');
+    }
   })
   .finally(() => {
     isLoading.value = false;
   });
-}
-    currentRound.value++;
-    showStartButton.value = true;
-  } else {
-    showStartButton.value = false;
-    if (personalContributor.value.id == sessionHostId.value)
-    isLoading.value = true; 
-      axios.post('/api/ideas/sendToGPT', {
-        session_id: sessionId.value,
-        method_name: method.value.name
-      })
-        .then(response => {
-          console.log('Server response:', response.data);
-          emit('switchPhase', 'votingPhase');
-        })
-  
-        .catch(error => {
-          console.error('Fehler bei der API-Anfrage', error);
-          emit('switchPhase', 'lobby');
-        })
-        .finally(() => {
-          isLoading.value = false;
-        });
-       
-  }
 };
+
 const callStopCollecting = () => {
   if (sessionHostId.value === personalContributor.value.id) {
     axios.post('/api/collecting/stop', {
       current_round: currentRound.value + 1,
       session_id: sessionId.value
     })
-      .then(response => {
-        console.log('Server response:', response.data);
-      })
-      .catch(error => {
-        console.error('Error stoping Collecting', error);
-      });
+    .then(response => {
+      console.log('Server response:', response.data);
+    })
+    .catch(error => {
+      console.error('Error stopping Collecting', error);
+    });
   }
 };
 const startTimer = () => {
@@ -402,6 +412,7 @@ const compressImage = async (file, maxSizeInMB = 2) => {
 };
 
 const submitIdea = async () => {
+  console.log(maxIdeaInput.value)
   if (submittedIdeas.value >= maxIdeaInput.value && maxIdeaInput.value !== null) {
     errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
     return;

@@ -8,14 +8,14 @@
       :contributors="props.contributors"
       :sessionId="props.sessionId"
       :personalContributor="props.personalContributor"
-      :ideasCount="props.ideasCount"
+      :ideasCount="props.ideasCount" 
+      :isLobby="true" :previousPhase="props.previousPhase"
     />
   </template>
   
   <script setup>
   import ContributorsBoard from '../ContributorsBoard.vue';
-  import { defineProps, onMounted } from 'vue';
-  
+
   const props = defineProps({
     method: Object,
     currentRound: Number,
@@ -24,18 +24,12 @@
     sessionId: [String, Number],
     personalContributor: Object,
     ideasCount: Object,
-    maxIdeaInput: Number
+    maxIdeaInput: Number,
+    isLobby: Boolean,
+    previousPhase: String
   });
+  const emit = defineEmits(['switchPhase']);
   const handleExit = () => {
-
+    emit('switchPhase', 'previousPhase');
   }
-  onMounted(() => {
-    console.log('method:', props.method);
-    console.log('currentRound:', props.currentRound);
-    console.log('sessionHostId:', props.sessionHostId);
-    console.log('contributors:', props.contributors);
-    console.log('sessionId:', props.sessionId);
-    console.log('personalContributor:', props.personalContributor);
-    console.log('ideasCount:', props.ideasCount);
-  });
   </script>

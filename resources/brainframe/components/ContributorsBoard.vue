@@ -1,11 +1,16 @@
 <template>
-    <div class="lobby__headline__container">
-    <h2 class="lobby__headline">Lobby</h2></div>
+    <div v-if="isLobby" class="lobby__headline__container">
+        <h2 v-if="isLobby" class="lobby__headline">Lobby</h2>
+        <h3>. . . warte, bis der Host die Runde startet</h3>
+    </div>
+    <div v-else class="lobby__headline__container">
+        <h2 class="lobby__headline">Dashboard</h2>
+        <h3>. . . du hast die Runde <strong>für dich </strong> pausiert.  </h3>
+    </div>
     <section class="contributors_board__container">
-        
         <div class="contributors_board">
             <div class="info__container">
-                <button @click="emit('exit')" class="primary">X</button>
+                <button v-if="!props.isLobby" @click="emit('exit')" class="primary">X</button>
                 <div @click="showInfo = !showInfo" class="join__info">
                     <p>i</p>
                 </div>
@@ -27,7 +32,8 @@
                             :class="{ 'active_round': round == currentRound }">
                             Runde {{ round }}
                         </th>
-                        <th>Gesamt</th>
+                        <th>Ideen</th>
+                        <th>Teilnehmer</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,6 +45,7 @@
                             {{ roundData.sum }}
                         </td>
                         <td class="center">{{ getTotalIdeas() }}</td>
+                        <td class="center">{{ contributors.length }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -62,18 +69,26 @@
                             <component :is="getIconComponent(contributor.icon)" />
                         </td>
                         <td :class="{ host: contributor.id === sessionHostId }">
-                            {{ contributor.id === sessionHostId ? `Host: ${contributor.role_name}` : contributor.role_name }}
+                            {{ contributor.id === sessionHostId ? `Host: ${contributor.role_name}` :
+                            contributor.role_name }}
                         </td>
-                        <td class="center">{{ (ideasCount[currentRound]?.contributors?.[contributor.id] || 0) + (maxIdeaInput ? ' / ' + maxIdeaInput : '') }}</td>
+                        <td class="center">{{ (ideasCount[currentRound]?.contributors?.[contributor.id] || 0) +
+                            (maxIdeaInput ? ' / ' + maxIdeaInput : '') }}</td>
                         <td>{{
                             (() => {
                             const diff = (new Date() - new Date(contributor.last_active)) / 60000;
                             return diff < 1 ? 'Jetzt' : diff < 60 ? `Vor ${Math.round(diff)} min` : `Vor
                                 ${Math.floor(diff / 60)}h ${Math.round(diff % 60)} min` })() }}</td>
-<td v-if="maxIdeaInput" class="center">{{ (ideasCount[currentRound]?.contributors?.[contributor.id] || 0) >= maxIdeaInput ? '✅' : '❌' }}</td>
+                        <td v-if="maxIdeaInput" class="center">{{
+                            (ideasCount[currentRound]?.contributors?.[contributor.id] || 0) >= maxIdeaInput ? '✅' : '❌'
+                            }}</td>
                     </tr>
                 </tbody>
             </table>
+            <div class="lobby__start__container">
+                <button class="primary" v-if="props.isLobby && props.personalContributor.id === props.sessionHostId"
+                    @click="emit('exit')">Runde starten</button>
+            </div>
         </div>
     </section>
 </template>
@@ -109,12 +124,19 @@ const props = defineProps({
     ideasCount: {
         type: [Object, null],
         required: true
+    },
+    isLobby: {
+        type: Boolean,
+        required: true
+    },
+    previousPhase: {
+        type: [String, null],
+        required:true
     }
 });
 const maxIdeaInput = ref(null);
 const showInfo = ref(false);
 const emit = defineEmits(['exit']);
-
 const getTotalIdeas = () => {
     return Object.values(props.ideasCount).reduce((total, round) => total + round.sum, 0);
 };
@@ -122,13 +144,12 @@ const getIconComponent = (iconName) => {
     return IconComponents[iconName] || null;
 };
 onMounted(() => {
-    if(props.method.name === "6-3-5"){
-        maxIdeaInput.value= 5;
-    } 
-    else if (props.method.name === "Crazy 8"){
-        maxIdeaInput.value= 1;
+    if (props.method.name === "6-3-5") {
+        maxIdeaInput.value = 5;
     }
-    maxIdeaInput.value= 1;
+    else if (props.method.name === "Crazy 8") {
+        maxIdeaInput.value = 1;
+    }
 });
 
 </script>

@@ -4,6 +4,7 @@
     <p class="response" v-if="responseMsg">{{responseMsg}}</p>
   </div>
   <main>
+    <div class="sessions__table__container">
     <table class="sessions__table" v-if="userSessions && userSessions.length > 0">
       <thead>
         <tr>
@@ -12,6 +13,7 @@
           <th>Role</th>
           <th>Updated At</th>
           <th>Method</th>
+          <th>Phase</th>
           <th>
             <SettingsIcon />
           </th>
@@ -57,13 +59,14 @@
               {{ session.method_name }}
             </template>
           </td>
+          <td>{{ session.active_phase }}</td>
           <td v-if="session.host_id === userId" class="settings">
             <template v-if="session.isEditing">
               <button @click="sendAlterSession(session)">Speichern</button>
             </template>
             <template v-else>
-              <div @click="alterSession(session)">
-                <BrushIcon />
+              <div v-if="session.active_phase === null || session.active_phase === 'collectingPhase'">
+                <BrushIcon @click="alterSession(session)" />
               </div>
               <div v-if="!session.confirmDelete" @click="session.confirmDelete = true" class="x">X</div>
               <div v-else>
@@ -72,10 +75,13 @@
               </div>
             </template>
           </td>
+          <td v-else></td>
         </tr>
       </tbody>
     </table>
     <p v-else>Keine Sitzungen gefunden.</p>
+  </div>
+  
   </main>
 </template>
 

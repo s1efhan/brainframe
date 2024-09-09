@@ -64,7 +64,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(idea, index) in [...sessionDetails.top_ideas].reverse()" :key="idea.id">
+          <tr v-for="(idea, index) in [...sessionDetails.top_ideas].sort((a, b) => b.avg_vote_value - a.avg_vote_value)"
+            :key="idea.id">
             <td class="center">{{ index + 1 }}</td>
             <td>{{ idea.idea_title }}</td>
             <td v-html="idea.idea_description"></td>

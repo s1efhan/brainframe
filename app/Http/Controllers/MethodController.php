@@ -56,22 +56,31 @@ class MethodController extends Controller
     {
         $sessionId = $request->input('session_id');
         $newPhase = $request->input('switched_phase');
-    
+        
         $session = Session::find($sessionId);
-    
-        if ($session) {
-            $session->previous_phase = $session->active_phase;
-            $session->active_phase = $newPhase;
-            $session->save();
-            event(new SwitchPhase($sessionId, $newPhase));
-    
-            return response()->json([
-                'message' => 'Phase switched successfully',
-                'previous_phase' => $session->previous_phase,
-                'active_phase' => $session->active_phase
-            ]);
+        
+        if (!$session) {
+            return response()->json(['error' => 'Session not found'], 404);
         }
-    
-        return response()->json(['error' => 'Session not found'], 404);
+        
+        if ($newPhase === "previousPhase") {
+            if ($session->previous_phase != "lobby" && $session->previous_phase != null) {
+                $newPhase = $session->previous_phase;
+            } else {
+                $newPhase = 'collectingPhase';
+            }
+        }
+        
+        $session->previous_phase = $session->active_phase;
+        $session->active_phase = $newPhase;
+        $session->save();
+        
+        event(new SwitchPhase($sessionId, $newPhase));
+        
+        return response()->json([
+            'message' => 'Phase switched successfully',
+            'previous_phase' => $session->previous_phase,
+            'active_phase' => $session->active_phase
+        ]);
     }
 }

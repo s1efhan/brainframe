@@ -86,57 +86,56 @@ table {
     }
 }
 
-table.sessions__table {
-    margin-top: 1em;
-    background-color: var(--primary);
-    font-size: 0.8em;
+main {
+    overflow: hidden;
+    box-sizing: border-box;
+}
+.sessions__table__container{
+    padding: 2em;
+}
+.sessions__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8em;
+  table-layout: fixed;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  th, td {
+    padding: 0.5em;
+    border: solid var(--primary);
+    overflow: hidden;
+  }
 
-    tbody,
-    thead {
-        th {
-            color: white;
-            background-color: var(--secondary);
-            padding: 0.2em;
-            text-align: center;
-        }
+  th {
+    background-color: var(--secondary);
+    color: white;
+    fill: white;
+  }
 
-        svg {
-            fill: white
-        }
+  td {
+    padding: 0.3em;
+    background-color: var(--secondary);
+    color: var(--accent);
+  }
 
-        .settings {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-evenly;
-            cursor: pointer;
-
-            button {
-                background: transparent;
-                border:none;
-                font-size: 0.8em;
-                color: var(--accent);
-            }
-        }
-
-        td {
-            color: var(--accent);
-            background-color: var(--secondary);
-
-            svg {
-                fill: var(--accent)
-            }
-
-            .x {
-                font-size: 1.3em;
-                color: red;
-            }
-
-            a {
-                color: var(--accent);
-            }
-        }
+  .settings {
+    text-align: center;
+    
+    button {
+      background: transparent;
+      border: none;
+      color: var(--accent);
     }
+
+    .x {
+      color: red;
+    }
+  }
+
+  a {
+    color: var(--accent);
+  }
 }
 
 svg {

@@ -26,7 +26,7 @@
       :userId="userId" @contributorAdded="handleContributorAdded" :methodName="methodName" />
     <Lobby
       v-if="method && personalContributor && sessionPhase === 'lobby' && personalContributor.role_name != 'Default' "
-      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
+      :method="method" :previousPhase="previousPhase" @switchPhase="switchPhase" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
       :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"/>
     <CollectingPhase  @getContributors="getContributors" @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
@@ -40,8 +40,8 @@
       v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
   </main>
-  <ContributorsBoard v-if="showContributorsBoard && method && personalContributor" @exit="handleExit" :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-  :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"/>
+  <ContributorsBoard :previousPhase="previousPhase" v-if="showContributorsBoard && method && personalContributor" @exit="handleExit" :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
+  :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"  :isLobby="false"/>
 </template>
 
 <script setup>

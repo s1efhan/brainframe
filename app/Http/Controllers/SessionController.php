@@ -277,15 +277,13 @@ class SessionController extends Controller
             $session->active_phase = 'collectingPhase';
             $session->save();
         }
-        if ($session->method_id === 4 && $round >1) {
+        if ($session->method_id === 4 && $round > 1 && $round < 7) {
             $contributors = Contributor::where('session_id', $session->id)->get();
             foreach ($contributors as $contributor) {
                 $contributor->role_id = $contributor->role_id % 6 + 1;
                 $contributor->save();
             }
         }
-        // Aktualisiere den Wert der Spalte `active_round` für die Session
-        // Event auslösen
         event(new StopCollecting($sessionId, $round));
 
         return response()->json(['message' => 'Collecting successfully stopped']);
@@ -590,8 +588,10 @@ class SessionController extends Controller
     }
     public function deleteSession(Request $request)
     {
+        
         $sessionId = $request->input('session_id');
         $userId = $request->input('user_id');
+        
         $session = Session::find($sessionId);
 
         if ($userId == $session->host_id) {
@@ -607,6 +607,8 @@ class SessionController extends Controller
         $newMethod = $request->input('new_method');
         $newTarget = $request->input('new_target');
         $session = Session::find($sessionId);
+        Log::info($userId);
+        Log::info($session->host_id);
 
         if ($userId == $session->host_id && ($session->active_phase === null || $session->active_phase === 'collectingPhase')) {
             $session->update([

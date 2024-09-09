@@ -76,14 +76,13 @@ onMounted(() => {
     console.log("ideas.value", JSON.parse(JSON.stringify(ideas.value)));
   }
 });
-
 const submitRanking = () => {
   const votes = ideas.value.map((idea, index) => ({
     session_id: props.sessionId,
     idea_id: idea.id,
     contributor_id: props.contributorId,
     vote_type: 'ranking',
-    vote_value: ideasCount.value - index,
+    vote_value: Math.max(5 - index, 1), // Ändert die Punktevergabe
     voting_phase: props.votingPhase
   }));
 

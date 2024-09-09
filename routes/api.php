@@ -10,6 +10,8 @@ use App\Http\Controllers\VoteController;
 use App\Http\Controllers\IdeaController;
 Route::post('/user', [UserController::class, 'store']);
 Route::post('/register', [UserController::class, 'register']);
+Route::post('/session/delete', [SessionController::class, 'deleteSession']);
+Route::post('/session/put', [SessionController::class, 'alterSession']);
 Route::post('/login', [UserController::class, 'login']);
 Route::get('/method/{methodId}', [MethodController::class, 'getDetails']);
 Route::get('/methods', [MethodController::class, 'get']);
@@ -39,5 +41,4 @@ Route::post('/session/leave', [SessionController::class, 'sessionLeave']);
 Route::post('/session/ping', [SessionController::class, 'sessionPing']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get'])
      ->where('sessionId', '[0-9]+');
-Route::post('/session/delete', [SessionController::class, 'deleteSession']);
-Route::post('/session/put', [SessionController::class, 'alterSession']);
+

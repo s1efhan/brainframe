@@ -51,36 +51,38 @@
                 </tr>
             </tbody>
         </table>
-
         <div class="top-ideas">
-            <h2>Top Ideen</h2>
-            @if(isset($sessionDetails['top_ideas']))
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Platz</th>
-                            <th>Idee</th>
-                            <th>Beschreibung</th>
-                            <th>Punkte</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach(array_reverse($sessionDetails['top_ideas']) as $index => $idea)
-                            <tr>
-                                <td class="center">
-                                    <div class="placement">{{ $index + 1 }}</div>
-                                </td>
-                                <td>{{ $idea['idea_title'] }}</td>
-                                <td>{!! $idea['idea_description'] !!}</td>
-                                <td class="center">
-                                    <div class="voting-value">{{ number_format($idea['avg_vote_value'], 1) }} /5.0 </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
-        </div>
+    <h2>Top Ideen</h2>
+    @if(isset($sessionDetails['top_ideas']))
+    <table>
+        <thead>
+            <tr>
+                <th>Platz</th>
+                <th>Idee</th>
+                <th>Beschreibung</th>
+                <th>Punkte</th>
+            </tr>
+        </thead>
+        <tbody>
+        @php
+            $sortedIdeas = collect($sessionDetails['top_ideas'])->sortByDesc('avg_vote_value');
+        @endphp
+        @foreach($sortedIdeas as $index => $idea)
+            <tr>
+                <td class="center">
+                    <div class="placement">{{ $index + 1 }}</div>
+                </td>
+                <td>{{ $idea['idea_title'] }}</td>
+                <td>{!! $idea['idea_description'] !!}</td>
+                <td class="center">
+                    <div class="voting-value">{{ number_format($idea['avg_vote_value'], 1) }} /5.0 </div>
+                </td>
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+    @endif
+</div>
 
         <div class="collecting-process">
             <h2>{{ $sessionDetails['method'] }}</h2>
