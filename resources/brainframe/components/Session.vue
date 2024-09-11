@@ -5,12 +5,14 @@
     </h1>
     <div class="session_headline__details"
       v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'">
-      <div  @click="showContributorsBoard = true">
-        <ProfileIcon/>
+      <div @click="showContributorsBoard = true">
+        <ProfileIcon /> <!-- soll leuchten, wenn jemand "wartet"-->
         <p v-if="personalContributor.role_name != 'Default'"> {{ contributorsCount }} | {{ contributorsAmount }} </p>
       </div>
-      <div v-if="sessionPhase != 'lobby' &&  personalContributor.id === sessionHostId" @click="switchPhase('lobby')">⏸</div>
-      <div v-if="sessionPhase === 'lobby' &&  personalContributor.id === sessionHostId" @click="switchPhase(previousPhase)">▶</div>
+      <div v-if="sessionPhase != 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
+        @click="switchPhase('lobby')">⏸</div>
+      <div v-if="sessionPhase === 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
+        @click="switchPhase(previousPhase)">▶</div>
       <div>
         <p>{{ methodName }} Methode</p>
       </div>
@@ -26,12 +28,13 @@
       :userId="userId" @contributorAdded="handleContributorAdded" :methodName="methodName" />
     <Lobby
       v-if="method && personalContributor && sessionPhase === 'lobby' && personalContributor.role_name != 'Default' "
-      :method="method" :previousPhase="previousPhase" @switchPhase="switchPhase" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-      :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"/>
-    <CollectingPhase  @getContributors="getContributors" @switchPhase="switchPhase"
+      :method="method" :previousPhase="previousPhase" @switchPhase="switchPhase" :currentRound="currentRound"
+      :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
+      :personalContributor="personalContributor" :ideasCount="ideasCount" />
+    <CollectingPhase @getContributors="getContributors" @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
       :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-      :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"/>
+      :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount" />
     <VotingPhase @finishedVoting="finishedVoting"
       v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"
@@ -40,8 +43,10 @@
       v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
   </main>
-  <ContributorsBoard :previousPhase="previousPhase" v-if="showContributorsBoard && method && personalContributor" @exit="handleExit" :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-  :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount"  :isLobby="false"/>
+  <ContributorsBoard :previousPhase="previousPhase"
+    v-if="showContributorsBoard && method && personalContributor && currentRound >= 1" @exit="handleExit"
+    :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
+    :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount" :isLobby="false" />
 </template>
 
 <script setup>
@@ -122,24 +127,25 @@ const getSessionDetails = () => {
         sessionDetails.value = response.data;
         methodId.value = sessionDetails.value.method_id;
         methodName.value = sessionDetails.value.method_name;
-       sessionPhase.value = sessionDetails.value.session_phase || 'lobby';
-       previousPhase.value = sessionDetails.value.previous_phase || 'collectingPhase';
+        sessionPhase.value = sessionDetails.value.session_phase || 'lobby';
+        previousPhase.value = sessionDetails.value.previous_phase || 'collectingPhase';
         contributorsAmount.value = sessionDetails.value.contributors_amount;
         sessionHostId.value = sessionDetails.value.session_host;
-        currentRound.value = sessionDetails.value.current_round;
+        currentRound.value = sessionDetails.value.current_round || 0;
         ideasCount.value = sessionDetails.value.ideas_count;
         getMethodDetails();
         getContributors();
       })
     .catch(error => {
       console.error('Error fetching Session Details', error);
+      sessionId.value = null;
       router.push('/brainframe/join')
     });
 };
 const emit = defineEmits(['updateSessionId']);
 const switchPhase = (switchedPhase) => {
-  sessionPhase.value = switchedPhase;
-    if (personalContributor.value.id == sessionHostId.value) {
+  currentRound.value = 1;
+  if (personalContributor.value.id == sessionHostId.value) {
     axios.post('/api/phase', {
       switched_phase: switchedPhase,
       session_id: sessionId.value
@@ -178,7 +184,7 @@ const joinSession = () => {
       })
   }
 };
-const finishedVoting =() =>{
+const finishedVoting = () => {
   sessionPhase.value = 'closingPhase';
 }
 const leaveSession = () => {

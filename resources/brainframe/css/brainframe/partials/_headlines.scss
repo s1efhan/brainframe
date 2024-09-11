@@ -28,10 +28,17 @@
   }
 }
 
+.headline__brainframe-icon .hamburger {
+  fill: var(--accent);
+  height: 2.2em;
+}
+
 .headline {
   display: flex;
   flex-direction: row;
   width: 100%;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.5em;
 
   &__session-pin {
@@ -91,7 +98,7 @@
 }
 
 .headline__session-target {
-  font-size: 1.4em;
+  font-size: 1.1em;
   display: inline-block;
   border: solid var(--primary) thick;
   box-sizing: border-box;
@@ -217,14 +224,19 @@
   bottom: 7em;
   justify-content: space-between;
 }
-.timer__container{
+
+.timer__container {
   padding: 1em;
   justify-content: center;
   align-items: center;
-  display:flex;
+  display: flex;
   flex-direction: row;
-  svg {fill:var(--secondary);}
+
+  svg {
+    fill: var(--secondary);
+  }
 }
+
 .timer {
   margin-left: 1em;
   display: flex;
@@ -239,7 +251,7 @@
 }
 
 .timer::before {
-  position:absolute;
+  position: absolute;
   content: '';
   height: 2.5em;
   padding: 3px;
@@ -255,7 +267,8 @@
 }
 
 .headline__sessions,
-.headline__login, .knowledge__headline {
+.headline__login,
+.knowledge__headline {
   margin-top: 1em;
   display: inline-block;
   border: solid var(--accent)thick;
@@ -272,48 +285,56 @@
     color: var(--accent);
   }
 }
-.headline__session-pin{
-  p{
-    display:flex;
-    align-items:center;
+
+.headline__session-pin {
+  p {
+    display: flex;
+    align-items: center;
     justify-content: center;
   }
 }
+
 .session_headline__details {
   display: flex;
   justify-content: space-between;
+
   .red-hat {
     fill: red;
-}
+  }
 
-.blue-hat {
+  .blue-hat {
     fill: rgb(1, 1, 255);
-}
+  }
 
-.yellow-hat {
+  .yellow-hat {
     fill: yellow;
-}
+  }
 
-.white-hat {
+  .white-hat {
     fill: white;
-}
+  }
 
-.green-hat {
+  .green-hat {
     fill: lime;
-}
-.black-hat {
-  fill: black;
-}
-.white-hat {fill:white;}
+  }
+
+  .black-hat {
+    fill: black;
+  }
+
+  .white-hat {
+    fill: white;
+  }
 
 
-.snowflake-inner {
+  .snowflake-inner {
     fill: var(--secondary);
-}
+  }
 
-.snowflake-outer {
+  .snowflake-outer {
     fill: var(--accent);
-}
+  }
+
   div {
     min-width: 6em;
     background-color: var(--text);
@@ -342,4 +363,15 @@
   text-align: center;
   margin-top: 0.5em;
   font-size: 1em;
+}
+
+
+.sessionTarget__container {
+  display: flex;
+  align-items: end;
+  justify-content: left;
+
+  button {
+    margin-left: 1em;
+  }
 }

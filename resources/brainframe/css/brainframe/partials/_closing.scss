@@ -90,13 +90,14 @@
 
 .collecting-pdf {
   background-color: var(--text);
+  padding: 0.5em;
 
   table {
+    border: solid var(--accent);
     border-collapse: collapse;
     background-color: var(--background);
     box-sizing: border-box;
     overflow: hidden;
-    gap: 0;
     font-size: 0.9em;
 
     th {
@@ -112,17 +113,44 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       border-bottom: solid var(--accent);
+
+      a,
+      a:active,
+      a:focus {
+        color: var(--secondary);
+      }
     }
-    .center {text-align:center;}
+
+    .center {
+      text-align: center;
+    }
   }
+
   .top-ideas table {
-    table-layout: fixed;
-    th, td {
-      &:nth-child(1) { width: 10%; }
-      &:nth-child(2) { width: 25%; }
-      &:nth-child(3) { width: 40%; }
-      &:nth-child(4) { width: 10%; }
-      &:nth-child(5) { width: 15%; }
+    table-layout: auto;
+
+    th,
+    td {
+      &:nth-child(1) {
+        width: 15%;
+      }
+
+      &:nth-child(2) {
+        width: 20%;
+      }
+
+      &:nth-child(3) {
+        display: none;
+        width: 40%;
+      }
+
+      &:nth-child(4) {
+        width: 10%;
+      }
+
+      &:nth-child(5) {
+        width: 15%;
+      }
     }
   }
 }
@@ -136,6 +164,7 @@
   svg {
     fill: var(--secondary)
   }
+
   h2 {
     margin: 2vh 0;
     background-color: var(--background);
@@ -145,6 +174,14 @@
     padding: 0.25em;
     border: none;
     border: solid;
+  }
+
+  th {
+    color: var(--accent);
+
+    svg {
+      fill: var(--accent);
+    }
   }
 }
 
@@ -328,6 +365,29 @@
   li {
     margin-left: 1em;
     margin-bottom: 0.3em;
+  }
+}
+.token {font-size:0.8em}
+#first-table {
+  margin-bottom: 0.5em;
+  table-layout: fixed;
+  th,
+  td {
+    &:nth-child(1) {
+      width: 35%;
+    }
+
+    &:nth-child(2) {
+      width: 20%;
+    }
+
+    &:nth-child(3) {
+      width: 10%;
+    }
+
+    &:nth-child(4) {
+      width: 25%;
+    }
   }
 }
 

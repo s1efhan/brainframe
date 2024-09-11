@@ -206,7 +206,7 @@ class SessionController extends Controller
             return [
                 'session_id' => $contributor->session_id,
                 'target' => $session->target,
-                'role' => $role->name,
+                'role' => $role->icon,
                 'updated_at' => $session->updated_at,
                 'method_name' => $method->name,
                 'method_id' => $method->id,
@@ -406,16 +406,16 @@ class SessionController extends Controller
                 ->where('users.email', '!=', '')
                 ->get()
                 ->pluck('email');
-
+                $inputIdeas = Idea::where('session_id', $session->id)
+                ->whereNull('tag')
+                ->get();
             $response = [
                 'session_id' => $session->id,
                 'target' => $session->target,
                 'top_ideas' => $topIdeas,
-                'ideas' => $ideas->map(function ($idea) {
+                'ideas' => $inputIdeas->map(function ($idea) {
                     return [
                         'id' => $idea->id,
-                        'title' => $idea->title,
-                        'description' => $idea->description,
                         'round' => $idea->round,
                         'contributor_icon' => $idea->contributor->role->icon,
                     ];
@@ -432,16 +432,15 @@ class SessionController extends Controller
                 'contributor_emails' => $contributor_emails,
                 'next_steps' => $nextSteps,
             ];
+           
 
             $sessionDetailsCache = SessionDetailsCache::create([
                 'session_id' => $session->id,
                 'target' => $session->target,
                 'top_ideas' => $topIdeas,
-                'ideas' => $ideas->map(function ($idea) {
+                'ideas' => $inputIdeas->map(function ($idea) {
                     return [
                         'id' => $idea->id,
-                        'title' => $idea->title,
-                        'description' => $idea->description,
                         'round' => $idea->round,
                         'contributor_icon' => $idea->contributor->role->icon,
                     ];
@@ -458,6 +457,7 @@ class SessionController extends Controller
                 'contributor_emails' => $contributor_emails,
                 'next_steps' => $nextSteps,
             ]);
+
 
             return response()->json($response);
         } else {
@@ -513,21 +513,35 @@ class SessionController extends Controller
             ]);
             $responseData = json_decode($response->getBody(), true);
             $content = $responseData['choices'][0]['message']['content'];
+            
+            // Entferne mögliche JSON-Codeblock-Markierungen
             $content = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $content);
+            
+            // Entferne Zeilenumbrüche und normalisiere Whitespace
+            $content = preg_replace('/\s+/', ' ', trim($content));
+            
+            // Entferne Backslashes
+            $content = str_replace('\\', '', $content);
+            
             Log::info("Content: " . $content);
-
-            // Decode the JSON string into an associative array
-            $decodedContent = json_decode($content, true);
-
-            // Now use $decodedContent instead of $content
+            
+            // JSON-Dekodierung mit zusätzlicher Option
+            $decodedContent = json_decode($content, true, 512, JSON_UNESCAPED_SLASHES);
+            
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('JSON decode error: ' . json_last_error_msg());
+                // Fallback zu leeren Arrays
+                $decodedContent = ['wordcloud' => [], 'nextSteps' => ['html' => '']];
+            }
+            
             $wordCloudData = $decodedContent['wordcloud'] ?? [];
             $nextSteps = $decodedContent['nextSteps']['html'] ?? '';
+            $nextSteps = str_replace(search: '\n', replace: '', subject: $nextSteps);
             $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
             $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
-
+            
             Log::info("wordCloudData: " . json_encode($wordCloudData));
             Log::info("nextSteps: " . $nextSteps);
-
             // Update the database with the new token counts
             $session = Session::find($sessionId);
             if ($session) {

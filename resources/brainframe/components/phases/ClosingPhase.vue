@@ -8,10 +8,10 @@
     <table class="session-data" id="first-table">
       <thead>
         <tr>
-          <th>Ziel</th>
-          <th>Teilnehmerzahl</th>
-          <th>Ideen</th>
-          <th>Datum</th>
+          <th><TargetIcon/></th>
+          <th><ProfileIcon/></th>
+          <th><LightbulbIcon/></th>
+          <th><CalendarIcon/></th>
         </tr>
       </thead>
       <tbody>
@@ -28,9 +28,9 @@
       <thead>
         <tr>
           <th>Methode</th>
-          <th>Session ID</th>
-          <th>Token</th>
-          <th>Dauer</th>
+          <th><PinIcon/></th>
+          <th><AiStarsIcon/></th>
+          <th><SandclockIcon/></th>
         </tr>
       </thead>
       <tbody>
@@ -40,8 +40,8 @@
               {{ sessionDetails.session_id }}
             </a>
           </td>
-          <td>
-            {{ sessionDetails.input_token }} (input) {{ sessionDetails.output_token }} (output) =>
+          <td class="token">
+            {{ sessionDetails.input_token }} (in) <br>{{ sessionDetails.output_token }} (out) <br> =>
             {{ calculateCost }} ct
           </td>
           <td class="center">
@@ -56,11 +56,11 @@
       <table v-if="sessionDetails && sessionDetails.top_ideas">
         <thead>
           <tr>
-            <th>Platz</th>
-            <th>Idee</th>
+            <th><PodiumIcon/></th>
+            <th><LightbulbIcon/></th>
             <th>Beschreibung</th>
-            <th></th>
-            <th>Punkte</th>
+            <th><ProfileIcon/></th>
+            <th><StarIcon/></th>
           </tr>
         </thead>
         <tbody>
@@ -142,8 +142,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
+import CalendarIcon from '../icons/CalendarIcon.vue';
+import PinIcon from '../icons/PinIcon.vue';
+import PodiumIcon from '../icons/PodiumIcon.vue';
+import SandclockIcon from '../icons/SandclockIcon.vue';
+import TargetIcon from '../icons/TargetIcon.vue';
+import ProfileIcon from '../icons/ProfileIcon.vue';
+import StarIcon from '../icons/StarIcon.vue';
+import AiStarsIcon from '../icons/AiStarsIcon.vue';
+import LightbulbIcon from '../icons/LightbulbIcon.vue';
 import { useRoute } from 'vue-router';
 import 'ldrs/dotPulse';
 const route = useRoute();
@@ -257,6 +266,7 @@ const getSessionDetails = () => {
     .finally(() => {
       isLoading.value = false;
       console.log('getSessionDetails', sessionDetails.value);
+      console.log(sessionDetails.value.ideas);
       emit('switchPhase', 'closingPhase');
     });
 };

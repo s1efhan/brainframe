@@ -22,12 +22,13 @@ class UserController extends Controller
         // 2. Anzahl der Contributors mit dieser user_id
         $contributorCount = Contributor::where('user_id', $user->id)->count();
 
-        // 3. Anzahl der Ideas, die mit diesen Contributors verbunden sind
         $ideaCount = Idea::whereIn('contributor_id', function ($query) use ($user) {
             $query->select('id')
-                ->from('bf_contributors')
-                ->where('user_id', $user->id);
-        })->count();
+                 ->from('bf_contributors')
+                 ->where('user_id', $user->id);
+        })
+        ->whereNotNull('tag')
+        ->count();
 
         $lastIdea = Idea::where('contributor_id', $user->id)->orderBy('created_at', 'desc')->first();
         $lastContribution = Contributor::where('user_id', $user->id)->orderBy('created_at', 'desc')->first();

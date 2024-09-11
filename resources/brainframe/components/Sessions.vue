@@ -8,10 +8,10 @@
     <table class="sessions__table" v-if="userSessions && userSessions.length > 0">
       <thead>
         <tr>
-          <th>Session ID</th>
-          <th>Target</th>
-          <th>Role</th>
-          <th>Updated At</th>
+          <th><PinIcon/></th>
+          <th><TargetIcon/></th>
+          <th><ProfileIcon/></th>
+          <th><CalendarIcon/></th>
           <th>Method</th>
           <th>Phase</th>
           <th>
@@ -32,7 +32,7 @@
               {{ session.target }}
             </template>
           </td>
-          <td>{{ session.role }}</td>
+          <td class="center"> <component :is="getIconComponent(session.role)" /></td>
           <td>
             {{
             new Date(session.updated_at).toLocaleTimeString('de-DE', {
@@ -59,7 +59,10 @@
               {{ session.method_name }}
             </template>
           </td>
-          <td>{{ session.active_phase }}</td>
+          <td class="center" v-if="session.active_phase == 'closingPhase'"><SwooshIcon/></td>
+          <td class="center" v-if="session.active_phase == 'collectingPhase' || !session.active_phase"><BrainIcon/></td>
+          <td class="center" v-if ="session.active_phase == 'lobby'"><PauseIcon/></td>
+          <td class="center" v-if ="session.active_phase == 'votingPhase'"><FunnelIcon/></td>
           <td v-if="session.host_id === userId" class="settings">
             <template v-if="session.isEditing">
               <button @click="sendAlterSession(session)">Speichern</button>
@@ -90,6 +93,18 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import SettingsIcon from '../components/icons/SettingsIcon.vue';
 import BrushIcon from '../components/icons/BrushIcon.vue';
+import TargetIcon from '../components/icons/TargetIcon.vue';
+import SwooshIcon from '../components/icons/SwooshIcon.vue';
+import PinIcon from '../components/icons/PinIcon.vue';
+import CalendarIcon from '../components/icons/CalendarIcon.vue';
+import ProfileIcon from '../components/icons/ProfileIcon.vue';
+import BrainIcon from '../components/icons/BrainIcon.vue';
+import PauseIcon from '../components/icons/PauseIcon.vue';
+import FunnelIcon from '../components/icons/FunnelIcon.vue';
+import IconComponents from '../components/IconComponents.vue';
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
 const props = defineProps({
   userId: {
     type: [String, Number],

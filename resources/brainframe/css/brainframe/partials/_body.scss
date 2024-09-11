@@ -28,6 +28,40 @@ h2 {
     padding: 0.25em 1em 0.25em 1em;
 }
 
+.scroll-to-top.secondary {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    margin: 0.5em 1em;
+    border-radius: 15px;
+    svg {
+        fill: var(--accent)
+    }
+
+    &:active,
+    &:focus,
+    &:hover {
+        opacity: 90%;
+        background-color: var(--text);
+
+        svg {
+            fill: var(--accent)
+        }
+    }
+}
+
+.scroll-to-top.active {
+    opacity: 70%;
+    &:active,
+    &:focus,
+    &:hover {
+        opacity: 100%;
+    }
+}
+.scroll-to-top.inactive {
+    opacity: 10%;
+}
+
 .qr-code-container {
     margin-top: 2em;
     display: flex;
@@ -40,12 +74,24 @@ h2 {
     max-height: 100%;
 }
 
+.placeholder {
+    width: 100%;
+    height: 5.8em;
+}
+
 footer {
-    margin-bottom: 8em;
+    width: 100%;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: row;
+    align-items: top;
 
     ul {
+        margin: 2em 0;
+        width: 100%;
         display: flex;
-        align-items: center;
+        flex-direction: row;
+        align-items: top;
         justify-content: space-evenly;
 
         li {
@@ -57,10 +103,6 @@ footer {
             text-decoration: none;
         }
     }
-}
-
-main {
-    min-height: 100vh;
 }
 
 .error {
@@ -80,6 +122,7 @@ table {
     width: 100%;
     table-layout: fixed;
     overflow: hidden;
+    fill: var(--accent);
 
     td {
         overflow: hidden;
@@ -90,52 +133,57 @@ main {
     overflow: hidden;
     box-sizing: border-box;
 }
-.sessions__table__container{
-    padding: 2em;
-}
-.sessions__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8em;
-  table-layout: fixed;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  th, td {
+
+.sessions__table__container {
     padding: 0.5em;
-    border: solid var(--primary);
-    overflow: hidden;
-  }
+}
 
-  th {
-    background-color: var(--secondary);
-    color: white;
-    fill: white;
-  }
-
-  td {
-    padding: 0.3em;
-    background-color: var(--secondary);
-    color: var(--accent);
-  }
-
-  .settings {
-    text-align: center;
-    
-    button {
-      background: transparent;
-      border: none;
-      color: var(--accent);
+.sessions__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8em;
+    table-layout: fixed;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+.center {text-align:center;}
+    th,
+    td {
+        padding: 0.5em;
+        border: solid var(--primary);
+        overflow: hidden;
+        fill: var(--accent);
     }
 
-    .x {
-      color: red;
+    th {
+        background-color: var(--secondary);
+        color: white;
+        fill: white;
     }
-  }
 
-  a {
-    color: var(--accent);
-  }
+    td {
+        padding: 0.3em;
+        background-color: var(--secondary);
+        color: var(--accent);
+    }
+
+    .settings {
+        text-align: center;
+
+        button {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+        }
+
+        .x {
+            color: red;
+        }
+    }
+
+    a {
+        color: var(--accent);
+    }
 }
 
 svg {
@@ -153,7 +201,7 @@ svg {
         padding: 2em;
         color: var(--accent);
         background-color: var(--text);
-        margin-top: 4em;
+      margin-top:0.5em;
 
         li {
             padding: 1em;
