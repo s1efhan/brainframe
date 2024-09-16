@@ -31,6 +31,7 @@
 .headline__brainframe-icon .hamburger {
   fill: var(--accent);
   height: 2.2em;
+  margin:2em;
 }
 
 .headline {
@@ -74,7 +75,7 @@
   &__brainframe-icon {
     flex-grow: 1;
     display: flex;
-    justify-content: center;
+    justify-content: end;
     align-items: center;
 
     svg {
@@ -218,7 +219,6 @@
 
 .collecting__bottom__container {
   display: flex;
-  position: fixed;
   width: 100%;
   align-items: center;
   bottom: 7em;

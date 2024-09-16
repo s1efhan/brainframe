@@ -1,28 +1,35 @@
 <template>
-  <h2>Lobby</h2>
-  <div v-if="props.currentRound < 1 && props.sessionHostId == props.personalContributor.id" class="lobby__before__container">
-  <div v-if="sessionLink" class="qr-code-container">
-    <canvas class="qr-code" ref="qrcodeCanvas"></canvas>
-  </div>
-  <div>
-    <button @click="handleExit" class="primary">
-      Starte erste Runde
-    </button>
-  </div>
-  <div v-if="sessionLink" @click="copyToClipboard(sessionLink)" class="session-link">
+  {{ props.sessionPhase }}
+   <div v-if="sessionLink" @click="copyToClipboard(sessionLink)" class="session-link">
     <router-link :to="'/brainframe/' + sessionId">{{ sessionLink }}</router-link>
     <p>
       <CopyIcon />
     </p>
   </div>
-
-  <div v-if="sessionLink" class="email-list">
+  <div class="lobby__headline__container">
+        <h2 class="lobby__headline">Lobby</h2>
+        <h3>. . . warte, bis der Host die Runde startet</h3>
+    </div>
+  <div v-if="props.currentRound < 1" class="lobby__before__container">
+  <div v-if="sessionLink" class="qr-code-container">
+    <canvas class="qr-code" ref="qrcodeCanvas"></canvas>
+  </div>
+  <div>
+    <button @click="handleExit" class="primary">
+     Beitrittsprozess beenden
+    </button>
+  </div>
+  <ContributorsBoard v-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
+    :currentRound="props.currentRound" :sessionHostId="props.sessionHostId" :contributors="props.contributors"
+    :sessionId="props.sessionId" :personalContributor="props.personalContributor" :ideasCount="props.ideasCount"
+    :isLobby="true" :previousPhase="props.previousPhase" />
+  <div v-if="sessionLink && props.sessionHostId == props.personalContributor.id" class="email-list">
     <div v-for="email in validatedEmails" :key="email" class="validated-email">
       {{ email }} <span @click="removeEmail(email)" class="remove-email">x</span>
     </div>
   </div>
 
-  <div v-if="sessionLink" class="email-input__container" v-for="(email, index) in contributorEmailAddresses"
+  <div v-if="sessionLink && props.sessionHostId == props.personalContributor.id" class="email-input__container" v-for="(email, index) in contributorEmailAddresses"
     :key="index">
     <input type="email" v-model="contributorEmailAddresses[index]" @keyup.enter="validateEmail(index, $event)"
       @blur="validateEmail(index, $event)" placeholder="E-Mail-Adresse eingeben">
@@ -30,12 +37,12 @@
       Teilnehmer einladen
     </button>
   </div>
+  
 </div>
-   <ContributorsBoard v-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
+<ContributorsBoard v-else-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
     :currentRound="props.currentRound" :sessionHostId="props.sessionHostId" :contributors="props.contributors"
     :sessionId="props.sessionId" :personalContributor="props.personalContributor" :ideasCount="props.ideasCount"
     :isLobby="true" :previousPhase="props.previousPhase" />
-    
 </template>
 
 <script setup>
@@ -53,7 +60,8 @@ const props = defineProps({
   ideasCount: Object,
   maxIdeaInput: Number,
   isLobby: Boolean,
-  previousPhase: String
+  previousPhase: String,
+  sessionPhase: String
 });
 const qrcodeCanvas = ref(null);
 const showQRCode = ref(false);
@@ -65,6 +73,9 @@ import { useRouter } from 'vue-router';
 const sessionId = ref(props.sessionId);
 const router = useRouter();
 const handleExit = () => {
+  if(props.sessionPhase === "votingPhase"){
+    emit('switchPhase', 'votingPhase');
+  } else
   emit('switchPhase', 'previousPhase');
 }
 const removeEmail = (email) => {

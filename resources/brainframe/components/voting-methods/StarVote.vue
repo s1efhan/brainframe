@@ -22,7 +22,7 @@
   </div>
   <p v-else>Fertig. Du musst warten, bis der Rest fertig mit Voten ist.</p>
   <div v-if="ideasCount" class="ideasCount">
-    {{ decisionsMade }}/{{ ideasCount }}
+    {{ decisionsMade }}/{{ ideasCount + votedIdeasCount }}
   </div>
 </template>
 
@@ -31,15 +31,12 @@ import { ref, onMounted, toRef } from 'vue';
 import axios from 'axios';
 import IconComponents from '../IconComponents.vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
-const currentIdea = ref(null);
-const previousIdea = ref(null);
-const decisionsMade = ref(0);
-const ideasCount = ref(null);
-const ideas = ref(null);
-const tempRating = ref(0);
-
 const props = defineProps({
   ideasCount: {
+    type: [String, Number],
+    required: true,
+  },
+  votedIdeasCount: {
     type: [String, Number],
     required: true,
   },
@@ -60,6 +57,14 @@ const props = defineProps({
     required: true,
   },
 });
+const emit = defineEmits(['lastVote']);
+const currentIdea = ref(null);
+const previousIdea = ref(null);
+const decisionsMade = ref(props.votedIdeasCount);
+const ideasCount = ref(null);
+const ideas = ref(null);
+const tempRating = ref(0);
+
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
@@ -108,15 +113,11 @@ const setNextIdea = () => {
     delete ideas.value[nextKey];
     tempRating.value = 0;
   } else {
+    emit('lastVote');
     currentIdea.value = null;
   }
-  updateDecisionsMade();
 };
 
-const updateDecisionsMade = () => {
-  const remainingIdeas = Array.isArray(ideas.value) ? ideas.value.length : Object.keys(ideas.value).length;
-  decisionsMade.value = props.ideasCount - remainingIdeas;
-};
 
 const undoLastDecision = () => {
   if (previousIdea.value) {
@@ -128,13 +129,14 @@ const undoLastDecision = () => {
     currentIdea.value = previousIdea.value;
     previousIdea.value = null;
     tempRating.value = 0;
-    updateDecisionsMade();
+    decisionsMade.value--;
   }
 };
 
 const rate = (stars) => {
   tempRating.value = stars;
   sendVote(currentIdea.value.id, stars);
+  decisionsMade.value++;
   setNextIdea();
 };
 </script>

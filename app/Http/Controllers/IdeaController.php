@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Idea;
 use App\Models\Contributor;
+use App\Events\LastVote;
 use App\Models\Session;
+use App\Models\Vote;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
@@ -41,7 +43,7 @@ class IdeaController extends Controller
                 ->where('contributor_id', $neighbourContributor->id)
                 ->get();
 
-            Log::info("Ideas found for neighbour", ['count' => $ideas->count(), 'neighbour'=>$neighbourContributor->id]);
+            Log::info("Ideas found for neighbour", ['count' => $ideas->count(), 'neighbour' => $neighbourContributor->id]);
 
             $ideasWithIcon = $ideas->map(function ($idea) {
                 $idea->contributorIcon = $idea->contributor->role->icon ?? 'default_icon';
@@ -184,95 +186,242 @@ class IdeaController extends Controller
 
     public function get($sessionId, $votingPhase, $contributorId)
     {
-        if ($votingPhase >= 1 && $votingPhase <= 4) {
-
-            if ($votingPhase <= 1) {
-                $ideas = Idea::where('session_id', $sessionId)
-                    ->with('contributor')
-                    ->with([
-                        'votes' => function ($query) use ($votingPhase) {
-                            $query->where('voting_phase', $votingPhase - 1);
-                        }
-                    ])
-                    ->whereNotNull('tag')
-                    ->where('tag', '!=', '')
-                    ->get();
-            } else {
-                $ideas = Idea::where('session_id', $sessionId)
-                    ->with('contributor')
-                    ->with([
-                        'votes' => function ($query) use ($votingPhase) {
-                            $query->where('voting_phase', $votingPhase - 1);
-                        }
-                    ])
-                    ->whereNotNull('tag')
-                    ->where('tag', '!=', '')
-                    ->whereHas('votes', function ($query) use ($votingPhase) {
-                        $query->where('voting_phase', $votingPhase - 1);
-                    })
-                    ->get();
-
-                $ideas = $ideas->map(function ($idea) {
-                    $totalVotes = $idea->votes->map(function ($vote) {
-                        return $vote->vote_value !== null ? $vote->vote_value : $vote->vote_boolean;
-                    });
-                    $idea->averageVote = $totalVotes->avg() ?? 0;
-                    return $idea;
-                })->sortByDesc('averageVote');
-                $ideasCount = $ideas->count();
-                Log::info("else ideasCount: " . $ideasCount);
-            }
-
-            $ideasCount = $ideas->count();
-            Log::info("Initial ideasCount: " . $ideasCount);
-            Log::info("votingPhase: " . $votingPhase);
-            if ($votingPhase > 1) {
-                $votingMethod = $ideasCount > 32 ? 'LeftRightVote' : ($ideasCount > 15 ? 'StarVote' : 'RankingVote');
-            } else {
-                $votingMethod = $ideasCount > 15 ? 'SwipeVote' : ($ideasCount > 5 ? 'StarVote' : 'RankingVote');
-            }
-            switch ($votingMethod) {
-                case 'LeftRightVote':
-                    $numberOfIdeas = min(intval($ideasCount / 2), 30);
-                    if ($numberOfIdeas % 2 !== 0) {
-                        $numberOfIdeas--; // Reduce to the next even number
-                    }
-                    $numberOfIdeas = max($numberOfIdeas, 2);
-                    $ideas = $ideas->slice(0, $numberOfIdeas);
-                    break;
-                case 'StarVote':
-                    $ideas = $ideas->take(15);
-                    break;
-                case 'RankingVote':
-                    $ideas = $ideas->take(5);
-                    break;
-            }
-            $ideasCount = $ideas->count();
-            Log::info("New ideasCount: " . $ideasCount);
-            Log::info("New votingMethod: " . $votingMethod);
-            $ideas = $ideas->map(function ($idea) use ($votingPhase) {
-                return [
-                    'id' => $idea->id,
-                    'contributorIcon' => $idea->contributor->role->icon ?? 'default_icon',
-                    'ideaTitle' => $idea->idea_title,
-                    'ideaDescription' => $idea->idea_description,
-                    'tag' => $idea->tag,
-                    'averageVote' => $idea->averageVote ?? null,
-                ];
-            });
-            $ideas = $ideas->values()->all();
-            return response()->json([
-                'success' => true,
-                'ideas' => $ideas,
-                'ideasCount' => $ideasCount,
-                'votingMethod' => $votingMethod
-            ]);
-        } else {
+        if ($votingPhase < 1 || $votingPhase > 4) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ungültige Voting-Phase'
             ], 400);
         }
+    Log::info("VotingPhase".$votingPhase);
+        // Alle Ideen mit Tags
+        $ideas = Idea::where('session_id', $sessionId)
+            ->whereNotNull('tag')
+            ->where('tag', '!=', '')
+            ->get();
+    
+        // Abgestimmte Ideen
+        $votedIdeasCount = Vote::where('session_id', $sessionId)
+        ->where('voting_phase', $votingPhase)
+        ->where('contributor_id', $contributorId)
+        ->count();
+    
+        // Nicht abgestimmte Ideen
+        $unvotedIdeas = Idea::where('session_id', $sessionId)
+            ->with('contributor')
+            ->whereNotNull('tag')
+            ->where('tag', '!=', '')
+            ->whereDoesntHave('votes', function ($query) use ($votingPhase, $contributorId) {
+                $query->where('voting_phase', $votingPhase)
+                    ->where('contributor_id', $contributorId);
+            });
+    
+        // Für Abstimmungsphasen > 1
+        if ($votingPhase > 1) {
+            $ideas = Idea::where('session_id', $sessionId)
+                ->whereNotNull('tag')
+                ->where('tag', '!=', '')
+                ->whereHas('votes', function ($query) use ($votingPhase) {
+                    $query->where('voting_phase', $votingPhase - 1);
+                })
+                ->with(['votes' => function ($query) use ($votingPhase, $contributorId) {
+                    $query->where('voting_phase', $votingPhase)
+                          ->where('contributor_id', $contributorId);
+                }])
+                ->get();
+
+                $votingMethod = $this->determineVotingMethod($votingPhase, $ideas->count(), $sessionId, $contributorId);
+                
+                $ideas = $this->sortIdeasByPreviousVotes($ideas, $votingPhase);
+                
+                $unvotedIdeas = $this->limitIdeasByVotingMethod($ideas, $votingMethod, $votingPhase, $contributorId);
+               Log::info("limitedIdeas", [$unvotedIdeas->pluck('idea_title', 'id')->toJson(JSON_PRETTY_PRINT)]);
+        } else {
+            $votingMethod = $this->determineVotingMethod($votingPhase, $ideas->count(), $sessionId,  $contributorId);
+            $unvotedIdeas = $unvotedIdeas->get();
+        }
+    
+        $formattedIdeas = $this->formatIdeas($unvotedIdeas);
+        Log::info("Formatted ideas", [$formattedIdeas]);
+        if ($unvotedIdeas->isEmpty()) {
+            Log::info($unvotedIdeas);
+            $this->checkAllVotesSubmitted($sessionId, $votingPhase, $contributorId);
+            return response()->json([
+                'success' => false,
+                'message' => 'Keine weiteren Ideen zum Bewerten verfügbar'
+            ], 404);
+        }
+    
+        return response()->json([
+            'success' => true,
+            'ideas' => $formattedIdeas,
+            'ideasCount' => count($formattedIdeas),
+            'votingMethod' => $votingMethod,
+            'votedIdeasCount' => $votedIdeasCount
+        ]);
+    }
+
+    private function checkAllVotesSubmitted($sessionId, $votingPhase, $contributorId)
+    {
+        $contributors = Contributor::where('session_id', $sessionId)->get();
+        $ideas = Idea::where('session_id', $sessionId)
+            ->whereNotNull('tag')
+            ->where('tag', '!=', '')
+            ->when($votingPhase > 1, function ($query) use ($votingPhase) {
+                return $query->whereHas('votes', function ($subquery) use ($votingPhase) {
+                    $subquery->where('voting_phase', $votingPhase - 1);
+                });
+            })
+            ->get();
+    
+        $votingMethod = $this->determineVotingMethod($votingPhase, $ideas->count(), $sessionId, $contributorId);
+        $limitedIdeas = $this->limitIdeasByVotingMethod($ideas, $votingMethod, $votingPhase, null);
+        $totalIdeasCount = $limitedIdeas->count();
+    
+        Log::info('Checking all votes submitted', [
+            'session_id' => $sessionId,
+            'voting_phase' => $votingPhase,
+            'voting_method' => $votingMethod,
+            'total_ideas_with_tags' => $ideas->count(),
+            'limited_ideas_count' => $totalIdeasCount,
+            'total_contributors' => $contributors->count()
+        ]);
+    
+        $allVotesSubmitted = $contributors->every(function ($contributor) use ($sessionId, $votingPhase, $totalIdeasCount) {
+            $votedIdeasCount = $this->getVotedIdeasCount($sessionId, $votingPhase, $contributor->id);
+            $isContributorFinished = ($votedIdeasCount >= $totalIdeasCount);
+    
+            Log::info('Contributor voting status', [
+                'contributor_id' => $contributor->id,
+                'voted_ideas' => $votedIdeasCount,
+                'total_ideas' => $totalIdeasCount,
+                'is_finished' => $isContributorFinished
+            ]);
+    
+            return $isContributorFinished;
+        });
+    
+        if ($allVotesSubmitted) {
+            Log::info("All votes submitted for session", ['session_id' => $sessionId]);
+            event(new LastVote($sessionId, $votingPhase + 1));
+        } else {
+            Log::info("Not all votes submitted yet for session", ['session_id' => $sessionId]);
+        }
+    }
+    private function sortIdeasByPreviousVotes($ideas, $votingPhase)
+    {
+        Log::info("Sorting ideas by previous votes for phase: {$votingPhase}");
+        
+        if ($votingPhase > 1) {
+            return $ideas->map(function ($idea) use ($votingPhase) {
+                $previousVotes = Vote::where('idea_id', $idea->id)
+                    ->where('voting_phase', $votingPhase - 1)
+                    ->get();
+                
+                $totalValue = $previousVotes->sum(function ($vote) {
+                    return $vote->vote_value ?? ($vote->vote_boolean ? 1 : 0);
+                });
+                
+                $averageVote = $previousVotes->count() > 0 ? $totalValue / $previousVotes->count() : 0;
+                
+                $idea->averageVote = $averageVote;
+                
+                Log::info("Idea sorting details", [
+                    'idea_id' => $idea->id,
+                    'previous_votes_count' => $previousVotes->count(),
+                    'total_value' => $totalValue,
+                    'average_vote' => $averageVote
+                ]);
+                
+                return $idea;
+            })->sortByDesc('averageVote');
+        }
+        
+        Log::info("No sorting applied (voting phase <= 1)");
+        return $ideas;
+    }
+
+    private function determineVotingMethod($votingPhase, $ideasCount, $sessionId, $contributorId)
+    {
+        Log::info("votingPhase, ideasCount, sessionId, contributorId", [$votingPhase, $ideasCount, $sessionId, $contributorId]);
+        if ($votingPhase == 1) {
+            if ($ideasCount <= 5)
+                return 'RankingVote';
+            if ($ideasCount <= 15)
+                return 'StarVote';
+            if ($ideasCount <= 31)
+                return 'SwipeVote';
+            return 'LeftRightVote';
+        } else {
+            $previousVotes = Vote::where('session_id', $sessionId)
+                ->where('voting_phase', $votingPhase - 1)
+                ->where('contributor_id', $contributorId)
+                ->count();
+            Log::info("Previous votes for phase {$votingPhase} by contributor {$contributorId}: {$previousVotes}");
+    
+            if ($previousVotes <= 5)
+                return 'End';
+            if ($previousVotes <= 15)
+                return 'RankingVote';
+            if ($previousVotes <= 31)
+                return 'StarVote';
+            return 'SwipeVote';
+        }
+    }
+    private function getVotedIdeasCount($sessionId, $votingPhase, $contributorId)
+    {
+        return Vote::where('session_id', $sessionId)
+            ->where('voting_phase', $votingPhase)
+            ->where('contributor_id', $contributorId)
+            ->count();
+    }
+    private function limitIdeasByVotingMethod($ideas, $votingMethod, $votingPhase, $contributorId)
+    {
+        switch ($votingMethod) {
+            case 'LeftRightVote':
+                $numberOfIdeas = min(intval($ideas->count() / 2), 32);
+                $numberOfIdeas = max($numberOfIdeas - ($numberOfIdeas % 2), 2);
+                $limitedIdeas = $ideas->slice(0, $numberOfIdeas);
+                break;
+            case 'SwipeVote':
+                $numberOfIdeas = min(intval($ideas->count() / 2), 30);
+                $limitedIdeas = $ideas->take($numberOfIdeas);
+                break;
+            case 'StarVote':
+                $limitedIdeas = $ideas->take(15);
+                break;
+            case 'RankingVote':
+                $limitedIdeas = $ideas->take(5);
+                break;
+            default:
+                $limitedIdeas = $ideas;
+        }
+    
+        return $limitedIdeas->filter(function ($idea) use ($votingPhase, $contributorId) {
+            return !$idea->votes->where('voting_phase', $votingPhase)
+                                ->where('contributor_id', $contributorId)
+                                ->count();
+        })->values();
+    }
+
+    private function getNextVotingMethod($votingMethods, $currentMethod)
+    {
+        $currentMethodIndex = array_search($currentMethod, $votingMethods);
+        $nextMethodIndex = $currentMethodIndex + 1;
+        return $nextMethodIndex < count($votingMethods) ? $votingMethods[$nextMethodIndex] : null;
+    }
+
+    private function formatIdeas($ideas)
+    {
+        return $ideas->map(function ($idea) {
+            return [
+                'id' => $idea->id,
+                'contributorIcon' => $idea->contributor->role->icon ?? 'default_icon',
+                'ideaTitle' => $idea->idea_title,
+                'ideaDescription' => $idea->idea_description,
+                'tag' => $idea->tag,
+                'averageVote' => $idea->averageVote ?? null,
+            ];
+        })->values()->all();
     }
     public function iceBreaker(Request $request)
     {

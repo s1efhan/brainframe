@@ -9,9 +9,9 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
-class VotingFinished implements ShouldBroadcast
+
+class LastVote implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -20,17 +20,15 @@ class VotingFinished implements ShouldBroadcast
      */
     public function __construct(
         public string $sessionId,
-        public string $contributorId,
-        public string $voteType
-    ) {
-        // Log erstellen, wenn das Event ausgelöst wird
-        Log::info('VotingFinished Event ausgelöst', [
-            'session_id' => $this->sessionId,
-            'contributor_id' => $this->contributorId,
-            'vote_type' => $this->voteType
-        ]);
+        public int $votingPhase
+    )
+    {
+        //
     }
-
+    /**
+     * Get the channels the event should broadcast on.
+     * @return \Illuminate\Broadcasting\Channel
+     */
     public function broadcastOn(): Channel
     {
         return new Channel('session.' . $this->sessionId);

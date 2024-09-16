@@ -1,9 +1,5 @@
 <template>
-    <div v-if="isLobby" class="lobby__headline__container">
-        <h2 v-if="isLobby" class="lobby__headline">Lobby</h2>
-        <h3>. . . warte, bis der Host die Runde startet</h3>
-    </div>
-    <div v-else class="lobby__headline__container">
+    <div v-if="!isLobby"class="lobby__headline__container">
         <h2 class="lobby__headline">Dashboard</h2>
         <h3>. . . du hast die Runde <strong>für dich </strong> pausiert.  </h3>
     </div>

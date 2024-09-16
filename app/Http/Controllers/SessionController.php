@@ -20,6 +20,7 @@ use App\Events\StartCollecting;
 use App\Events\StopCollecting;
 use App\Events\UserJoinedSession;
 use App\Events\UserLeftSession;
+use App\Events\SwitchPhase;
 use Log;
 use GuzzleHttp\Client;
 
@@ -187,6 +188,7 @@ class SessionController extends Controller
             'session_host' => $contributor->id,
             'method_id' => $session->method_id,
             'target' => $session->target,
+            'voting_phase' => $session->voting_phase,
             'method_name' => $session->method->name,
             'session_phase' => $session->active_phase,
             'current_round' => $session->active_round,
@@ -195,7 +197,28 @@ class SessionController extends Controller
             'ideas_count'=> $ideasCount
         ], 200);
     }
-
+    public function votingPhaseUpdate(Request $request)
+    {
+        $request->validate([
+            'session_id' => 'required|string',
+            'voting_phase' => 'required|integer|min:1'
+        ]);
+    
+        $sessionId = $request->input('session_id');
+        $votingPhase = $request->input('voting_phase');
+    
+        $session = Session::findOrFail($sessionId);
+        $session->voting_phase = $votingPhase;
+        $session->save();
+    
+        event(new SwitchPhase($sessionId, $votingPhase));
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Voting phase updated successfully',
+            'new_phase' => $votingPhase
+        ]);
+    }
     public function getUserSessions($userId)
     {
         $contributors = Contributor::where('user_id', $userId)->get();

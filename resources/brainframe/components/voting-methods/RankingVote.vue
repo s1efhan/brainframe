@@ -48,6 +48,9 @@ const props = defineProps({
   ideasCount: {
     type: Number,
     required: true
+  },votedIdeasCount: {
+    type: Number,
+    required: true
   },
   sessionId: {
     type: [String, Number],
@@ -69,7 +72,7 @@ const getIconComponent = (iconName) => {
 const activeIdeaId = ref(null);
 const ideasCount = toRef(props, 'ideasCount');
 const ideas = toRef(props, 'ideas');
-
+const emit = defineEmits(['lastVote']);
 onMounted(() => {
   if (ideasCount.value && ideas.value) {
     console.log("ideasCount.value", ideasCount.value);
@@ -89,6 +92,7 @@ const submitRanking = () => {
   axios.post('/api/vote', { votes })
     .then(response => {
       console.log('Server response:', response.data);
+      emit('lastVote');
     })
     .catch(error => {
       console.error('Fehler beim Speichern der Votes', error);

@@ -39,6 +39,7 @@ Route::get('/ideas/6-3-5/{sessionId}/{personalContributorId}/{round}', [IdeaCont
 Route::post('/session/join', [SessionController::class, 'sessionJoin']);
 Route::post('/session/leave', [SessionController::class, 'sessionLeave']);
 Route::post('/session/ping', [SessionController::class, 'sessionPing']);
+Route::post('/session/vote/update', [SessionController::class, 'votingPhaseUpdate']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get'])
      ->where('sessionId', '[0-9]+');
 

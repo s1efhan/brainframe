@@ -921,8 +921,8 @@ input:focus {
 }
 
 .lobby__headline__container {
-    position: fixed;
-    height: 25vh;
+    padding-top:2vh;
+    background-color: var(--text);
     width: 100%;
     justify-content: center;
     display: flex;
@@ -942,8 +942,6 @@ input:focus {
     justify-content: center;
     align-items: center;
     width: 100%;
-    position: fixed;
-    background: transparent;
     z-index: 10;
     background-color: var(--text);
 

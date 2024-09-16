@@ -29,21 +29,21 @@
     <Lobby
       v-if="method && personalContributor && sessionPhase === 'lobby' && personalContributor.role_name != 'Default' "
       :method="method" :previousPhase="previousPhase" @switchPhase="switchPhase" :currentRound="currentRound"
-      :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
+      :sessionPhase="sessionPhase" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
       :personalContributor="personalContributor" :ideasCount="ideasCount" />
     <CollectingPhase @getContributors="getContributors" @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
       :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
       :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount" />
-    <VotingPhase @finishedVoting="finishedVoting"
+    <VotingPhase @switchPhase="switchPhase" @wait="wait"
       v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
-      :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor"
-      :contributorsCount="contributorsCount" />
+      :sessionId="sessionId" :votingPhase="votingPhase" :sessionHostId="sessionHostId"
+      :personalContributor="personalContributor" :contributorsCount="contributorsCount" />
     <ClosingPhase @switchPhase="switchPhase"
       v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
   </main>
-  <ContributorsBoard :previousPhase="previousPhase"
+  <ContributorsBoard :sessionPhase="sessionPhase" :previousPhase="previousPhase"
     v-if="showContributorsBoard && method && personalContributor && currentRound >= 1" @exit="handleExit"
     :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
     :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount" :isLobby="false" />
@@ -74,7 +74,7 @@ const props = defineProps({
     required: true
   }
 });
-
+const votingPhase = ref(1);
 const updateSessionId = () => {
   sessionId.value = route.params.id;
   emit('updateSessionId', sessionId.value);
@@ -133,6 +133,7 @@ const getSessionDetails = () => {
         sessionHostId.value = sessionDetails.value.session_host;
         currentRound.value = sessionDetails.value.current_round || 0;
         ideasCount.value = sessionDetails.value.ideas_count;
+        votingPhase.value = sessionDetails.value.voting_phase || 1;
         getMethodDetails();
         getContributors();
       })
@@ -142,13 +143,17 @@ const getSessionDetails = () => {
       router.push('/brainframe/join')
     });
 };
+const wait = () => {
+  sessionPhase.value = "lobby";
+}
 const emit = defineEmits(['updateSessionId']);
 const switchPhase = (switchedPhase) => {
   currentRound.value = 1;
   if (personalContributor.value.id == sessionHostId.value) {
     axios.post('/api/phase', {
       switched_phase: switchedPhase,
-      session_id: sessionId.value
+      session_id: sessionId.value,
+      voting_phase: votingPhase.value
     })
       .then(response => {
         console.log('Server response:', response.data);
@@ -234,7 +239,24 @@ onMounted(() => {
   getSessionDetails();
   Echo.channel('session.' + sessionId.value)
     .listen('SwitchPhase', (e) => {
-      sessionPhase.value = e.phase;
+      getSessionDetails();
+      console.log("switchedPhase");
+    })
+    .listen('LastVote', (e) => {
+      if (personalContributor.value.id == sessionHostId.value) {
+        votingPhase.value = e.votingPhase;
+        axios.post('/api/session/vote/update', {
+          session_id: sessionId.value,
+          voting_phase: votingPhase.value
+        })
+          .then(response => {
+            console.error('Success switching VotingPhase', response.data);
+          })
+          .catch(error => {
+            console.error('Error switching VotingPhase', error);
+          })
+      }
+      console.log("Last Vote Event received");
     })
     .listen('UserJoinedSession', (e) => {
       contributorsCount.value = e.newContributorsCount;

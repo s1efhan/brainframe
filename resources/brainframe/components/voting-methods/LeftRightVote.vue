@@ -32,7 +32,7 @@
   </div>
   <button class="secondary undo" @click="undoLastDecision" :disabled="previousPair.length === 0">↺</button>
   <div v-if="ideasCount" class="ideasCount">
-    {{ decisionsMade }}/{{ ideasCount }}
+    {{ decisionsMade }}/{{ ideasCount + props.votedIdeasCount}}
   </div>
 </template>
 
@@ -46,6 +46,10 @@ const getIconComponent = (iconName) => {
 
 const props = defineProps({
   ideasCount: {
+    type: [String, Number],
+    required: true
+  },
+  votedIdeasCount: {
     type: [String, Number],
     required: true
   },
@@ -66,11 +70,11 @@ const props = defineProps({
     required:true
   }
 });
-
+const emit = defineEmits(['lastVote']);
 
 const currentPair = ref([]);
 const previousPair = ref([]);
-const decisionsMade = ref(0);
+const decisionsMade = ref(props.votedIdeasCount);
 const ideasCount = toRef(props, 'ideasCount');
 const ideas = ref(Object.values(props.ideas));
 const sessionId = toRef(props, 'sessionId');
@@ -104,8 +108,9 @@ const setNextPair = () => {
   if (ideas.value.length >= 2) {
     previousPair.value = [...currentPair.value];
     currentPair.value = ideas.value.slice(0, 2);
-    decisionsMade.value = ideasCount.value - ideas.value.length;
+    decisionsMade.value = props.votedIdeasCount;
   } else {
+    emit('lastVote');
     currentPair.value = [];
   }
 };
@@ -126,7 +131,7 @@ const undoLastDecision = () => {
     ideas.value.unshift(...previousPair.value);
     currentPair.value = [...previousPair.value];
     previousPair.value = [];
-    decisionsMade.value = ideasCount.value - ideas.value.length;
+    decisionsMade.value = props.votedIdeasCount + (ideasCount.value - ideas.value.length);
   }
 };
 
