@@ -17,7 +17,6 @@ class MethodController extends Controller
 
     public function getDetails($methodId)
     {
-        Log::info('Received request to get method details', ['methodId' => $methodId]);
     
         if (!$methodId) {
             Log::warning('No method ID provided');
@@ -31,12 +30,6 @@ class MethodController extends Controller
             Log::error('Method not found', ['methodId' => $methodId]);
             return response()->json(['message' => 'Method not found'], 404);
         }
-    
-        Log::info('Method found', [
-            'id' => $method->id,
-            'name' => $method->name,
-            'description' => $method->description,
-        ]);
     
         return response()->json([
             'id' => $method->id,

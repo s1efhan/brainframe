@@ -7,7 +7,7 @@ use App\Models\Idea;
 use App\Models\Contributor;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-
+use App\Events\SwitchPhase;
 class VoteController extends Controller
 {
     public function vote(Request $request)
@@ -44,67 +44,82 @@ class VoteController extends Controller
             ->whereNotNull('tag')
             ->where('tag', '!=', '')
             ->get();
-        $contributors = Contributor::where('session_id', $sessionId)->get();
     
-        // Begrenzen der Ideen basierend auf dem Abstimmungstyp
-        switch ($voteType) {
-            case 'left_right':
-                $numberOfIdeas = min(intval($ideas->count() / 2), 32);
-                $numberOfIdeas = max($numberOfIdeas - ($numberOfIdeas % 2), 2);
-                $limitedIdeas = $ideas->slice(0, $numberOfIdeas);
-                break;
-            case 'swipe':
-                $limitedIdeas = $ideas->take(30);
-                break;
-            case 'star':
-                $limitedIdeas = $ideas->take(15);
-                break;
-            case 'ranking':
-                $limitedIdeas = $ideas->take(5);
-                break;
-            default:
-                $limitedIdeas = $ideas;
-        }
-    
-        $totalIdeasCount = $limitedIdeas->count();
-    
-        Log::info('Checking all votes submitted', [
+        
+        
+        $totalIdeas = Idea::where('session_id', $sessionId)
+        ->whereNotNull('tag')
+        ->where('tag', '!=', '')
+        ->when($votingPhase > 1, function ($query) use ($votingPhase) {
+            return $query->whereHas('votes', function ($subquery) use ($votingPhase) {
+                $subquery->where('voting_phase', $votingPhase);
+            });
+        })
+        ->get();
+        $totalIdeasCount = $totalIdeas->count();
+
+        Log::info('Überprüfe Stimmabgabe', [
             'session_id' => $sessionId,
             'voting_phase' => $votingPhase,
             'vote_type' => $voteType,
-            'total_ideas_with_tags' => $ideas->count(),
             'limited_ideas_count' => $totalIdeasCount,
-            'total_contributors' => $contributors->count()
         ]);
     
-        $allVotesSubmitted = true;
-        foreach ($contributors as $contributor) {
-            $votedIdeasCount = Vote::where('session_id', $sessionId)
-                ->where('contributor_id', $contributor->id)
+        $allVotesSubmitted = Contributor::where('session_id', $sessionId)
+            ->get()
+            ->every(function ($contributor) use ($sessionId, $votingPhase, $totalIdeas, $totalIdeasCount) {
+                $votedIdeasCount = Vote::where('session_id', $sessionId)
+                    ->where('contributor_id', $contributor->id)
+                    ->where('voting_phase', $votingPhase)
+                    ->whereIn('idea_id', $totalIdeas->pluck('id'))
+                    ->count();
+    
+                $isContributorFinished = ($votedIdeasCount >= $totalIdeasCount);
+                Log::debug('Teilnehmer-Abstimmungsstatus', [
+                    'contributor_id' => $contributor->id,
+                    'voted_ideas' => $votedIdeasCount,
+                    'total_ideas' => $totalIdeasCount,
+                    'is_finished' => $isContributorFinished
+                ]);
+    
+                return $isContributorFinished;
+            });
+    
+            if ($allVotesSubmitted) {
+                Log::info("Alle Stimmen abgegeben", ['session_id' => $sessionId]);
+                
+                $voteType = Vote::where('session_id', $sessionId)
                 ->where('voting_phase', $votingPhase)
-                ->whereIn('idea_id', $limitedIdeas->pluck('id'))
-                ->count();
-    
-            $isContributorFinished = ($votedIdeasCount >= $totalIdeasCount);
-    
-            Log::info('Contributor voting status', [
-                'contributor_id' => $contributor->id,
-                'voted_ideas' => $votedIdeasCount,
-                'total_ideas' => $totalIdeasCount,
-                'is_finished' => $isContributorFinished
-            ]);
-    
-            if (!$isContributorFinished) {
-                $allVotesSubmitted = false;
-                break;
+                ->first()
+                ->vote_type;
+            
+                
+                if ($voteType === 'ranking') {
+                    event(new LastVote($sessionId, 0, true));
+                } else {
+                    event(new LastVote($sessionId, $votingPhase + 1, false));
+                }
+            } else {
+                Log::info("Noch nicht alle Stimmen abgegeben", ['session_id' => $sessionId]);
             }
-        }
     
-        if ($allVotesSubmitted) {
-            Log::info("All votes submitted for session", ['session_id' => $sessionId]);
-            event(new LastVote($sessionId, $votingPhase + 1));
-        } else {
-            Log::info("Not all votes submitted yet for session", ['session_id' => $sessionId]);
+        return $allVotesSubmitted;
+    }
+    
+    private function limitIdeasByVoteType($ideas, $voteType)
+    {
+        switch ($voteType) {
+            case 'left_right':
+                $count = min(intval($ideas->count() / 2), 32);
+                return $ideas->slice(0, max($count - ($count % 2), 2));
+            case 'swipe':
+                return $ideas->take(30);
+            case 'star':
+                return $ideas->take(15);
+            case 'ranking':
+                return $ideas->take(5);
+            default:
+                return $ideas;
         }
     }
     private function processVote($voteData)

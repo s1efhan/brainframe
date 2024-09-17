@@ -201,7 +201,7 @@ class SessionController extends Controller
     {
         $request->validate([
             'session_id' => 'required|string',
-            'voting_phase' => 'required|integer|min:1'
+            'voting_phase' => 'required|integer'
         ]);
     
         $sessionId = $request->input('session_id');

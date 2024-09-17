@@ -257,6 +257,9 @@ onMounted(() => {
           })
       }
       console.log("Last Vote Event received");
+      if(e.switchToClosing){
+        switchPhase("closingPhase");
+      }
     })
     .listen('UserJoinedSession', (e) => {
       contributorsCount.value = e.newContributorsCount;

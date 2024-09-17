@@ -20,7 +20,8 @@ class LastVote implements ShouldBroadcast
      */
     public function __construct(
         public string $sessionId,
-        public int $votingPhase
+        public int $votingPhase,
+        public bool $switchToClosing
     )
     {
         //
