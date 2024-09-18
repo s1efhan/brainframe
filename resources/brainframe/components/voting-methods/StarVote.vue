@@ -8,15 +8,16 @@
       <div v-html="currentIdea.ideaDescription"></div>
     </div>
     <div class="star-rating">
-      <button class="primary" @click="rate(1)" :class="{ active: tempRating >= 1 }">★</button>
-      <button class="primary" @click="rate(2)" :class="{ active: tempRating >= 2 }">★</button>
-      <button class="primary" @click="rate(3)" :class="{ active: tempRating >= 3 }">★</button>
-    </div>
+  <button class="primary star" @click="rate(1)" @mouseover="hoverStar(1)" @mouseleave="resetStars">★</button>
+  <button class="primary star" @click="rate(2)" @mouseover="hoverStar(2)" @mouseleave="resetStars">★</button>
+  <button class="primary star" @click="rate(3)" @mouseover="hoverStar(3)" @mouseleave="resetStars">★</button>
+</div>
     <div class="idea-card__bottom">
       <button @click="undoLastDecision" class="secondary undo" :disabled="!previousIdea">↺</button>
       <div class="tag">#{{ currentIdea.tag }}</div>
       <div class="contributor__icon">
-        <ProfileIcon /><component :is="getIconComponent(currentIdea.contributorIcon)" />
+        <ProfileIcon />
+        <component :is="getIconComponent(currentIdea.contributorIcon)" />
       </div>
     </div>
   </div>
@@ -63,14 +64,23 @@ const previousIdea = ref(null);
 const decisionsMade = ref(props.votedIdeasCount);
 const ideasCount = ref(null);
 const ideas = ref(null);
-const tempRating = ref(0);
-
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
 const sessionId = toRef(props, 'sessionId');
 const contributorId = toRef(props, 'contributorId');
 const votingPhase = toRef(props, 'votingPhase');
+const hoverStar = (starNumber) => {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach((star, index) => {
+    star.classList.toggle('active', index < starNumber);
+  });
+};
+
+const resetStars = () => {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach(star => star.classList.remove('active'));
+};
 
 const sendVote = (ideaId, voteValue) => {
   console.log('Sending vote:', sessionId.value, voteValue, ideaId, contributorId.value, 'star', voteValue);
@@ -105,13 +115,11 @@ const setNextIdea = () => {
   if (Array.isArray(ideas.value) && ideas.value.length > 0) {
     previousIdea.value = currentIdea.value;
     currentIdea.value = ideas.value.shift();
-    tempRating.value = 0;
   } else if (typeof ideas.value === 'object' && Object.keys(ideas.value).length > 0) {
     const nextKey = Object.keys(ideas.value)[0];
     previousIdea.value = currentIdea.value;
     currentIdea.value = ideas.value[nextKey];
     delete ideas.value[nextKey];
-    tempRating.value = 0;
   } else {
     emit('lastVote');
     currentIdea.value = null;
@@ -128,13 +136,11 @@ const undoLastDecision = () => {
     }
     currentIdea.value = previousIdea.value;
     previousIdea.value = null;
-    tempRating.value = 0;
     decisionsMade.value--;
   }
 };
 
 const rate = (stars) => {
-  tempRating.value = stars;
   sendVote(currentIdea.value.id, stars);
   decisionsMade.value++;
   setNextIdea();

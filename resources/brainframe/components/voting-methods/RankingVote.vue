@@ -5,7 +5,12 @@
   <table v-if="ideas && ideasCount" class="rankingVote__table">
     <tbody>
       <template v-for="(idea, index) in ideas" :key="idea.id">
-        <tr draggable="true" @dragstart="dragStart(index)" @dragover.prevent @drop="drop(index)">
+        <tr
+          :data-index="index"
+          @touchstart="touchStart(index, $event)"
+          @touchmove="touchMove"
+          @touchend="touchEnd"
+        >
           <td class="dragAndDrop">
             <svg width="80px" height="80px" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
@@ -20,10 +25,6 @@
             <div class="contributor"><component :is="getIconComponent(idea.contributorIcon)" /></div>
             <div class="tag">#{{ idea.tag ? idea.tag : "ideaTag" }}</div>
           </td>
-          <td class="buttons">
-            <button @click="moveUp(index)">⬆</button>
-            <button @click="moveDown(index)">⬇</button>
-          </td>
         </tr>
         <tr v-if="activeIdeaId === idea.id">
           <td class="description" colspan="5" v-html="idea.ideaDescription"></td>
@@ -32,13 +33,16 @@
     </tbody>
   </table>
   <div class="ranking-vote__submit__container">
-  <button class="primary" @click="submitRanking">Senden</button>
-</div>
+    <button class="primary" @click="submitRanking">Senden</button>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, toRef } from 'vue';
 import axios from 'axios';
+import ArrowUpIcon from '../icons/ArrowUpIcon.vue';
+import ArrowDownIcon from '../icons/ArrowDownIcon.vue';
+import IconComponents from '../IconComponents.vue';
 
 const props = defineProps({
   ideas: {
@@ -48,7 +52,8 @@ const props = defineProps({
   ideasCount: {
     type: Number,
     required: true
-  },votedIdeasCount: {
+  },
+  votedIdeasCount: {
     type: Number,
     required: true
   },
@@ -62,30 +67,33 @@ const props = defineProps({
   },
   votingPhase: {
     type: Number,
-    required:true
+    required: true
   }
 });
-import IconComponents from '../IconComponents.vue';
+
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
+
 const activeIdeaId = ref(null);
 const ideasCount = toRef(props, 'ideasCount');
 const ideas = toRef(props, 'ideas');
 const emit = defineEmits(['lastVote']);
+
 onMounted(() => {
   if (ideasCount.value && ideas.value) {
     console.log("ideasCount.value", ideasCount.value);
     console.log("ideas.value", JSON.parse(JSON.stringify(ideas.value)));
   }
 });
+
 const submitRanking = () => {
   const votes = ideas.value.map((idea, index) => ({
     session_id: props.sessionId,
     idea_id: idea.id,
     contributor_id: props.contributorId,
     vote_type: 'ranking',
-    vote_value: Math.max(5 - index, 1), // Ändert die Punktevergabe
+    vote_value: Math.max(5 - index, 1),
     voting_phase: props.votingPhase
   }));
 
@@ -103,33 +111,34 @@ const toggleShowIdeaDetails = (ideaId) => {
   activeIdeaId.value = activeIdeaId.value === ideaId ? null : ideaId;
 };
 
-let draggedItemIndex = null;
+const draggedItem = ref(null);
+const draggedItemIndex = ref(null);
 
-const dragStart = (index) => {
-  draggedItemIndex = index;
+const touchStart = (index, event) => {
+  draggedItemIndex.value = index;
+  draggedItem.value = ideas.value[index];
+  event.target.closest('tr').classList.add('dragging');
 };
 
-const drop = (index) => {
-  if (draggedItemIndex !== null) {
-    const draggedItem = ideas.value.splice(draggedItemIndex, 1)[0];
-    ideas.value.splice(index, 0, draggedItem);
-    draggedItemIndex = null;
+const touchMove = (event) => {
+  event.preventDefault();
+  const touch = event.touches[0];
+  const moveTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+  const tableRow = moveTarget.closest('tr');
+  
+  if (tableRow && tableRow.dataset.index) {
+    const newIndex = parseInt(tableRow.dataset.index);
+    if (newIndex !== draggedItemIndex.value) {
+      const removedItem = ideas.value.splice(draggedItemIndex.value, 1)[0];
+      ideas.value.splice(newIndex, 0, removedItem);
+      draggedItemIndex.value = newIndex;
+    }
   }
 };
 
-const moveUp = (index) => {
-  if (index > 0) {
-    const temp = ideas.value[index];
-    ideas.value[index] = ideas.value[index - 1];
-    ideas.value[index - 1] = temp;
-  }
-};
-
-const moveDown = (index) => {
-  if (index < ideas.value.length - 1) {
-    const temp = ideas.value[index];
-    ideas.value[index] = ideas.value[index + 1];
-    ideas.value[index + 1] = temp;
-  }
+const touchEnd = (event) => {
+  event.target.closest('tr').classList.remove('dragging');
+  draggedItem.value = null;
+  draggedItemIndex.value = null;
 };
 </script>

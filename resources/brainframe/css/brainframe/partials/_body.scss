@@ -132,6 +132,7 @@ table {
 main {
     overflow: hidden;
     box-sizing: border-box;
+    min-height: 80vh;
 }
 
 .sessions__table__container {

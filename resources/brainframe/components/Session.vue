@@ -6,7 +6,7 @@
     <div class="session_headline__details"
       v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'">
       <div @click="showContributorsBoard = true">
-        <ProfileIcon /> <!-- soll leuchten, wenn jemand "wartet"-->
+        <ProfileIcon />
         <p v-if="personalContributor.role_name != 'Default'"> {{ contributorsCount }} | {{ contributorsAmount }} </p>
       </div>
       <div v-if="sessionPhase != 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
@@ -263,6 +263,7 @@ onMounted(() => {
     })
     .listen('UserJoinedSession', (e) => {
       contributorsCount.value = e.newContributorsCount;
+      contributorsAmount.value = e.newContributorsAmount;
     })
     .listen('UserLeftSession', (e) => {
       contributorsCount.value = e.newContributorsCount;

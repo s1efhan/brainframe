@@ -99,7 +99,7 @@
 }
 
 .headline__session-target {
-  font-size: 1.1em;
+  font-size: 1.2em;
   display: inline-block;
   border: solid var(--primary) thick;
   box-sizing: border-box;
@@ -109,6 +109,7 @@
   color: white;
   overflow: hidden;
   resize: none;
+  width: 100%;
 
   &:focus {
     outline: none;
@@ -117,7 +118,7 @@
 
   &::placeholder {
     text-align: center;
-    font-size: 1em;
+    font-size: 1.2em;
     color: var(--accent);
   }
 }

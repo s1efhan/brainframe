@@ -14,7 +14,7 @@
   <div v-if="sessionLink" class="qr-code-container">
     <canvas class="qr-code" ref="qrcodeCanvas"></canvas>
   </div>
-  <div>
+  <div v-if="personalContributor.id === sessionHostId">
     <button @click="handleExit" class="primary">
      Beitrittsprozess beenden
     </button>

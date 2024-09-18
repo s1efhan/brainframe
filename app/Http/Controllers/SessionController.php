@@ -36,8 +36,8 @@ class SessionController extends Controller
                 ->update(['is_active' => true, 'last_ping' => now()]);
 
             $newContributorsCount = $this->getActiveContributorsCount($sessionId);
-
-            event(new UserJoinedSession($sessionId, $userId, $newContributorsCount));
+            $newContributorsAmount = Contributor::where('session_id', $sessionId)->distinct('user_id')->count();
+            event(new UserJoinedSession($sessionId, $userId, $newContributorsCount, $newContributorsAmount));
 
             return response()->json([
                 'session_id' => $sessionId,
@@ -183,6 +183,8 @@ class SessionController extends Controller
             ->keyBy('round');
         $contributorsCount = Contributor::where('session_id', $session->id)->count();
         Log::info('ContributorsCount: ' . $contributorsCount);
+        $contributorsAmount = Contributor::where('session_id', $session->id)->distinct('user_id')->count();
+
         return response()->json([
             'id' => $session->id,
             'session_host' => $contributor->id,
@@ -193,7 +195,7 @@ class SessionController extends Controller
             'session_phase' => $session->active_phase,
             'current_round' => $session->active_round,
             'contributors_count' => $contributorsCount,
-            'contributors_amount' => $session->contributors_amount,
+            'contributors_amount' => $contributorsAmount,
             'ideas_count'=> $ideasCount
         ], 200);
     }
@@ -491,14 +493,14 @@ class SessionController extends Controller
     {
         $wordCloudData = [];
         $stopWords = ['der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'für', 'und', 'oder', 'aber', 'doch', 'sondern', 'denn'];
-        
         $allIdeas = $ideas->concat($topIdeas)->filter(function($idea) {
             return !empty($idea->tag);
         });
-        Log::info($allIdeas);
-    
+        
         foreach ($allIdeas as $idea) {
-            $words = explode(' ', strtolower($idea->idea_title . ' ' . strip_tags($idea->idea_description)));
+            $text = strtolower($idea->idea_title . ' ' . strip_tags($idea->idea_description));
+            $text = preg_replace('/[^a-z0-9\s]/', '', $text);
+            $words = explode(' ', $text);
             foreach ($words as $word) {
                 $word = trim($word);
                 if (strlen($word) > 3 && !in_array($word, $stopWords)) {
@@ -507,20 +509,20 @@ class SessionController extends Controller
             }
         }
         
-        Log::info('Ursprüngliche $wordCloudData: ' . json_encode($wordCloudData));
-    
+        $wordCloudData = array_filter($wordCloudData, function($count) {
+            return $count >= 2;
+        });
+        
         $formattedWordCloudData = array_map(function($word, $count) {
             return ["word" => $word, "count" => (string)$count];
         }, array_keys($wordCloudData), $wordCloudData);
-    
-        Log::info('Formatierte $formattedWordCloudData: ' . json_encode($formattedWordCloudData));
-    
+        
         $nextSteps = "<ul>
             <li>Ziele & Aufgaben definieren: Konkrete Ergebnisse festlegen, Verantwortlichkeiten zuweisen.</li>
             <li>Zeitplan & Ressourcen planen: Meilensteine setzen, benötigte Mittel zuordnen.</li>
             <li>Umsetzung & Kontrolle: Start der Implementierung, regelmäßige Fortschrittsprüfung.</li>
         </ul>";
-    
+        
         return [
             'wordCloudData' => $formattedWordCloudData,
             'nextSteps' => $nextSteps
