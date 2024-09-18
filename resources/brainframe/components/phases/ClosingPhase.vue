@@ -266,7 +266,6 @@ const getSessionDetails = () => {
     .finally(() => {
       isLoading.value = false;
       console.log('getSessionDetails', sessionDetails.value);
-      console.log(sessionDetails.value.ideas);
       emit('switchPhase', 'closingPhase');
     });
 };

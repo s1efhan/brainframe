@@ -489,100 +489,42 @@ class SessionController extends Controller
     }
     private function generateWordCloudandNextSteps($topIdeas, $ideas, $sessionId)
     {
-        $client = new Client();
-        $apiKey = env('OPENAI_API_KEY');
-        Log::info('Logging top ideas and ideas', ['topideas' => $topIdeas, 'ideas' => $ideas]);
-
-        try {
-            $response = $client->post('https://api.openai.com/v1/chat/completions', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'model' => "gpt-4o-mini",
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'Generiere eine Wortcloud basierend auf den folgenden Ideen. Antworte in JSON. 
-                            Danach sollst du die next Steps für die Gruppe nennen nach dem Ideen Sammeln und Auswerten der Voting Ergebnosse. Maximal 3, antworte kurz im imperativ plural und in einer HTML Liste
-                                Beispiel:
-                    "wordcloud": {
-                      "word": "Kinderbücher",
-                      "count": "2",
-                      },
-                      {
-                      "word": "Baum",
-                      "count": "1",
-                      }, 
-                      "nextSteps": {
-                      "html": "<ul>
-<li>Ziele & Aufgaben definieren: Konkrete Ergebnisse festlegen, Verantwortlichkeiten zuweisen.</li>
-<li>Zeitplan & Ressourcen planen: Meilensteine setzen, benötigte Mittel zuordnen.</li>
-<li>Umsetzung & Kontrolle: Start der Implementierung, regelmäßige Fortschrittsprüfung.</li>
-</ul>"
-                        }
-                      "
-                                '
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => 'alle Ideen: ' . $ideas->toJson() .
-                                'Top 5 Ideen: ' . $topIdeas->toJson()
-                        ],
-                    ],
-                    'temperature' => 0.3,
-                ],
-            ]);
-            $responseData = json_decode($response->getBody(), true);
-            $content = $responseData['choices'][0]['message']['content'];
-            
-            // Entferne mögliche JSON-Codeblock-Markierungen
-            $content = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $content);
-            
-            // Entferne Zeilenumbrüche und normalisiere Whitespace
-            $content = preg_replace('/\s+/', ' ', trim($content));
-            
-            // Entferne Backslashes
-            $content = str_replace('\\', '', $content);
-            
-            Log::info("Content: " . $content);
-            
-            // JSON-Dekodierung mit zusätzlicher Option
-            $decodedContent = json_decode($content, true, 512, JSON_UNESCAPED_SLASHES);
-            
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON decode error: ' . json_last_error_msg());
-                // Fallback zu leeren Arrays
-                $decodedContent = ['wordcloud' => [], 'nextSteps' => ['html' => '']];
+        $wordCloudData = [];
+        $stopWords = ['der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'für', 'und', 'oder', 'aber', 'doch', 'sondern', 'denn'];
+        
+        $allIdeas = $ideas->concat($topIdeas)->filter(function($idea) {
+            return !empty($idea->tag);
+        });
+        Log::info($allIdeas);
+    
+        foreach ($allIdeas as $idea) {
+            $words = explode(' ', strtolower($idea->idea_title . ' ' . strip_tags($idea->idea_description)));
+            foreach ($words as $word) {
+                $word = trim($word);
+                if (strlen($word) > 3 && !in_array($word, $stopWords)) {
+                    $wordCloudData[$word] = ($wordCloudData[$word] ?? 0) + 1;
+                }
             }
-            
-            $wordCloudData = $decodedContent['wordcloud'] ?? [];
-            $nextSteps = $decodedContent['nextSteps']['html'] ?? '';
-            $nextSteps = str_replace(search: '\n', replace: '', subject: $nextSteps);
-            $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
-            $outputToken = $responseData['usage']['completion_tokens'] ?? 0;
-            
-            Log::info("wordCloudData: " . json_encode($wordCloudData));
-            Log::info("nextSteps: " . $nextSteps);
-            // Update the database with the new token counts
-            $session = Session::find($sessionId);
-            if ($session) {
-                $session->input_token += $inputToken;
-                $session->output_token += $outputToken;
-                $session->save();
-            }
-
-            Log::info($wordCloudData);
-            Log::info($nextSteps);
-            return [
-                'wordCloudData' => $wordCloudData,
-                'nextSteps' => $nextSteps
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error generating word cloud: ' . $e->getMessage());
-            return null;
         }
+        
+        Log::info('Ursprüngliche $wordCloudData: ' . json_encode($wordCloudData));
+    
+        $formattedWordCloudData = array_map(function($word, $count) {
+            return ["word" => $word, "count" => (string)$count];
+        }, array_keys($wordCloudData), $wordCloudData);
+    
+        Log::info('Formatierte $formattedWordCloudData: ' . json_encode($formattedWordCloudData));
+    
+        $nextSteps = "<ul>
+            <li>Ziele & Aufgaben definieren: Konkrete Ergebnisse festlegen, Verantwortlichkeiten zuweisen.</li>
+            <li>Zeitplan & Ressourcen planen: Meilensteine setzen, benötigte Mittel zuordnen.</li>
+            <li>Umsetzung & Kontrolle: Start der Implementierung, regelmäßige Fortschrittsprüfung.</li>
+        </ul>";
+    
+        return [
+            'wordCloudData' => $formattedWordCloudData,
+            'nextSteps' => $nextSteps
+        ];
     }
     public function sendPDF(Request $request)
     {
