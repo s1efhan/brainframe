@@ -5,12 +5,10 @@
   <table v-if="ideas && ideasCount" class="rankingVote__table">
     <tbody>
       <template v-for="(idea, index) in ideas" :key="idea.id">
-        <tr
-          :data-index="index"
-          @touchstart="touchStart(index, $event)"
-          @touchmove="touchMove"
-          @touchend="touchEnd"
-        >
+        <tr :data-index="index" draggable="true" @dragstart="dragStart(index, $event)"
+          @dragover="dragOver(index, $event)" @drop="drop(index, $event)" @dragend="dragEnd($event)"
+          @touchstart="touchStart(index, $event)" @touchmove="touchMove" @touchend="touchEnd"
+          :class="{ 'expanded': expandedIds.includes(idea.id) }">
           <td class="dragAndDrop">
             <svg width="80px" height="80px" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
@@ -20,14 +18,32 @@
           <td class="index">
             <div>{{ index + 1 }}</div>
           </td>
-          <td @click="toggleShowIdeaDetails(idea.id)" class="title">{{ idea.ideaTitle }}</td>
+          <td @click="toggleDetails(idea.id)" class="title">{{ idea.ideaTitle }}</td>
           <td class="contributor__tag">
-            <div class="contributor"><component :is="getIconComponent(idea.contributorIcon)" /></div>
+            <div class="contributor">
+              <component :is="getIconComponent(idea.contributorIcon)" />
+            </div>
             <div class="tag">#{{ idea.tag ? idea.tag : "ideaTag" }}</div>
           </td>
+          <td class="buttons">
+            <button @click.stop="moveUp(index)">
+              <ArrowUpIcon />
+            </button>
+            <button @click.stop="moveDown(index)">
+              <ArrowDownIcon />
+            </button>
+          </td>
         </tr>
-        <tr v-if="activeIdeaId === idea.id">
-          <td class="description" colspan="5" v-html="idea.ideaDescription"></td>
+        <tr v-if="expandedIds.includes(idea.id)" class="details-row">
+          <td  @click="toggleDetails(idea.id)" colspan="6">
+            <div class="details__container">
+            <div v-html="idea.ideaDescription"></div></div>
+          </td>
+        </tr>
+        <tr class="chevron" @click.stop="toggleDetails(idea.id)">
+          <td colspan="6">
+            <div class="chevron-container" :class="{ 'rotated': expandedIds.includes(idea.id) }">▼</div>
+          </td>
         </tr>
       </template>
     </tbody>
@@ -70,12 +86,11 @@ const props = defineProps({
     required: true
   }
 });
-
+const expandedIds = ref([]);
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
 
-const activeIdeaId = ref(null);
 const ideasCount = toRef(props, 'ideasCount');
 const ideas = toRef(props, 'ideas');
 const emit = defineEmits(['lastVote']);
@@ -86,7 +101,16 @@ onMounted(() => {
     console.log("ideas.value", JSON.parse(JSON.stringify(ideas.value)));
   }
 });
-
+const dragOver = (index, event) => {
+  event.preventDefault();
+  const draggedOverItem = event.target.closest('tr');
+  if (draggedOverItem && !draggedOverItem.classList.contains('dragging')) {
+    // Entfernen Sie die Klasse von allen anderen Zeilen
+    document.querySelectorAll('tr').forEach(row => row.classList.remove('drag-over'));
+    // Fügen Sie die Klasse zur aktuellen Zeile hinzu
+    draggedOverItem.classList.add('drag-over');
+  }
+};
 const submitRanking = () => {
   const votes = ideas.value.map((idea, index) => ({
     session_id: props.sessionId,
@@ -107,25 +131,50 @@ const submitRanking = () => {
     });
 };
 
-const toggleShowIdeaDetails = (ideaId) => {
-  activeIdeaId.value = activeIdeaId.value === ideaId ? null : ideaId;
+const toggleDetails = (id) => {
+  if (expandedIds.value.includes(id)) {
+    expandedIds.value = [];
+  } else {
+    expandedIds.value = [id];
+  }
 };
 
+
+const moveUp = (index) => {
+  if (index > 0) {
+    const temp = ideas.value[index];
+    ideas.value[index] = ideas.value[index - 1];
+    ideas.value[index - 1] = temp;
+  }
+};
+
+const moveDown = (index) => {
+  if (index < ideas.value.length - 1) {
+    const temp = ideas.value[index];
+    ideas.value[index] = ideas.value[index + 1];
+    ideas.value[index + 1] = temp;
+  }
+};
+
+// Touch functionality
+const isDragging = ref(false);
 const draggedItem = ref(null);
 const draggedItemIndex = ref(null);
 
 const touchStart = (index, event) => {
+  isDragging.value = true;
   draggedItemIndex.value = index;
   draggedItem.value = ideas.value[index];
   event.target.closest('tr').classList.add('dragging');
 };
 
 const touchMove = (event) => {
+  if (!isDragging.value) return;
   event.preventDefault();
   const touch = event.touches[0];
   const moveTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-  const tableRow = moveTarget.closest('tr');
-  
+  const tableRow = moveTarget?.closest('tr');
+
   if (tableRow && tableRow.dataset.index) {
     const newIndex = parseInt(tableRow.dataset.index);
     if (newIndex !== draggedItemIndex.value) {
@@ -137,8 +186,49 @@ const touchMove = (event) => {
 };
 
 const touchEnd = (event) => {
-  event.target.closest('tr').classList.remove('dragging');
-  draggedItem.value = null;
-  draggedItemIndex.value = null;
+  if (draggedItem.value) {
+    isDragging.value = false;
+    event.target.closest('tr')?.classList.remove('dragging');
+    draggedItem.value = null;
+    draggedItemIndex.value = null;
+  }
+};
+
+// Drag and drop functionality for desktop
+const dragStart = (index, event) => {
+  draggedItemIndex.value = index;
+  event.target.closest('tr').classList.add('dragging');
+};
+const drop = (index, event) => {
+  if (draggedItemIndex.value !== null) {
+    const draggedItem = ideas.value.splice(draggedItemIndex.value, 1)[0];
+    ideas.value.splice(index, 0, draggedItem);
+    draggedItemIndex.value = null;
+
+    // Entfernen Sie die Klassen von allen Zeilen
+    document.querySelectorAll('tr').forEach(row => {
+      row.classList.remove('dragging', 'drag-over');
+    });
+  }
+}; const dragEnd = (event) => {
+  // Entfernen Sie die Klassen von allen Zeilen
+  document.querySelectorAll('tr').forEach(row => {
+    row.classList.remove('dragging', 'drag-over');
+  });
 };
 </script>
+<style scoped>
+/* Fügen Sie hier die notwendigen Stile hinzu */
+
+.chevron {
+  cursor: pointer;
+}
+
+.chevron div {
+  transition: transform 0.3s ease;
+}
+
+.chevron .rotated {
+  transform: rotate(180deg);
+}
+</style>

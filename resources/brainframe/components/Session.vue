@@ -1,8 +1,8 @@
 <template>
   <main>
-    <h1 class="headline__session-target" @input="adjustHeadline" :style="{ height: headlineHeight }">
-      {{ sessionDetails.target }}
-    </h1>
+ <h1 class="headline__session-target" @input="adjustHeadline" contenteditable>
+  {{ sessionDetails.target }}
+</h1>
     <div class="session_headline__details"
       v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'">
       <div @click="showContributorsBoard = true">
@@ -83,13 +83,16 @@ const handleExit = () => {
   showContributorsBoard.value = false;
 };
 const headlineHeight = ref('auto');
+const baseHeight = 1.5; // Basishöhe in em
 
 const adjustHeadline = (event) => {
   const headline = event.target;
   if (headline.textContent.length > 60) {
     headline.textContent = headline.textContent.slice(0, 60);
   }
-  headlineHeight.value = `${headline.scrollHeight}px`;
+  
+  const lines = Math.ceil(headline.scrollHeight / (parseFloat(getComputedStyle(headline).lineHeight)));
+  headlineHeight.value = `${lines * baseHeight}em`;
 };
 const showContributorsBoard = ref(false);
 const collectingTimer = ref(360);
@@ -273,6 +276,7 @@ onMounted(() => {
   pingInterval = setInterval(ping, 30000);
   nextTick(() => {
     joinSession();
+    adjustHeadline();
   });
 });
 
