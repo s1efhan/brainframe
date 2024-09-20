@@ -1,6 +1,6 @@
 <template>
   <main>
- <h1 class="headline__session-target" @input="adjustHeadline" contenteditable>
+ <h1 class="headline__session-target">
   {{ sessionDetails.target }}
 </h1>
     <div class="session_headline__details"
@@ -85,14 +85,24 @@ const handleExit = () => {
 const headlineHeight = ref('auto');
 const baseHeight = 1.5; // Basishöhe in em
 
-const adjustHeadline = (event) => {
-  const headline = event.target;
-  if (headline.textContent.length > 60) {
-    headline.textContent = headline.textContent.slice(0, 60);
-  }
-  
-  const lines = Math.ceil(headline.scrollHeight / (parseFloat(getComputedStyle(headline).lineHeight)));
-  headlineHeight.value = `${lines * baseHeight}em`;
+const adjustHeadline = () => {
+  nextTick(() => {
+    const headline = document.querySelector('.headline__session-target');
+    if (!headline) return;
+
+    if (headline.textContent.length > 60) {
+      headline.textContent = headline.textContent.slice(0, 60);
+    }
+    
+    const computedStyle = window.getComputedStyle(headline);
+    const lineHeight = parseFloat(computedStyle.lineHeight);
+    const height = headline.offsetHeight;
+    
+    if (lineHeight && height) {
+      const lines = Math.ceil(height / lineHeight);
+      headlineHeight.value = `${lines * baseHeight}em`;
+    }
+  });
 };
 const showContributorsBoard = ref(false);
 const collectingTimer = ref(360);
@@ -192,9 +202,6 @@ const joinSession = () => {
       })
   }
 };
-const finishedVoting = () => {
-  sessionPhase.value = 'closingPhase';
-}
 const leaveSession = () => {
   if (sessionId.value > 0 && userId)
     // Option 1: Using Fetch API
@@ -265,9 +272,17 @@ onMounted(() => {
       }
     })
     .listen('UserJoinedSession', (e) => {
-      contributorsCount.value = e.newContributorsCount;
-      contributorsAmount.value = e.newContributorsAmount;
-    })
+  if (e.newContributorsCount !== null) {
+    contributorsCount.value = e.newContributorsCount;
+  }
+  
+  if (e.newContributorsAmount !== null) {
+    contributorsAmount.value = e.newContributorsAmount;
+  }
+  if (e.newContributorsCount !== null || e.newContributorsAmount !== null) {
+    getContributors();
+  }
+})
     .listen('UserLeftSession', (e) => {
       contributorsCount.value = e.newContributorsCount;
     });

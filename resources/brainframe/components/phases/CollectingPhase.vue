@@ -412,7 +412,6 @@ const compressImage = async (file, maxSizeInMB = 2) => {
 };
 
 const submitIdea = async () => {
-  console.log(maxIdeaInput.value)
   if (submittedIdeas.value >= maxIdeaInput.value && maxIdeaInput.value !== null) {
     errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
     return;

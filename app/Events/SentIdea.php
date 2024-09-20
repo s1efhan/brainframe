@@ -9,25 +9,28 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
-class UserJoinedSession implements ShouldBroadcast
+class SentIdea
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(
-        public int $sessionId,
-        public int $userId,
-        public ?int $newContributorsCount = null,
-        public ?int $newContributorsAmount = null
-    ) {
+    public function __construct()
+    {
+        //
     }
 
-    public function broadcastOn(): Channel
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
     {
-        return new Channel('session.' . $this->sessionId);
+        return [
+            new PrivateChannel('channel-name'),
+        ];
     }
 }

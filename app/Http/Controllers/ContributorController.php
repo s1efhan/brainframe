@@ -3,7 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Contributor;
-use App\Events\ContributorJoin;
+use App\Events\UserJoinedSession;
 
 class ContributorController extends Controller
 {
@@ -33,13 +33,13 @@ class ContributorController extends Controller
             $contributor = Contributor::create([
                 'session_id' => $sessionId,
                 'user_id' => $userId,
-                'role_id' => $roleId
+                'role_id' => $roleId,
+                'last_ping'=> now()
             ]);
             $message = 'Contributor created successfully.';
         }
-
-        ContributorJoin::dispatch($sessionId, $userId, $roleId);
-
+        $newContributorsAmount = Contributor::where('session_id', $sessionId)->distinct('user_id')->count();
+        event(new UserJoinedSession($sessionId, $userId, $newContributorsAmount));
         return response()->json(['success' => true, 'message' => $message, 'contributor' => $contributor]);
     }
     public function get($sessionId, $userId)

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 use App\Events\SwitchPhase;
+use App\Models\ApiLog;
 class IdeaController extends Controller
 {
     public function getPassedIdeas($sessionId, $personalContributorId, $currentRound)
@@ -136,6 +137,17 @@ class IdeaController extends Controller
                     ],
                 ]);
                 $responseBody = json_decode($response->getBody(), true);
+                ApiLog::create([
+                    'session_id' => $sessionId,
+                    'contributor_id' => null, // oder der erste contributor_id aus $ideas, falls relevant
+                    'request_data' => json_decode($ideasFormatted, true),
+                    'response_data' => $responseBody,
+                    'icebreaker_msg' => null, // nicht relevant für diese Funktion
+                    'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
+                    'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0,
+                    'total_tokens' => $responseBody['usage']['total_tokens'] ?? 0,
+                ]);
+
                 $inputToken = $responseBody['usage']['prompt_tokens'] ?? 0;
                 $outputToken = $responseBody['usage']['completion_tokens'] ?? 0;
                 $session = Session::find($sessionId);
@@ -170,7 +182,6 @@ class IdeaController extends Controller
                 } else {
                     \Log::error('Unexpected API response format', $responseBody);
                 }
-
                 return response()->json($responseBody);
 
             } catch (\GuzzleHttp\Exception\ClientException $e) {
@@ -266,7 +277,7 @@ class IdeaController extends Controller
     private function checkAllVotesSubmitted($sessionId, $votingPhase)
     {
         Log::info("Überprüfe Stimmabgabe", ['session_id' => $sessionId, 'voting_phase' => $votingPhase]);
-    
+
         $contributors = Contributor::where('session_id', $sessionId)->get();
         $ideasCount = Idea::where('session_id', $sessionId)
             ->whereNotNull('tag')
@@ -277,38 +288,39 @@ class IdeaController extends Controller
                 });
             })
             ->count();
-    
+
         Log::info("Anzahl der Ideen und Teilnehmer", [
             'ideas_count' => $ideasCount,
             'contributors_count' => $contributors->count()
         ]);
-    
+
         $allVotesSubmitted = $contributors->every(function ($contributor) use ($sessionId, $votingPhase, $ideasCount) {
             $votes = Vote::where('session_id', $sessionId)
                 ->where('contributor_id', $contributor->id)
                 ->where('voting_phase', $votingPhase)
                 ->count();
-            
+
             Log::debug("Stimmabgabe des Teilnehmers", [
                 'contributor_id' => $contributor->id,
                 'votes_count' => $votes,
                 'required_votes' => $ideasCount
             ]);
-    
+
             return $votes >= $ideasCount;
         });
-    
+
         Log::info("Stimmabgabe abgeschlossen", ['all_votes_submitted' => $allVotesSubmitted]);
-    
+
         if ($allVotesSubmitted) {
             Log::info("Alle Stimmen abgegeben", ['session_id' => $sessionId]);
-            
+
             $voteType = Vote::where('session_id', $sessionId)
-            ->where('voting_phase', $votingPhase)
-            ->first()
-            ->vote_type;
-        
-            Log:info($voteType."voteType");
+                ->where('voting_phase', $votingPhase)
+                ->first()
+                ->vote_type;
+
+            Log:
+            info($voteType . "voteType");
             if ($voteType === 'ranking') {
                 event(new LastVote($sessionId, 0, true));
             } else {
@@ -317,7 +329,7 @@ class IdeaController extends Controller
         } else {
             Log::info("Noch nicht alle Stimmen abgegeben", ['session_id' => $sessionId]);
         }
-    
+
         return $allVotesSubmitted;
     }
     private function sortIdeasByPreviousVotes($ideas, $votingPhase)
@@ -417,7 +429,7 @@ class IdeaController extends Controller
         return $nextMethodIndex < count($votingMethods) ? $votingMethods[$nextMethodIndex] : null;
     }
 
-    private function formatIdeas($ideas)
+    private function formatIdeas($ideas): mixed
     {
         return $ideas->map(function ($idea) {
             return [
@@ -464,7 +476,21 @@ class IdeaController extends Controller
         }
 
         try {
-            // Anfrage an die OpenAI API
+            $requestData = [
+                'model' => "gpt-4",
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'Deine Aufgabe ist es, mir auf Grundlage der dir gezeigten Ideen einen einzigen kurzen Eisbrecher zu geben, damit ich inspiriert werde, weitere Ideen zu entwickeln. Antworte mit maximal 20 Worten, bestehend aus 2 Teilsätzen wobei der zweite Satz mit "z.B" beginnt um eine mögliche Idee zu nennen. Nenne auf keinen Fall eine bereits vorhandene Idee.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $userContent,
+                    ],
+                ],
+                'temperature' => 0.3,
+            ];
+            \Log::info('OpenAI API Request:', ['request' => $requestData]);
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $apiKey,
@@ -487,11 +513,20 @@ class IdeaController extends Controller
             ]);
 
             $responseBody = json_decode($response->getBody(), true);
+            \Log::info('OpenAI API Response:', ['response' => $responseBody]);
 
             // Extrahiere die relevante Nachricht aus der API-Antwort
             $iceBreakerMsg = $responseBody['choices'][0]['message']['content'] ?? 'Keine Antwort erhalten';
-
-            \Log::info('API Response:', ['iceBreaker_msg' => $iceBreakerMsg]);
+            ApiLog::create([
+                'session_id' => $sessionId,
+                'contributor_id' => $contributorId,
+                'request_data' => json_encode($requestData),
+                'response_data' => json_encode($responseBody),
+                'icebreaker_msg' => $iceBreakerMsg,
+                'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
+                'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0,
+                'total_tokens' => $responseBody['usage']['total_tokens'] ?? 0,
+            ]);
             // Update the database with the new token counts
             $responseData = json_decode($response->getBody(), true);
             $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
@@ -539,7 +574,11 @@ class IdeaController extends Controller
 
             $apiKey = env('OPENAI_API_KEY');
             $client = new Client();
-
+            Log::info('submitted idea, validated', [
+                'fileName' => $fileName,
+                'filePath' => $filePath,
+                'imageFileUrl' => $imageFileUrl
+            ]);
             try {
                 $response = $client->post('https://api.openai.com/v1/chat/completions', [
                     'headers' => [
@@ -568,6 +607,19 @@ class IdeaController extends Controller
 
                 $responseBody = json_decode($response->getBody(), true);
                 $aiResponse = $responseBody['choices'][0]['message']['content'] ?? null;
+                ApiLog::create([
+                    'session_id' => $sessionId,
+                    'contributor_id' => $contributorId,
+                    'request_data' => [
+                        'image_url' => $imageFileUrl,
+                        'prompt' => "What is in this image?"
+                    ],
+                    'response_data' => $responseBody,
+                    'icebreaker_msg' => null, // nicht relevant für diese Funktion
+                    'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
+                    'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0,
+                    'total_tokens' => $responseBody['usage']['total_tokens'] ?? 0,
+                ]);
                 $responseData = json_decode($response->getBody(), true);
                 $inputToken = $responseData['usage']['prompt_tokens'] ?? 0;
                 $outputToken = $responseData['usage']['completion_tokens'] ?? 0;

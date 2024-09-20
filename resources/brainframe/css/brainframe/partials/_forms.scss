@@ -840,6 +840,7 @@ border-top:none;
     display: flex;
     flex-direction: column;
     width: 100%;
+    margin-top: 1em;
     align-items: start;
     color: var(--secondary);
     justify-content: center;
@@ -966,7 +967,6 @@ border-top:none;
 
 .lobby__headline__container {
     padding-top: 2vh;
-    background-color: var(--text);
     width: 100%;
     justify-content: center;
     display: flex;
@@ -992,7 +992,6 @@ border-top:none;
     align-items: center;
     width: 100%;
     z-index: 10;
-    background-color: var(--text);
 
     .contributors_board {
         border: solid var(--secondary);
@@ -1000,7 +999,6 @@ border-top:none;
         display: flex;
         flex-direction: column;
         width: 100%;
-        min-height: 55vh;
         color: var(--accent);
         padding: 1em;
 
