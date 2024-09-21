@@ -316,34 +316,66 @@ class SessionController extends Controller
 
     public function invite(Request $request)
     {
-        $request->validate([
-            'session_id' => 'required',
-            'host_id' => 'required',
-            'contributor_email_addresses' => 'required|array',
-            'contributor_email_addresses.*' => 'email',
-        ]);
+        try {
+            Log::info('Session Invite Request:', $request->all());
+    
+            $validated = $request->validate([
+                'session_id' => 'required',
+                'host_id' => 'required', // This is actually contributor_id
+                'contributor_email_addresses' => 'required|array',
+                'contributor_email_addresses.*' => 'email',
+            ]);
+    
+            $sessionId = $validated['session_id'];
+            $contributorId = $validated['host_id'];
+            $contributorEmailAddresses = $validated['contributor_email_addresses'];
+    
+            // Find the contributor and get the associated user
+            $host = User::whereIn('id', function($query) use ($contributorId) {
+                $query->select('user_id')
+                      ->from('bf_contributors')
+                      ->where('id', $contributorId);
+            })->first();
 
-        $sessionId = $request->input('session_id');
-        $hostId = $request->input('host_id');
-        $contributorEmailAddresses = $request->input('contributor_email_addresses');
-
-        $host = User::findOrFail($hostId);
-        $userName = explode('.', $host->email)[0];
-
-        $emailMessage = "Hallo, <br> Du wurdest von {$userName} zu einer Ideen-Session eingeladen. <br> <br>
-        Du kannst über folgenden Link beitreten: <a href='https://stefan-theissen.de/brainframe/{$sessionId}'>Brainframe</a>. <br> <br>
-        Alternativ kannst du auch unter <a href='https://stefan-theissen.de/brainframe'>Brainframe</a> vorbeischauen und mit dem Code: {$sessionId} beitreten.";
-
-        foreach ($contributorEmailAddresses as $email) {
-            if ($email) {
-                Mail::html($emailMessage, function ($message) use ($email, $userName) {
-                    $message->to($email)
-                        ->subject("{$userName} - Einladung zur Ideen-Session");
-                });
+            if (!$host) {
+                throw new \Exception("No user found for contributor ID: {$contributorId}");
             }
+    
+            $userName = explode('.', $host->email)[0];
+            $emailMessage = "Hallo, <br> Du wurdest von {$userName} zu einer Ideen-Session eingeladen. <br> <br>
+                Du kannst über folgenden Link beitreten: <a href='https://stefan-theissen.de/brainframe/{$sessionId}'>Brainframe</a>. <br> <br>
+                Alternativ kannst du auch unter <a href='https://stefan-theissen.de/brainframe'>Brainframe</a> vorbeischauen und mit dem Code: {$sessionId} beitreten.";
+    
+            $sentCount = 0;
+            foreach ($contributorEmailAddresses as $email) {
+                if ($email) {
+                    try {
+                        Mail::html($emailMessage, function ($message) use ($email, $userName) {
+                            $message->to($email)
+                                ->subject("{$userName} - Einladung zur Ideen-Session");
+                        });
+                        $sentCount++;
+                    } catch (\Exception $e) {
+                        Log::error("Failed to send email to {$email}: " . $e->getMessage());
+                    }
+                }
+            }
+    
+            Log::info("Invitations sent: {$sentCount} out of " . count($contributorEmailAddresses));
+    
+            return response()->json([
+                'message' => 'Invitations sent successfully.',
+                'sent_count' => $sentCount,
+                'total_count' => count($contributorEmailAddresses)
+            ], 200);
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Validation failed:', $e->errors());
+            return response()->json(['error' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in invite function: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
-
-        return response()->json(['message' => 'Invitations sent successfully.'], 200);
     }
     public function getClosingDetails(Request $request, $sessionId)
     {

@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('api_logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('session_id');
-            $table->unsignedBigInteger('contributor_id');
+            $table->unsignedBigInteger('contributor_id')->nullable();
             $table->json('request_data');
             $table->json('response_data');
-            $table->text('icebreaker_msg');
+            $table->text('icebreaker_msg')->nullable();
             $table->integer('prompt_tokens')->default(0);
             $table->integer('completion_tokens')->default(0);
             $table->integer('total_tokens')->default(0);

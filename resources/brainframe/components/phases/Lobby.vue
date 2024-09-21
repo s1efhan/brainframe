@@ -21,14 +21,14 @@
     </div>
   </div>
   <div v-if="sessionLink && props.sessionHostId == props.personalContributor.id" class="email-input__container" v-for="(email, index) in contributorEmailAddresses"
-    :key="index">
-    
-    <input type="email" v-model="contributorEmailAddresses[index]" @keyup.enter="validateEmail(index, $event)"
-      @blur="validateEmail(index, $event)" placeholder="E-Mail-Adresse eingeben">
-    <button v-if="sessionLink" @click="sessionInvite" class="secondary">
-      Teilnehmer einladen
-    </button>
-  </div>
+  :key="index">
+  
+  <input type="email" v-model="contributorEmailAddresses[index]" @keyup.enter="validateEmail(index, $event)"
+    @blur="validateEmail(index, $event)" placeholder="E-Mail-Adresse eingeben">
+  <button v-if="sessionLink" @click="sessionInvite" class="secondary">
+    Teilnehmer einladen
+  </button>
+</div>
   <ContributorsBoard v-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
     :currentRound="props.currentRound" :sessionHostId="props.sessionHostId" :contributors="props.contributors"
     :sessionId="props.sessionId" :personalContributor="props.personalContributor" :ideasCount="props.ideasCount"
@@ -83,7 +83,12 @@ const copyToClipboard = (copyText) => {
 const validateEmail = (index, event) => {
   const email = contributorEmailAddresses.value[index];
   if (isValidEmail(email) && (event.key === 'Enter' || event.type === 'blur')) {
-    validatedEmails.value.push(email);
+    if (!validatedEmails.value.includes(email)) {
+      validatedEmails.value.push(email);
+    } else {
+      console.log('Diese E-Mail-Adresse wurde bereits hinzugefügt.');
+    }
+    // Leeren Sie das Eingabefeld in jedem Fall
     contributorEmailAddresses.value[index] = '';
   }
 };
@@ -91,12 +96,22 @@ const validateEmail = (index, event) => {
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const sessionInvite = () => {
+  const oldValidatedEmails = [...validatedEmails.value];
+
+  validatedEmails.value = [];
+  contributorEmailAddresses.value = [''];
+
   axios.post('/api/session/invite', {
     session_id: sessionId.value,
     host_id: props.sessionHostId,
-    contributor_email_addresses: validatedEmails.value
-  }).catch(error => {
-    console.error('Error starting the session', error);
+    contributor_email_addresses: oldValidatedEmails
+  })
+  .then(response => {
+      console.log('Einladungen erfolgreich gesendet');
+  })
+  .catch(error => {
+    console.error('Error inviting to the session', error);
+ validatedEmails.value = oldValidatedEmails;
   });
 };
 
