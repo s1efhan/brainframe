@@ -43,13 +43,13 @@ const logout = () => {
 const login = (token) => {
   emit('login');
   authToken.value = token;
+  getUser();
 }
 
 watch(() => props.userId, (newVal) => {
   userId.value = newVal;
   getUser();
 });
-
 const getUser = () => {
   axios.get(`/api/user/${userId.value}`, {
     headers: { Authorization: `Bearer ${authToken.value}` }

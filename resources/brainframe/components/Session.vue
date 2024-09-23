@@ -282,10 +282,7 @@ onMounted(() => {
       }
     })
     .listen('UserJoinedSession', (e) => {
-  if (e.newContributorsCount !== null) {
-    contributorsCount.value = e.newContributorsCount;
-  }
-  
+      
   if (e.newContributorsAmount !== null) {
     contributorsAmount.value = e.newContributorsAmount;
   }

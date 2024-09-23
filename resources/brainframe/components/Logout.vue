@@ -1,8 +1,5 @@
 <template>
   <main class="login__main">
-    <div class="headline__login">
-      <h1>Logout</h1>
-    </div>
     <form class="login-form" @submit.prevent="login">
       <div class="login-form__buttons">
         <button class="primary" @click="logout" >Abmelden</button>

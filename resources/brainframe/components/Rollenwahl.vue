@@ -116,6 +116,12 @@ const addContributor = () => {
 onMounted(() => {
   sessionId.value = route.params.id;
   userId.value = props.userId;
+  console.log("sessionId Rollenwahl", sessionId.value)
+  Echo.channel('session.' + sessionId.value)
+  .listen('RolePick', (e) => {
+    console.log("rolePick event empfangen")
+       getRoles();
+    });
   if (sessionId.value) {
     getRoles();
   }

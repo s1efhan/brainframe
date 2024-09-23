@@ -4,8 +4,8 @@
       <l-dot-pulse size="70" speed="1" color="#33d2ca"></l-dot-pulse>
     </div>
   </div>
-  <div v-else class="collecting-pdf">
-    <table class="session-data" id="first-table">
+  <div v-else class="collecting-pdf ">
+    <table  class="session-data" id="first-table">
       <thead>
         <tr>
           <th><TargetIcon/></th>
@@ -53,9 +53,9 @@
     </table>
     <div class="top-ideas">
       <h2>Top Ideen</h2>
-      <table v-if="sessionDetails && sessionDetails.top_ideas">
-        <thead>
-          <tr>
+      <table class="fade-in-section" v-if="sessionDetails && sessionDetails.top_ideas">
+        <thead class="fade-in-section">
+          <tr  class="fade-in-section">
             <th><PodiumIcon/></th>
             <th><LightbulbIcon/></th>
             <th>Beschreibung</th>
@@ -63,25 +63,25 @@
             <th><StarIcon/></th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="(idea, index) in [...sessionDetails.top_ideas].sort((a, b) => b.avg_vote_value - a.avg_vote_value)"
+        <tbody class="fade-in-section">
+          <tr  class="fade-in-section" v-for="(idea, index) in [...sessionDetails.top_ideas].sort((a, b) => b.avg_vote_value - a.avg_vote_value)"
             :key="idea.id">
-            <td class="center">{{ index + 1 }}</td>
-            <td>{{ idea.idea_title }}</td>
-            <td v-html="idea.idea_description"></td>
-            <td class="center">
+            <td class="center fade-in-section">{{ index + 1 }}</td>
+            <td  class="fade-in-section">{{ idea.idea_title }}</td>
+            <td  class="fade-in-section"v-html="idea.idea_description"></td>
+            <td class="center fade-in-section">
               <component :is="getIconComponent(idea.contributor_icon)" />
             </td>
             <!-- <td class="center">#{{ idea.tag }}</td>-->
-            <td class="center">{{ parseFloat(idea.avg_vote_value).toFixed(1) }} /5.0</td>
+            <td class="center fade-in-section">{{ parseFloat(idea.avg_vote_value).toFixed(1) }} /5.0</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="collecting-process">
-      <h2>{{ sessionDetails.method }}</h2>
-      <div class="timeline">
+      <h2 class="fade-in-section">{{ sessionDetails.method }}</h2>
+      <div class="timeline  fade-in-section">
         <div v-for="(groupedIdeas, round) in groupedIdeasByRound" :key="round" class="tag">
           <div class="round">{{ round }}</div>
           <ul>
@@ -94,9 +94,9 @@
     </div>
 
     <div class="word-cluster" v-if="sessionDetails.word_cloud_data">
-      <h2>Wort-Cluster</h2>
+      <h2 class="fade-in-section">Wort-Cluster</h2>
       <ul>
-        <li :class="'count-' + item.count" v-for="item in sessionDetails.word_cloud_data" :key="item.word">
+        <li :class="'count-' + item.count + ' fade-in-section'" v-for="item in sessionDetails.word_cloud_data" :key="item.word">
           {{ item.word }}
         </li>
       </ul>
@@ -104,9 +104,9 @@
 
 
     <div class="tags-list">
-      <h2>#Tags</h2>
+      <h2 class="fade-in-section">#Tags</h2>
       <ul>
-        <li :class="'count-' + tag.count" v-for="tag in sessionDetails.tag_list" :key="tag.tag">
+        <li :class="'count- ' + tag.count + ' fade-in-section'" v-for="tag in sessionDetails.tag_list" :key="tag.tag">
           #{{ tag.tag }}
         </li>
       </ul>
@@ -129,11 +129,11 @@
     </div>
     <div v-if="errorMsg" class="error">{{ errorMsg }}</div>
     <div class="next-steps" v-if="sessionDetails.next_steps">
-      <h2>Nächste Schritte und Empfehlungen</h2>
-      <p v-html="sessionDetails.next_steps"></p>
+      <h2 class="fade-in-section">Nächste Schritte und Empfehlungen</h2>
+      <p class="fade-in-section"v-html="sessionDetails.next_steps"></p>
     </div>
 
-    <div class="newSession__buttons">
+    <div class="newSession__buttons fade-in-section">
       <button class="accent" @click="router.push('/brainframe/create')">Neue Session Starten</button>
       <button class="primary" @click="router.push('/brainframe/profile')">Account anlegen & Session speichern!</button>
     </div>
@@ -298,8 +298,44 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('de-DE', options);
 };
 
+const checkVisibility = () => {
+  const sections = document.querySelectorAll('.fade-in-section');
+  sections.forEach((section) => {
+    if (isElementInViewport(section)) {
+      section.classList.add('is-visible');
+    }
+  });
+};
+
+const isElementInViewport = (el) => {
+  const rect = el.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+};
+
 onMounted(() => {
-  personalContributor.value = props.personalContributor
+  personalContributor.value = props.personalContributor;
   getSessionDetails();
+  window.addEventListener('scroll', checkVisibility);
+  checkVisibility(); // Initial check
 });
 </script>
+<style>
+.fade-in-section {
+  opacity: 0;
+  transform: translateY(20px);
+  visibility: hidden;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out, visibility 0.6s ease-out;
+  will-change: opacity, transform, visibility;
+}
+
+.is-visible {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}
+</style>

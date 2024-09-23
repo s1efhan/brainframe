@@ -6,8 +6,9 @@ use App\Models\Contributor;
 use App\Models\Session;
 use App\Models\Idea;
 use App\Models\Vote;
+use App\Events\RolePick;
 use App\Events\UserJoinedSession;
-
+use Log;
 class ContributorController extends Controller
 {
     public function create(Request $request)
@@ -42,6 +43,8 @@ class ContributorController extends Controller
             $message = 'Contributor created successfully.';
         }
         $newContributorsAmount = Contributor::where('session_id', $sessionId)->distinct('user_id')->count();
+        Log::info("RolePick");
+        event(new RolePick($sessionId));
         event(new UserJoinedSession($sessionId, $userId, $newContributorsAmount));
         return response()->json(['success' => true, 'message' => $message, 'contributor' => $contributor]);
     }
