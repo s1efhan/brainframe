@@ -16,8 +16,6 @@ use App\Models\Role;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Events\StartCollecting;
-use App\Events\StopCollecting;
 use App\Events\UserJoinedSession;
 use App\Events\UserLeftSession;
 use App\Events\SwitchPhase;
@@ -148,25 +146,21 @@ class SessionController extends Controller
             'groupedIdeasByRound' => $groupedIdeasByRound
         ]);
     }
-
     public function get($sessionId)
     {
         if (!$sessionId) {
             return response()->json(['message' => 'Session ID is required'], 400);
         }
-
-        if (is_numeric($sessionId)) {
-            $session = Session::with(['host', 'method'])->find($sessionId);
-        }
+        
+        $session = is_numeric($sessionId) ? Session::with(['host', 'method'])->find($sessionId) : null;
+        
         if (!$session) {
             return response()->json(['message' => 'Session not found'], 404);
         }
-
-        $contributor = Contributor::where('user_id', $session->host_id)
-            ->where('session_id', $session->id)
-            ->first();
-
-            $ideasCount = Idea::where('session_id', $session->id)
+        
+        Log::info($sessionId);
+        
+        $ideasCount = Idea::where('session_id', $session->id)
             ->whereNull('tag')
             ->selectRaw('round, contributor_id, count(*) as count')
             ->groupBy('round', 'contributor_id')
@@ -181,22 +175,52 @@ class SessionController extends Controller
             })
             ->values()
             ->keyBy('round');
-        $contributorsCount = Contributor::where('session_id', $session->id)->count();
+        
+        $votedIdeasCounts = Vote::where('session_id', $sessionId)
+            ->where('voting_phase', $session->voting_phase)
+            ->selectRaw('contributor_id, count(*) as count')
+            ->groupBy('contributor_id')
+            ->pluck('count', 'contributor_id');
+        
+        $totalIdeasToVoteCount = Idea::where('session_id', $sessionId)
+            ->whereNotNull('tag')
+            ->where('tag', '!=', '')
+            ->count();
+        
+        $contributors = Contributor::where('session_id', $session->id)
+            ->get()
+            ->map(function ($contributor) use ($votedIdeasCounts, $totalIdeasToVoteCount) {
+                return [
+                    'id' => $contributor->id,
+                    'role_name' => $contributor->role->name,
+                    'last_active' => $contributor->last_ping,
+                    'voted_ideas_count' => $votedIdeasCounts[$contributor->id] ?? 0
+                ];
+            });
+        
+        $contributorsCount = $contributors->count();
+        $contributorsAmount = $contributors->unique('id')->count();
+        
         Log::info('ContributorsCount: ' . $contributorsCount);
-        $contributorsAmount = Contributor::where('session_id', $session->id)->distinct('user_id')->count();
-
+        Log::info($contributors->toJson());
+        
         return response()->json([
             'id' => $session->id,
-            'session_host' => $contributor->id,
+'session_host' => Contributor::where('session_id', $session->id)
+                             ->where('user_id', $session->host_id)
+                             ->value('id'),
             'method_id' => $session->method_id,
+            'contributors' => $contributors,
             'target' => $session->target,
             'voting_phase' => $session->voting_phase,
+            'previous_phase'=>$session->previous_phase,
             'method_name' => $session->method->name,
             'session_phase' => $session->active_phase,
             'current_round' => $session->active_round,
             'contributors_count' => $contributorsCount,
             'contributors_amount' => $contributorsAmount,
-            'ideas_count'=> $ideasCount
+            'ideas_count' => $ideasCount,
+            'total_ideas_to_vote_count' => $totalIdeasToVoteCount
         ], 200);
     }
     public function votingPhaseUpdate(Request $request)
@@ -280,38 +304,6 @@ class SessionController extends Controller
         return response()->json([
             'message' => $isNewSession ? 'Session created successfully.' : 'Session updated successfully.'
         ], 200);
-    }
-    public function startCollecting(Request $request)
-    {
-        $sessionId = $request->input('session_id');
-        $round = $request->input('current_round');
-       
-        event(new StartCollecting($sessionId, $round));
-    
-        return response()->json(['message' => 'Collecting successfully started']);
-    }
-
-
-    public function stopCollecting(Request $request)
-    {
-        $sessionId = $request->input('session_id');
-        $round = $request->input('current_round');
-        $session = Session::find($sessionId);
-        if ($session) {
-            $session->active_round = $round;
-            $session->active_phase = 'collectingPhase';
-            $session->save();
-        }
-        if ($session->method_id === 4 && $round > 1 && $round < 7) {
-            $contributors = Contributor::where('session_id', $session->id)->get();
-            foreach ($contributors as $contributor) {
-                $contributor->role_id = $contributor->role_id % 6 + 1;
-                $contributor->save();
-            }
-        }
-        event(new StopCollecting($sessionId, $round));
-
-        return response()->json(['message' => 'Collecting successfully stopped']);
     }
 
     public function invite(Request $request)

@@ -1,6 +1,4 @@
 <template>
-  <p>{{ votingPhase }}</p>
-  <p>{{ votingMethod }}</p>
   <component 
   :is="votingMethods[votingMethod]" 
   v-if="personalContributor && sessionId" 

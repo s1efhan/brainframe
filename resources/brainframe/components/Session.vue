@@ -5,10 +5,12 @@
 </h1>
     <div class="session_headline__details"
       v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'">
-      <div @click="showContributorsBoard = true">
-        <ProfileIcon />
-        <p v-if="personalContributor.role_name != 'Default'"> {{ contributorsCount }} | {{ contributorsAmount }} </p>
-      </div>
+      <div @click="sessionPhase  != 'lobby' && (showContributorsBoard = !showContributorsBoard)">
+  <ProfileIcon />
+  <p v-if="personalContributor.role_name != 'Default'">
+    {{ contributorsCount }} | {{ contributorsAmount }}
+  </p>
+</div>
       <div v-if="sessionPhase != 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
         @click="switchPhase('lobby')">⏸</div>
       <div v-if="sessionPhase === 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
@@ -27,26 +29,27 @@
     <Rollenwahl v-if="!personalContributor || personalContributor.role_name === 'Default' && methodName"
       :userId="userId" @contributorAdded="handleContributorAdded" :methodName="methodName" />
     <Lobby
-      v-if="method && personalContributor && sessionPhase === 'lobby' && personalContributor.role_name != 'Default' "
+      v-if="method && !showContributorsBoard && personalContributor && sessionDetails && personalContributor.role_name != 'Default' && sessionPhase === 'lobby' || isWaiting === true "
       :method="method" :previousPhase="previousPhase" @switchPhase="switchPhase" :currentRound="currentRound"
       :sessionPhase="sessionPhase" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
-      :personalContributor="personalContributor" :ideasCount="ideasCount" />
+      :personalContributor="personalContributor" :totalIdeasToVoteCount="totalIdeasToVoteCount" :ideasCount="ideasCount" />
     <CollectingPhase @getContributors="getContributors" @switchPhase="switchPhase"
-      v-if="method && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
+      v-if="method && !showContributorsBoard && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
       :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
       :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount" />
     <VotingPhase @switchPhase="switchPhase" @wait="wait"
-      v-if=" method && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
+      v-if=" method && !showContributorsBoard && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :votingPhase="votingPhase" :sessionHostId="sessionHostId"
       :personalContributor="personalContributor" :contributorsCount="contributorsCount" />
     <ClosingPhase @switchPhase="switchPhase"
-      v-if="method && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
+      v-if="method && !showContributorsBoard && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
-  </main>
-  <ContributorsBoard :sessionPhase="sessionPhase" :previousPhase="previousPhase"
-    v-if="showContributorsBoard && method && personalContributor && currentRound >= 1" @exit="handleExit"
+      <ContributorsBoard :sessionPhase="sessionPhase" :previousPhase="previousPhase"
+    v-if="showContributorsBoard && sessionDetails && method && personalContributor && currentRound >= 1" @exit="handleExit"
     :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-    :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount" :isLobby="false" />
+    :sessionId="sessionId" :totalIdeasToVoteCount="totalIdeasToVoteCount" :personalContributor="personalContributor" :ideasCount="ideasCount" />
+    </main>
+  
 </template>
 
 <script setup>
@@ -68,12 +71,14 @@ import IconComponents from '../components/IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
+const isWaiting = ref(false);
 const props = defineProps({
   userId: {
     type: [String, Number],
     required: true
   }
 });
+const totalIdeasToVoteCount = ref(null);
 const votingPhase = ref(1);
 const updateSessionId = () => {
   sessionId.value = route.params.id;
@@ -105,7 +110,6 @@ const adjustHeadline = () => {
   });
 };
 const showContributorsBoard = ref(false);
-const collectingTimer = ref(360);
 const contributors = ref([]);
 const personalContributor = ref(null);
 const handleContributorAdded = () => {
@@ -116,7 +120,10 @@ const getContributors = () => {
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {
       contributors.value = response.data.contributors;
+      console.log("getContributors",response.data.contributors)
       personalContributor.value = response.data.personal_contributor;
+      console.log("getContributors, ", response.data)
+      console.log("sessionHostId.value, personalContributor.value.id", sessionHostId.value, personalContributor.value.id)
     })
     .catch(error => {
       console.error('Error fetching contributors', error);
@@ -138,6 +145,7 @@ const getSessionDetails = () => {
     .then(
       response => {
         sessionDetails.value = response.data;
+        console.log("getSessiondetails", sessionDetails.value.contributors)
         methodId.value = sessionDetails.value.method_id;
         methodName.value = sessionDetails.value.method_name;
         sessionPhase.value = sessionDetails.value.session_phase || 'lobby';
@@ -146,6 +154,8 @@ const getSessionDetails = () => {
         sessionHostId.value = sessionDetails.value.session_host;
         currentRound.value = sessionDetails.value.current_round || 0;
         ideasCount.value = sessionDetails.value.ideas_count;
+        contributors.value = sessionDetails.value.contributors
+        totalIdeasToVoteCount.value = sessionDetails.value.total_ideas_to_vote_count;
         votingPhase.value = sessionDetails.value.voting_phase || 1;
         getMethodDetails();
         getContributors();
@@ -157,7 +167,7 @@ const getSessionDetails = () => {
     });
 };
 const wait = () => {
-  sessionPhase.value = "lobby";
+  isWaiting.value = true;
 }
 const emit = defineEmits(['updateSessionId']);
 const switchPhase = (switchedPhase) => {

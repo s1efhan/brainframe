@@ -1,5 +1,5 @@
 <template>
-    <div class="lobby__headline__container">
+    <div v-if="sessionPhase === 'lobby'" class="lobby__headline__container">
         <h2 class="lobby__headline">Lobby</h2>
         <h3>. . . warte, bis der Host die Runde startet</h3>
     </div>
@@ -32,12 +32,12 @@
   <ContributorsBoard v-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
     :currentRound="props.currentRound" :sessionHostId="props.sessionHostId" :contributors="props.contributors"
     :sessionId="props.sessionId" :personalContributor="props.personalContributor" :ideasCount="props.ideasCount"
-    :isLobby="true" :previousPhase="props.previousPhase" />
+    :previousPhase="props.previousPhase"  :sessionPhase="props.sessionPhase" :totalIdeasToVoteCount="props.totalIdeasToVoteCount"/>
 </div>
 <ContributorsBoard v-else-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
     :currentRound="props.currentRound" :sessionHostId="props.sessionHostId" :contributors="props.contributors"
     :sessionId="props.sessionId" :personalContributor="props.personalContributor" :ideasCount="props.ideasCount"
-    :isLobby="true" :previousPhase="props.previousPhase" />
+   :sessionPhase="props.sessionPhase" :totalIdeasToVoteCount="props.totalIdeasToVoteCount":previousPhase="props.previousPhase" />
 </template>
 
 <script setup>
@@ -54,9 +54,9 @@ const props = defineProps({
   personalContributor: Object,
   ideasCount: Object,
   maxIdeaInput: Number,
-  isLobby: Boolean,
   previousPhase: String,
-  sessionPhase: String
+  sessionPhase: String,
+  totalIdeasToVoteCount: [null, Number]
 });
 const qrcodeCanvas = ref(null);
 const showQRCode = ref(false);
@@ -125,7 +125,7 @@ const generateQRCode = () => {
 };
 
 onMounted(() => {
-  console.log(props.personalContributor.id, props.currentRound, props.sessionHostId);
+  console.log('props.previousPhase',props.previousPhase)
   sessionLink.value = `${window.location.origin}${router.resolve({ name: 'session', params: { id: sessionId.value } }).href}`;
 });
 nextTick(() => {generateQRCode()});

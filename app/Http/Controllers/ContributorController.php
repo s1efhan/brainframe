@@ -3,6 +3,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Contributor;
+use App\Models\Session;
+use App\Models\Idea;
+use App\Models\Vote;
 use App\Events\UserJoinedSession;
 
 class ContributorController extends Controller
@@ -44,42 +47,52 @@ class ContributorController extends Controller
     }
     public function get($sessionId, $userId)
     {
-        // Alle Contributors für die gegebene Session abrufen
+        $session = Session::findOrFail($sessionId);
+    
+        $votedIdeasCounts = Vote::where('session_id', $sessionId)
+            ->where('voting_phase', $session->voting_phase)
+            ->selectRaw('contributor_id, count(*) as count')
+            ->groupBy('contributor_id')
+            ->pluck('count', 'contributor_id');
+    
+        $totalIdeasToVoteCount = Idea::where('session_id', $sessionId)
+            ->whereNotNull('tag')
+            ->where('tag', '!=', '')
+            ->count();
+    
         $contributors = Contributor::where('session_id', $sessionId)
-            ->with('role:id,name,icon')  // Lade sowohl 'name' als auch 'icon'
+            ->with('role:id,name,icon')
             ->get()
-            ->map(function ($contributor) {
+            ->map(function ($contributor) use ($votedIdeasCounts, $totalIdeasToVoteCount) {
                 return [
                     'id' => $contributor->id,
                     'role_name' => $contributor->role->name,
-                    'icon' => $contributor->role->icon, // Icon hinzufügen
-                    'last_active' => $contributor->last_ping
+                    'icon' => $contributor->role->icon,
+                    'last_active' => $contributor->last_ping,
+                    'voted_ideas_count' => $votedIdeasCounts[$contributor->id] ?? 0,
                 ];
             });
-
-        // Den persönlichen Contributor für den gegebenen Benutzer abrufen
+    
         $personalContributor = Contributor::where('session_id', $sessionId)
             ->where('user_id', $userId)
-            ->with('role:id,name,icon')  // Lade sowohl 'name' als auch 'icon'
+            ->with('role:id,name,icon')
             ->first();
-
-
+    
         $personalContributorDetails = null;
         if ($personalContributor) {
             $personalContributorDetails = [
                 'id' => $personalContributor->id,
                 'role_name' => $personalContributor->role->name,
-                'icon' => $personalContributor->role->icon, // Icon hinzufügen
-                'last_active' => $personalContributor->last_ping
+                'icon' => $personalContributor->role->icon,
+                'last_active' => $personalContributor->last_ping,
+                'voted_ideas_count' => $votedIdeasCounts[$personalContributor->id] ?? 0,
             ];
         }
-
-        // Beides zusammen in einer einzigen Response zurückgeben
+    
         return response()->json([
             'contributors' => $contributors,
             'personal_contributor' => $personalContributorDetails
         ]);
     }
-
 
 }
