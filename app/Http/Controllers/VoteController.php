@@ -4,10 +4,11 @@ use App\Models\Vote;
 use Illuminate\Http\Request;
 use App\Events\LastVote;
 use App\Models\Idea;
+use App\Models\Session;
 use App\Models\Contributor;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use App\Events\SwitchPhase;
+use App\Events\UserSentVote;
 class VoteController extends Controller
 {
     public function vote(Request $request)
@@ -21,16 +22,26 @@ class VoteController extends Controller
             'votes.*.vote_value' => 'required|numeric',
             'votes.*.voting_phase' => 'required|integer|min:1|max:4',
         ]);
-
+    
         Log::info('Received vote request', ['votes_count' => count($request->votes)]);
-
+    
         DB::transaction(function () use ($request) {
             foreach ($request->votes as $voteData) {
                 $this->processVote($voteData);
             }
             $this->checkAllVotesSubmitted($request->votes[0]);
         });
-
+    
+        $sessionId = $request->votes[0]['session_id'];
+        $contributorId = $request->votes[0]['contributor_id'];
+        $votingPhase = $request->votes[0]['voting_phase'];
+        $newVoteCount = Vote::where('session_id', $sessionId)
+            ->where('contributor_id', $contributorId)
+            ->where('voting_phase', $votingPhase)
+            ->count();
+    
+        event(new UserSentVote($sessionId, $contributorId, $newVoteCount, $votingPhase));
+    
         return response()->json(['message' => 'Votes processed successfully'], 200);
     }
 
@@ -105,7 +116,6 @@ class VoteController extends Controller
     
         return $allVotesSubmitted;
     }
-    
     private function limitIdeasByVoteType($ideas, $voteType)
     {
         switch ($voteType) {

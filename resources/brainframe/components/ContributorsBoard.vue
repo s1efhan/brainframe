@@ -106,17 +106,20 @@
                             (ideasCount[currentRound]?.contributors?.[contributor.id] || 0) >= maxIdeaInput ? '✅' : '❌'
                             }}</td>
                         <!-- wenn Lobby ist -->
-                        <td v-if="maxIdeaInput && sessionPhase === 'lobby' &&  previousPhase == 'votingPhase'" class="center">{{
+                        <td v-if="maxIdeaInput && sessionPhase === 'lobby' &&  previousPhase == 'votingPhase'"
+                            class="center">{{
                             contributor.voted_ideas_count >= totalIdeasToVoteCount ? '✅' : '❌'
                             }}</td>
-                        <td v-if="maxIdeaInput && sessionPhase === 'lobby' && previousPhase == 'collectingPhase'" class="center">{{
+                        <td v-if="maxIdeaInput && sessionPhase === 'lobby' && previousPhase == 'collectingPhase'"
+                            class="center">{{
                             (ideasCount[currentRound]?.contributors?.[contributor.id] || 0) >= maxIdeaInput ? '✅' : '❌'
                             }}</td>
                     </tr>
                 </tbody>
             </table>
             <div class="lobby__start__container">
-                <button class="primary" v-if="sessionPhase==='lobby'&& props.personalContributor.id === props.sessionHostId"
+                <button class="primary"
+                    v-if="sessionPhase==='lobby'&& props.personalContributor.id === props.sessionHostId"
                     @click="emit('exit')">Runde starten</button>
             </div>
         </div>
@@ -155,7 +158,7 @@ const props = defineProps({
         type: [Object, null],
         required: true
     },
- 
+
     previousPhase: {
         type: [String, null],
         required: true
@@ -179,7 +182,7 @@ const getIconComponent = (iconName) => {
     return IconComponents[iconName] || null;
 };
 onMounted(() => {
-    console.log(props.contributors)
+    console.log("props.contributors", props.contributors)
     console.log("sessionPhase", props.sessionPhase);
     console.log("previousPhase", props.previousPhase);
     if (props.method.name === "6-3-5") {

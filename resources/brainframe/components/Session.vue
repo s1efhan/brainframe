@@ -1,16 +1,16 @@
 <template>
   <main>
- <h1 class="headline__session-target">
-  {{ sessionDetails.target }}
-</h1>
+    <h1 class="headline__session-target">
+      {{ sessionDetails.target }}
+    </h1>
     <div class="session_headline__details"
       v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'">
-      <div @click="sessionPhase  != 'lobby' && (showContributorsBoard = !showContributorsBoard)">
-  <ProfileIcon />
-  <p v-if="personalContributor.role_name != 'Default'">
-    {{ contributorsCount }} | {{ contributorsAmount }}
-  </p>
-</div>
+      <div @click="toggleShowContributorsBoard">
+        <ProfileIcon />
+        <p v-if="personalContributor.role_name != 'Default'">
+          {{ contributorsCount }} | {{ contributorsAmount }}
+        </p>
+      </div>
       <div v-if="sessionPhase != 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
         @click="switchPhase('lobby')">⏸</div>
       <div v-if="sessionPhase === 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
@@ -32,7 +32,8 @@
       v-if="method && !showContributorsBoard && personalContributor && sessionDetails && personalContributor.role_name != 'Default' && sessionPhase === 'lobby' || isWaiting === true "
       :method="method" :previousPhase="previousPhase" @switchPhase="switchPhase" :currentRound="currentRound"
       :sessionPhase="sessionPhase" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
-      :personalContributor="personalContributor" :totalIdeasToVoteCount="totalIdeasToVoteCount" :ideasCount="ideasCount" />
+      :personalContributor="personalContributor" :totalIdeasToVoteCount="totalIdeasToVoteCount"
+      :ideasCount="ideasCount" />
     <CollectingPhase @getContributors="getContributors" @switchPhase="switchPhase"
       v-if="method && !showContributorsBoard && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
       :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
@@ -44,12 +45,13 @@
     <ClosingPhase @switchPhase="switchPhase"
       v-if="method && !showContributorsBoard && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
       :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
-      <ContributorsBoard :sessionPhase="sessionPhase" :previousPhase="previousPhase"
-    v-if="showContributorsBoard && sessionDetails && method && personalContributor && currentRound >= 1" @exit="handleExit"
-    :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-    :sessionId="sessionId" :totalIdeasToVoteCount="totalIdeasToVoteCount" :personalContributor="personalContributor" :ideasCount="ideasCount" />
-    </main>
-  
+    <ContributorsBoard :sessionPhase="sessionPhase" :previousPhase="previousPhase"
+      v-if="showContributorsBoard && sessionDetails && method && personalContributor" @exit="handleExit"
+      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
+      :sessionId="sessionId" :totalIdeasToVoteCount="totalIdeasToVoteCount" :personalContributor="personalContributor"
+      :ideasCount="ideasCount" />
+  </main>
+
 </template>
 
 <script setup>
@@ -98,11 +100,11 @@ const adjustHeadline = () => {
     if (headline.textContent.length > 60) {
       headline.textContent = headline.textContent.slice(0, 60);
     }
-    
+
     const computedStyle = window.getComputedStyle(headline);
     const lineHeight = parseFloat(computedStyle.lineHeight);
     const height = headline.offsetHeight;
-    
+
     if (lineHeight && height) {
       const lines = Math.ceil(height / lineHeight);
       headlineHeight.value = `${lines * baseHeight}em`;
@@ -120,15 +122,14 @@ const getContributors = () => {
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {
       contributors.value = response.data.contributors;
-      console.log("getContributors",response.data.contributors)
+      console.log("contributors", response.data.contributors)
       personalContributor.value = response.data.personal_contributor;
-      console.log("getContributors, ", response.data)
       console.log("sessionHostId.value, personalContributor.value.id", sessionHostId.value, personalContributor.value.id)
     })
     .catch(error => {
       console.error('Error fetching contributors', error);
     });
-};
+}
 const methodId = ref(null);
 const methodName = ref(null);
 const sessionHostId = ref(null);
@@ -140,6 +141,24 @@ const method = ref(null);
 const userId = ref(props.userId);
 const ideasCount = ref(null);
 const previousPhase = ref('collectingPhase');
+
+const toggleShowContributorsBoard = () => {
+  if (sessionPhase.value !== 'lobby') {
+    showContributorsBoard.value = !showContributorsBoard.value;
+
+    console.log('Contributors Board Toggle:', {
+      showContributorsBoard: showContributorsBoard.value,
+      sessionPhase: sessionPhase.value,
+      sessionDetailsAvailable: !!sessionDetails.value,
+      method: method.value,
+      personalContributorAvailable: !!personalContributor.value,
+      currentRound: currentRound.value
+    });
+  } else {
+    console.log('Cannot toggle Contributors Board in lobby phase');
+  }
+}
+
 const getSessionDetails = () => {
   axios.get(`/api/session/${sessionId.value}`)
     .then(
@@ -154,11 +173,9 @@ const getSessionDetails = () => {
         sessionHostId.value = sessionDetails.value.session_host;
         currentRound.value = sessionDetails.value.current_round || 0;
         ideasCount.value = sessionDetails.value.ideas_count;
-        contributors.value = sessionDetails.value.contributors
         totalIdeasToVoteCount.value = sessionDetails.value.total_ideas_to_vote_count;
         votingPhase.value = sessionDetails.value.voting_phase || 1;
         getMethodDetails();
-        getContributors();
       })
     .catch(error => {
       console.error('Error fetching Session Details', error);
@@ -277,19 +294,26 @@ onMounted(() => {
           })
       }
       console.log("Last Vote Event received");
-      if(e.switchToClosing){
+      if (e.switchToClosing) {
         switchPhase("closingPhase");
       }
     })
     .listen('UserJoinedSession', (e) => {
-      
-  if (e.newContributorsAmount !== null) {
-    contributorsAmount.value = e.newContributorsAmount;
-  }
-  if (e.newContributorsCount !== null || e.newContributorsAmount !== null) {
-    getContributors();
-  }
-})
+
+      if (e.newContributorsAmount !== null) {
+        contributorsAmount.value = e.newContributorsAmount;
+      }
+      if (e.newContributorsCount !== null || e.newContributorsAmount !== null) {
+        getContributors();
+      }
+    })
+    .listen('UserSentVote', (e) => {
+      console.log(`Contributor ${e.contributorId} hat ${e.voteCount} Ideen in Runde ${e.votingPhase}`);
+      const contributorIndex = contributors.value.findIndex(c => c.id == e.contributorId);
+      if (contributorIndex !== -1) {
+        contributors.value[contributorIndex].voted_ideas_count = e.voteCount;
+      }
+    })
     .listen('UserLeftSession', (e) => {
       contributorsCount.value = e.newContributorsCount;
     });
@@ -304,7 +328,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   leaveSession();
-  // Make sure to clean up event listeners and intervals
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', leaveSession);
   clearInterval(pingInterval);

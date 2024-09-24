@@ -340,7 +340,7 @@ console.log("stopCollecting aufgerufen");
       }
       if (method.value.name == '6-3-5') {
         console.log("1")
-       sendToGPT(currentRound.value);
+     sendToGPT(currentRound.value);
       }
       currentRound.value++;
       showStartButton.value = true;
@@ -348,7 +348,7 @@ console.log("stopCollecting aufgerufen");
       showStartButton.value = false;
       if (method.value.name != '6-3-5') {
         console.log("2")
-       sendToGPT();
+      sendToGPT();
       } else {
         // Für 6-3-5 Methode: Sende nur, wenn nicht bereits in der letzten Runde gesendet wurde
         if (currentRound.value === collectingRounds.value) {

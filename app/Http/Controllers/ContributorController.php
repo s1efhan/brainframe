@@ -53,18 +53,19 @@ class ContributorController extends Controller
         $session = Session::findOrFail($sessionId);
     
         $votedIdeasCounts = Vote::where('session_id', $sessionId)
-            ->where('voting_phase', $session->voting_phase)
-            ->selectRaw('contributor_id, count(*) as count')
-            ->groupBy('contributor_id')
-            ->pluck('count', 'contributor_id');
-    
-        $totalIdeasToVoteCount = Idea::where('session_id', $sessionId)
-            ->whereNotNull('tag')
-            ->where('tag', '!=', '')
-            ->count();
-    
-        $contributors = Contributor::where('session_id', $sessionId)
-            ->with('role:id,name,icon')
+        ->where('voting_phase', $session->voting_phase)
+        ->selectRaw('contributor_id, count(*) as count')
+        ->groupBy('contributor_id')
+        ->pluck('count', 'contributor_id');
+    Log::info ("sessionId, $sessionId, voting_phase, $session->voting_phase");
+    $totalIdeasToVoteCount = Idea::where('session_id', $sessionId)
+        ->whereNotNull('tag')
+        ->where('tag', '!=', '')
+        ->count();
+
+            Log::info("totalIdeasToVoteCount $totalIdeasToVoteCount");
+
+            $contributors = Contributor::where('session_id', $session->id)
             ->get()
             ->map(function ($contributor) use ($votedIdeasCounts, $totalIdeasToVoteCount) {
                 return [
@@ -72,10 +73,10 @@ class ContributorController extends Controller
                     'role_name' => $contributor->role->name,
                     'icon' => $contributor->role->icon,
                     'last_active' => $contributor->last_ping,
-                    'voted_ideas_count' => $votedIdeasCounts[$contributor->id] ?? 0,
+                    'voted_ideas_count' => $votedIdeasCounts[$contributor->id] ?? 0
                 ];
             });
-    
+            Log::info("contributors $contributors");
         $personalContributor = Contributor::where('session_id', $sessionId)
             ->where('user_id', $userId)
             ->with('role:id,name,icon')

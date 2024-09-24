@@ -210,7 +210,7 @@ class SessionController extends Controller
                              ->where('user_id', $session->host_id)
                              ->value('id'),
             'method_id' => $session->method_id,
-            'contributors' => $contributors,
+          //  'contributors' => $contributors,
             'target' => $session->target,
             'voting_phase' => $session->voting_phase,
             'previous_phase'=>$session->previous_phase,
