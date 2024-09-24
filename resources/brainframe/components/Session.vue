@@ -164,7 +164,6 @@ const getSessionDetails = () => {
     .then(
       response => {
         sessionDetails.value = response.data;
-        console.log("getSessiondetails", sessionDetails.value.contributors)
         methodId.value = sessionDetails.value.method_id;
         methodName.value = sessionDetails.value.method_name;
         sessionPhase.value = sessionDetails.value.session_phase || 'lobby';
@@ -189,6 +188,7 @@ const wait = () => {
 const emit = defineEmits(['updateSessionId']);
 const switchPhase = (switchedPhase) => {
   currentRound.value = 1;
+  isWaiting.value = false;
   if (personalContributor.value.id == sessionHostId.value) {
     axios.post('/api/phase', {
       switched_phase: switchedPhase,
@@ -277,9 +277,11 @@ onMounted(() => {
   Echo.channel('session.' + sessionId.value)
     .listen('SwitchPhase', (e) => {
       getSessionDetails();
+      isWaiting.value = false;
       console.log("switchedPhase");
     })
     .listen('LastVote', (e) => {
+      isWaiting.value = false;
       if (personalContributor.value.id == sessionHostId.value) {
         votingPhase.value = e.votingPhase;
         axios.post('/api/session/vote/update', {

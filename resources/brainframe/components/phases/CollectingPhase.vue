@@ -111,13 +111,13 @@
 import { ref, watch, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import IconComponents from '../IconComponents.vue';
-import 'ldrs/quantum';
+import { quantum } from "ldrs";
 import LightbulbIcon from '../icons/LightbulbIcon.vue';
 import DefaultimageIcon from '../icons/DefaultimageIcon.vue';
 import MicrophoneIcon from '../icons/MicrophoneIcon.vue';
 import SandclockIcon from '../icons/SandclockIcon.vue';
 import AiStarsIcon from '../icons/AiStarsIcon.vue';
-import 'ldrs/waveform'
+import {waveform} from "ldrs"
 const props = defineProps({
   personalContributor: {
     type: Object,
@@ -153,7 +153,7 @@ const emit = defineEmits(['switchPhase', 'getContributors']);
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
-
+quantum.register();
 // Zeitmessung und Runden
 const currentRound = ref(props.currentRound || 1);
 const collectingTimer = ref(null);
@@ -186,7 +186,7 @@ const showStartButton = ref(true);
 const isLoading = ref(false);
 
 const errorMsg = ref('');
-const iceBreakerMsg = ref('...');
+const iceBreakerMsg = ref('');
 
 const setMethodParameters = () => {
   switch (method.value.id) {
@@ -219,6 +219,7 @@ const setMethodParameters = () => {
 };
 
 const getIdeasPassed = () => {
+  isLoading.value = true;
   console.log("getIdeasPassed", sessionId.value, props.personalContributor.id, currentRound.value)
   axios.get(`/api/ideas/6-3-5/${sessionId.value}/${props.personalContributor.id}/${currentRound.value}`)
     .then(response => {
@@ -227,6 +228,9 @@ const getIdeasPassed = () => {
     })
     .catch(error => {
       console.error('Error fetching passedIdeas', error);
+    })
+    .finally(() => {
+      isLoading.value = false;
     });
 }
 
@@ -266,22 +270,21 @@ const sendToGPT = (round = null) => {
 };
 
 const iceBreaker = () => {
-  axios.post('/api/ice-breaker',
-    {
-      session_id: sessionId.value,
-      contributor_id: personalContributor.value.id
+    axios.post('/api/ice-breaker', {
+        session_id: sessionId.value,
+        contributor_id: personalContributor.value.id
     })
     .then(response => {
-      console.log(response.data);
-      iceBreakerMsg.value = response.data.iceBreaker_msg;
-      console.log(iceBreakerMsg.value);
+        iceBreakerMsg.value = response.data.iceBreaker_msg;
     })
     .catch(error => {
-      console.error('Error fetching iceBreaker', error);
-      iceBreakerMsg.value = "Fehler beim IceBreaker!";
+        if (error.response && error.response.status === 403) {
+            errorMsg.value = 'Maximale Anzahl an Anfragen erreicht (3 pro Session)';
+        } else {
+            errorMsg.value = 'Ein Fehler ist aufgetreten';
+        }
     });
 }
-
 const submitIdea = async () => {
   if (submittedIdeas.value >= maxIdeaInput.value && maxIdeaInput.value !== null) {
     errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
@@ -301,7 +304,7 @@ const submitIdea = async () => {
     }
 
     formData.append('text_input', textInput.value);
-
+isLoading.value = true;
     try {
       const response = await axios.post('/api/idea', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -311,12 +314,14 @@ const submitIdea = async () => {
       imageFile.value = null;
       imageFileUrl.value = '';
       submittedIdeas.value++;
+      iceBreakerMsg.value = "";
     } catch (error) {
       console.error('Error saving idea', error);
     }
   } else {
     errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
   }
+  isLoading.value = false;
 };
 
 
@@ -398,6 +403,7 @@ const updateTimerState = () => {
 const getCountdown = () => {
   axios.get(`/api/collecting/timer/${props.sessionId}`)
     .then(response => {
+      console.log("countdown", response.data)
       if (response.data.seconds_left >0) {
         collectingStarted.value = true;
         remainingTime.value = response.data.seconds_left;
@@ -407,7 +413,7 @@ const getCountdown = () => {
     .catch(error => console.error('Error fetching timer status:', error));
 };
 onMounted(() => {
-  "onMounted Collecting"
+  isLoading.value = true;
   setMethodParameters();
   if(currentRound.value > collectingRounds.value && personalContributor.value.id === sessionHostId.value){
     emit("switchPhase", "votingPhase");
@@ -427,6 +433,7 @@ onMounted(() => {
     getIdeasPassed();
   }
   getCountdown();
+  isLoading.value = false;
 });
 
 watch(() => personalContributor.value.id, (newId, oldId) => {

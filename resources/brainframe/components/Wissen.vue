@@ -49,40 +49,16 @@
         </ul>
       </div>
     </div>
-    <button @click="fillValue">Start</button>
-    <div v-if="!fakeValue">
-      <l-quantum size="90" speed="3" color="white"></l-quantum>
-    </div>
-    <l-ring-2 
-class="loader" 
-color="#ffffff" 
-size="50" 
-stroke="6" 
-bg-opacity="0.1" 
-stroke-length="0.25" 
-speed="0.8"
-></l-ring-2>
   </main>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import 'ldrs/quantum';
-import 'ldrs/ring2';
 const showDetails = ref({
   methodik: false,
   motivation: false,
   techStack: false
 });
-
-const fakeValue = ref(null);
-
-const fillValue = () => {
-  fakeValue.value = null;
-  setTimeout(() => {
-    fakeValue.value = 1;
-  }, 5000); // 5000 Millisekunden = 5 Sekunden
-};
 
 const toggleDetailsVisibility = (section) => {
   showDetails.value[section] = !showDetails.value[section];

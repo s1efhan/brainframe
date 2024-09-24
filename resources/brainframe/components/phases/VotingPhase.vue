@@ -11,7 +11,7 @@
 />
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import StarVote from '../voting-methods/StarVote.vue';
 import RankingVote from '../voting-methods/RankingVote.vue';
@@ -75,25 +75,13 @@ const handleContributorsLastVote = () => {
   console.log('lastVote');
   emit('wait');
 }
-const finishedVoting = () =>{
-  if(personalContributor.value.id == sessionHostId.value){
-  console.log("finishedVoting", votingPhase.value);
-  if(votingMethod.value != 'RankingVote'){
+watch(() => props.votingPhase, (newPhase, oldPhase) => {
+  if (newPhase !== oldPhase) {
+    votingPhase.value = newPhase;
     getIdeas();
   }
-  else {
-    console.log("switchPhase to closing")
-    emit('switchPhase', 'closingPhase');
-  }
-}
-}
+});
 onMounted(() => {
   getIdeas();
-  Echo.channel('session.' + sessionId.value)
-    .listen('VotingFinished', (e) => {
-      console.log('VotingFinished Event empfangen:', e);
-      console.log("contributorsCount", props.contributorsCount);
-      finishedVoting();
-    })
 });
 </script>

@@ -453,7 +453,19 @@ class IdeaController extends Controller
         $client = new Client();
         $sessionId = $request->input('session_id');
         $contributorId = $request->input('contributor_id');
+        // Zähle die Anfragen für diesen Contributor in dieser Session
+        $requestCount = ApiLog::where('session_id', $sessionId)
+        ->where('contributor_id', $contributorId)
+        ->whereNotNull('icebreaker_msg')
+        ->count();
+    
+    if ($requestCount >= 3) {
+        return response()->json(['error' => 'Maximale Anzahl an Anfragen erreicht'], 403);
+    }
 
+        if ($requestCount >= 3) {
+            return response()->json(['error' => 'Maximale Anzahl an Anfragen erreicht'], 403);
+        }
         // Filter Ideen nach session_id und ausschließen der Ideen des aktuellen Contributors
         $ideas = Idea::where('session_id', $sessionId)
             ->where('contributor_id', '!=', $contributorId)
@@ -561,62 +573,62 @@ class IdeaController extends Controller
             'contributor_id' => 'required|exists:bf_contributors,id',
             'round' => 'required|integer'
         ]);
-        
+
         $contributorId = $request->input('contributor_id');
         $sessionId = $request->input('session_id');
         $imageFileUrl = null;
         $aiResponse = null;
-    
+
         // Hole die Session und das Target
         $session = Session::find($sessionId);
         $target = $session->target;
-    
+
         if ($request->hasFile('image_file')) {
             $imageFile = $request->file('image_file');
-            
+
             // Speichern der Bild-URL
             $fileName = time() . '_' . $imageFile->getClientOriginalName();
             $filePath = $imageFile->storeAs('brainframe/images', $fileName, 'public');
             $imageFileUrl = 'storage/' . $filePath;
-    
+
             // Bild komprimieren und skalieren
             $sourceImage = imagecreatefromstring(file_get_contents($imageFile->getRealPath()));
             $width = imagesx($sourceImage);
             $height = imagesy($sourceImage);
-    
+
             // Neue Größe berechnen (max. 200px Breite)
             $newWidth = min($width, 100);
             $newHeight = ($height / $width) * $newWidth;
-    
+
             $newImage = imagecreatetruecolor($newWidth, $newHeight);
             imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-    
+
             // In JPEG umwandeln und komprimieren
             ob_start();
             imagejpeg($newImage, null, 20);
             $imageData = ob_get_contents();
             ob_end_clean();
-    
+
             // Ressourcen freigeben
             imagedestroy($sourceImage);
             imagedestroy($newImage);
-    
+
             // Überprüfen der komprimierten Bildgröße
             $compressedSize = strlen($imageData);
             \Log::info('Compressed image size: ' . $compressedSize . ' bytes');
-    
+
             // Base64-Kodierung des komprimierten Bildes
             $imageData = base64_encode($imageData);
-    
+
             $apiKey = env('OPENAI_API_KEY');
             $client = new Client();
-    
+
             // Überprüfen der gesendeten Daten
             \Log::info('Sending request to OpenAI', [
                 'imageDataLength' => strlen($imageData),
-                'prompt' => "Bild zu: ".$target.". Idee in 3 Sätzen?"
+                'prompt' => "Bild zu: " . $target . ". Idee in 3 Sätzen?"
             ]);
-    
+
             try {
                 $response = $client->post('https://api.openai.com/v1/chat/completions', [
                     'headers' => [
@@ -643,23 +655,23 @@ class IdeaController extends Controller
                         'temperature' => 0.3
                     ],
                 ]);
-    
+
                 $responseBody = json_decode($response->getBody(), true);
                 $aiResponse = $responseBody['choices'][0]['message']['content'] ?? null;
-                
+
                 // Überprüfen der API-Antwort
                 \Log::info('OpenAI response', [
                     'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
                     'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0,
                     'total_tokens' => $responseBody['usage']['total_tokens'] ?? 0
                 ]);
-    
+
                 ApiLog::create([
                     'session_id' => $sessionId,
                     'contributor_id' => $contributorId,
                     'request_data' => [
                         'image_url' => $imageFileUrl,
-                        'prompt' => "Bild zu: ".$target.". Idee in 3 Sätzen?"
+                        'prompt' => "Bild zu: " . $target . ". Idee in 3 Sätzen?"
                     ],
                     'response_data' => $responseBody,
                     'icebreaker_msg' => null,
@@ -667,7 +679,7 @@ class IdeaController extends Controller
                     'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0,
                     'total_tokens' => $responseBody['usage']['total_tokens'] ?? 0,
                 ]);
-    
+
                 $inputToken = $responseBody['usage']['prompt_tokens'] ?? 0;
                 $outputToken = $responseBody['usage']['completion_tokens'] ?? 0;
                 if ($session) {
@@ -685,7 +697,7 @@ class IdeaController extends Controller
                 return response()->json(['message' => 'Fehler: ' . $e->getMessage()], 500);
             }
         }
-    
+
         // Erstelle einen neuen Datensatz
         $idea = Idea::create([
             'text_input' => $aiResponse ?? $request->input('text_input'),
@@ -694,7 +706,7 @@ class IdeaController extends Controller
             'contributor_id' => $contributorId,
             'round' => $request->input('round')
         ]);
-    
+
         // Rückgabe einer erfolgreichen Antwort
         return response()->json(['message' => 'Idea stored successfully', 'idea' => $idea], 201);
     }
