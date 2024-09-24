@@ -8,6 +8,10 @@ import Join from '../components/Join.vue';
 import Profile from '../components/Profile.vue';
 import Wissen from '../components/Wissen.vue';
 import Sessions from '../components/Sessions.vue';
+import SechsDreiFünf from '../components/articles/6-3-5-Article.vue';
+import WaltDisney from '../components/articles/Walt-Disney-Article.vue';
+import CrazyEight from '../components/articles/Crazy-8-Article.vue';
+import SixThinkingHats from '../components/articles/6-Thinking-Hats-Article.vue';
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -23,6 +27,10 @@ const router = createRouter({
       { name: 'Sessions', path: '/brainframe/sessions', component: Sessions },
       { name: 'Wissen', path: '/brainframe/knowledge', component: Wissen },
       { name: 'error404', path: '/:catchAll(.*)', component: Error404 },
+      { name: '6-3-5', path: '/brainframe/knowledge/6-3-5', component: SechsDreiFünf },
+      { name: 'Walt-Disney', path: '/brainframe/knowledge/walt-disney', component: WaltDisney },
+      { name: '6-Thinking-Hats', path: '/brainframe/knowledge/6-thinking-hats', component: SixThinkingHats },
+      { name: 'Crazy-8', path: '/brainframe/knowledge/crazy-8', component: CrazyEight },
     ],
 });
 

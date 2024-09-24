@@ -1,6 +1,7 @@
 <template>
     <main>
-        <div class="sessionTarget__container">
+      <div class="error" v-if="errorMsg"><p>{{ errorMsg }}</p></div>
+        <div v-if ="!errorMsg" class="sessionTarget__container">
       <textarea 
         ref="targetTextarea"
         @focus="onFocus"
@@ -17,10 +18,9 @@
     </div>
       <SessionSettings 
         @updateSession="updateSession" 
-        v-if="userId && sessionId && sessionTarget"
+        v-if="userId && sessionId && sessionTarget && !errorMsg"
       />
-      
-      <div v-if="sessionTarget" class="create__session__container">
+      <div v-if="sessionTarget && !errorMsg" class="create__session__container">
         <button @click="createSession" class="primary">Session Erstellen</button>
       </div>
       
@@ -44,7 +44,7 @@
   
   // Refs
   const router = useRouter();
-
+const errorMsg = ref(null);
   const sessionTarget = ref('');
   const tempSessionTarget = ref('');
   const sessionLink = ref(null);
@@ -104,6 +104,7 @@
       contributors_amount: 1,
       session_target: sessionTarget.value,
     }).catch(error => {
+      errorMsg.value = error.response.data.message;
       console.error('Error saving session data', error);
     });
   };

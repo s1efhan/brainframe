@@ -268,8 +268,6 @@ class SessionController extends Controller
         Log::info('User Sessions:', $sessions->toArray());
         return response()->json($sessions, 200);
     }
-
-
     public function update(Request $request)
     {
         $request->validate([
@@ -279,33 +277,54 @@ class SessionController extends Controller
             'session_target' => 'nullable|string|present',
             'contributors_amount' => 'required'
         ]);
-
+    
         $sessionId = $request->input('session_id');
         $hostId = $request->input('host_id');
         $contributorsAmount = $request->input('contributors_amount');
+    
         $session = Session::firstOrNew(['id' => $sessionId]);
         $isNewSession = !$session->exists;
-
+    
+        if ($isNewSession) {
+            $userEmail = User::find($hostId)->email;
+    
+            // Ausnahme für mich
+            if ($userEmail !== 'stefan.theissen@mail.de') {
+                $todaySessionCount = Session::where('host_id', $hostId)
+                    ->whereDate('created_at', Carbon::today())
+                    ->count();
+    
+                Log::info("User $userEmail has created $todaySessionCount sessions today");
+    
+                if ($todaySessionCount >= 3) {
+                    return response()->json([
+                        'message' => 'You have reached the maximum limit of 3 new sessions per day.'
+                    ], 403);
+                }
+            } else {
+                Log::info("Special user $userEmail is creating a new session (no limit applied)");
+            }
+        }
+    
         $session->target = $request->input('session_target') ?: 'Kein Ziel festgelegt';
         $session->host_id = $hostId;
         $session->contributors_amount = $contributorsAmount;
         $session->method_id = $request->input('method_id');
         $session->save();
-
+    
         if ($isNewSession) {
-            $defaultRoleId = 0; // Angenommen, 1 ist die ID für die "Unassigned" Rolle
+            $defaultRoleId = 0; // Angenommen, 0 ist die ID für die "Unassigned" Rolle
             Contributor::create([
                 'session_id' => $session->id,
                 'user_id' => $hostId,
                 'role_id' => $defaultRoleId
             ]);
         }
-
+    
         return response()->json([
             'message' => $isNewSession ? 'Session created successfully.' : 'Session updated successfully.'
         ], 200);
     }
-
     public function invite(Request $request)
     {
         try {
