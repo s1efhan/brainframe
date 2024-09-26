@@ -85,6 +85,7 @@ class SessionController extends Controller
             $newContributorsCount = $this->getActiveContributorsCount($sessionId);
 
             return response()->json([
+                'success' => true,
                 'session_id' => $sessionId,
                 'user_id' => $userId,
                 'contributors_count' => $newContributorsCount,
