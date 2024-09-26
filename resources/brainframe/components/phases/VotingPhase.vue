@@ -77,6 +77,7 @@ const handleContributorsLastVote = () => {
 }
 watch(() => props.votingPhase, (newPhase, oldPhase) => {
   if (newPhase !== oldPhase) {
+    console.log("votingPhase switched", newPhase.value, oldPhase.value)
     votingPhase.value = newPhase;
     getIdeas();
   }

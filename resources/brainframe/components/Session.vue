@@ -73,15 +73,45 @@ import IconComponents from '../components/IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
-const isWaiting = ref(false);
+
 const props = defineProps({
   userId: {
     type: [String, Number],
     required: true
   }
 });
+const emit = defineEmits(['updateSessionId']);
+
+// Session
+const methodId = ref(null);
+const methodName = ref(null);
+const sessionHostId = ref(null);
+const sessionDetails = ref([]);
+const method = ref(null);
+const currentRound = ref(null);
+const sessionPhase = ref('lobby');
+const previousPhase = ref('collectingPhase');
+
+// Benutzer und Teilnehmer
+const userId = ref(props.userId);
+const contributors = ref([]);
+const contributorsCount = ref(null);
+const contributorsAmount = ref(null);
+const personalContributor = ref(null);
+const showContributorsBoard = ref(false);
+
+// Ideen und Abstimmung
+const ideasCount = ref(null);
 const totalIdeasToVoteCount = ref(null);
 const votingPhase = ref(1);
+
+// UI und Zustand
+const headlineHeight = ref('auto');
+const baseHeight = 1.5;
+const isWaiting = ref(false);
+
+let pingInterval;
+
 const updateSessionId = () => {
   sessionId.value = route.params.id;
   emit('updateSessionId', sessionId.value);
@@ -89,8 +119,13 @@ const updateSessionId = () => {
 const handleExit = () => {
   showContributorsBoard.value = false;
 };
-const headlineHeight = ref('auto');
-const baseHeight = 1.5; // Basishöhe in em
+const toggleShowContributorsBoard = () => {
+  if (sessionPhase.value !== 'lobby') {
+    showContributorsBoard.value = !showContributorsBoard.value;
+  } else {
+    console.log('Cannot toggle Contributors Board in lobby phase');
+  }
+}
 
 const adjustHeadline = () => {
   nextTick(() => {
@@ -111,18 +146,19 @@ const adjustHeadline = () => {
     }
   });
 };
-const showContributorsBoard = ref(false);
-const contributors = ref([]);
-const personalContributor = ref(null);
+
 const handleContributorAdded = () => {
   getContributors();
 };
-const sessionPhase = ref('lobby');
+
+const wait = () => {
+  isWaiting.value = true;
+}
+
 const getContributors = () => {
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {
       contributors.value = response.data.contributors;
-      console.log("contributors", response.data.contributors)
       personalContributor.value = response.data.personal_contributor;
       console.log("sessionHostId.value, personalContributor.value.id", sessionHostId.value, personalContributor.value.id)
     })
@@ -130,34 +166,27 @@ const getContributors = () => {
       console.error('Error fetching contributors', error);
     });
 }
-const methodId = ref(null);
-const methodName = ref(null);
-const sessionHostId = ref(null);
-const currentRound = ref(null);
-const sessionDetails = ref([]);
-const contributorsCount = ref(null);
-const contributorsAmount = ref(null);
-const method = ref(null);
-const userId = ref(props.userId);
-const ideasCount = ref(null);
-const previousPhase = ref('collectingPhase');
 
-const toggleShowContributorsBoard = () => {
-  if (sessionPhase.value !== 'lobby') {
-    showContributorsBoard.value = !showContributorsBoard.value;
-
-    console.log('Contributors Board Toggle:', {
-      showContributorsBoard: showContributorsBoard.value,
-      sessionPhase: sessionPhase.value,
-      sessionDetailsAvailable: !!sessionDetails.value,
-      method: method.value,
-      personalContributorAvailable: !!personalContributor.value,
-      currentRound: currentRound.value
-    });
-  } else {
-    console.log('Cannot toggle Contributors Board in lobby phase');
+ const switchPhase = (switchedPhase) => {
+  currentRound.value = 1;
+  isWaiting.value = false;
+  if (personalContributor.value.id == sessionHostId.value) {
+    axios.post('/api/phase', {
+      switched_phase: switchedPhase,
+      session_id: sessionId.value,
+      voting_phase: votingPhase.value
+    })
+      .then(response => {
+        console.log('Server response:', response.data);
+      })
+      .catch(error => {
+        console.error('Error switching Phase', error);
+      })
+      .finally(() => {
+        getSessionDetails();
+      });
   }
-}
+};
 
 const getSessionDetails = () => {
   axios.get(`/api/session/${sessionId.value}`)
@@ -182,30 +211,7 @@ const getSessionDetails = () => {
       router.push('/brainframe/join')
     });
 };
-const wait = () => {
-  isWaiting.value = true;
-}
-const emit = defineEmits(['updateSessionId']);
-const switchPhase = (switchedPhase) => {
-  currentRound.value = 1;
-  isWaiting.value = false;
-  if (personalContributor.value.id == sessionHostId.value) {
-    axios.post('/api/phase', {
-      switched_phase: switchedPhase,
-      session_id: sessionId.value,
-      voting_phase: votingPhase.value
-    })
-      .then(response => {
-        console.log('Server response:', response.data);
-      })
-      .catch(error => {
-        console.error('Error switching Phase', error);
-      })
-      .finally(() => {
-        getSessionDetails();
-      });
-  }
-};
+
 const getMethodDetails = () => {
   axios.get(`/api/method/${methodId.value}`)
     .then(response => {
@@ -268,11 +274,8 @@ const ping = () => {
   }
 };
 
-let pingInterval;
-
 onMounted(() => {
   updateSessionId();
-  console.log('Listening on channel:', 'session.' + sessionId.value);
   getSessionDetails();
   Echo.channel('session.' + sessionId.value)
     .listen('SwitchPhase', (e) => {

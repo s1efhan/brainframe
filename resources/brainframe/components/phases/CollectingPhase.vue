@@ -9,7 +9,7 @@
     <div class="roundCountInfo__container">
 
       <div class="roundCount">
-        <div v-if="collectingRounds > 1" v-for="round in collectingRounds" :key="round" class="round-item">
+        <div v-if="collectingRounds" v-for="round in collectingRounds" :key="round" class="round-item">
           <div class="round-circle" :class="{ 'completed': round <= currentRound }">
             {{ round }}
           </div>
@@ -192,7 +192,7 @@ const setMethodParameters = () => {
   switch (method.value.id) {
     case 1: // 6-3-5
       console.log("setMethodParameters", contributors.value.length)
-      collectingRounds.value = contributors.value.length;
+      collectingRounds.value = Math.max(1, contributors.value.length);
       maxIdeaInput.value = 3;
       collectingTimer.value = 360;
       break;

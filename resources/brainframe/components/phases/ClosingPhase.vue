@@ -249,7 +249,7 @@ const groupedIdeasByRound = computed(() => {
 
 const calculateCost = computed(() => {
   if (!sessionDetails.value) return 0;
-  return ((sessionDetails.value.input_token * 0.000015 + sessionDetails.value.output_token * 0.000060) * 100).toFixed(2);
+  return ((sessionDetails.value.input_token * 0.00000015 + sessionDetails.value.output_token * 0.00000060) * 100).toFixed(2);
 });
 const emit = defineEmits(['switchPhase']);
 const isLoading = ref(true);
