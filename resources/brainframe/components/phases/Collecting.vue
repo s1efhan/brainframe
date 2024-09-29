@@ -1,0 +1,242 @@
+<template>
+       <h2 class="collecting__header">
+      <LightbulbIcon />
+    </h2>
+    <div class="roundCountInfo__container">
+
+        <div class="roundCount">
+            <div v-for="round in session.method.round_limit" :key="round" class="round-item">
+                <div class="round-circle" :class="{ 'completed': round <= session.collecting_round }">
+                    {{ round }}
+                </div>
+                <div v-if="round < session.method.round_limit" class="connecting-line"
+                    :class="{ 'completed': round < session.collecting_round }">
+                </div>
+            </div>
+        </div>
+        <div @click="showInfo = !showInfo" class="info__container">
+            <div class="join__info">
+                <p>i</p>
+            </div>
+        </div>
+    </div>
+    <div v-if="showInfo" class="info__text__container">
+        <div class="info__text">
+            <h3>Sammel Phase:</h3>
+            <ul>
+                <li>Team sammelt Ideen.</li>
+                <li>Je nach Methode: mehrere Runden mit <strong>Zeit- </strong> oder <strong>Ideen-Limit.</strong></li>
+                <li>Einreichung: <strong>Bild</strong> (PNG, PDF, JPEG), <strong>Sprach- </strong> oder
+                    <strong>Texteingabe.</strong>
+                </li>
+                <li>Fotos werden von der <strong>BrainFrame KI in Text </strong> umgewandelt.</li>
+            </ul>
+        </div>
+    </div>
+    <form class="collectForm" @submit.prevent="handleSubmit">
+        <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
+        <div class="Input__container">
+            <textarea id="textInput" :placeholder="iceBreakerMsg" v-model="textInput" rows="12"></textarea>
+
+            <div class="input__container" id="input__container">
+
+                <button @click="openFileInput">
+                    <img class="input__image" v-if="imageFileUrl" :src="imageFileUrl" alt="uploadedImageIdea"
+                        height="100">
+                    <DefaultimageIcon class="input__image" @click="openFileInput" v-else />
+                </button>
+                <!--
+     <button v-if="!isListening" type="button" @click="isListening = true">
+       <MicrophoneIcon />
+     </button>
+     <button v-else type="button" @click="isListening = false">
+       <l-waveform size="35" stroke="2.5" speed="0.8" color="white"></l-waveform></button>
+      -->
+                <button @click="iceBreaker">
+
+                    <AiStarsIcon />
+                </button>
+            </div>
+
+        </div>
+        <!-- <p v-if="isListening" class="recording-status">Aufnahme läuft...</p>-->
+        <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
+    </form>
+    <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1" class="passed-ideas__container">
+        <h3>Inspirationen deiner Session Nachbarn</h3>
+        <ul v-for="(idea, index) in passedIdeas">
+            <li :class="'round-'+ idea.round">
+                <div>{{ idea.idea_title }}</div>
+                <div>
+                    <component :is="getIconComponent(idea.contributorIcon)" />
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="collecting__bottom__container">
+        <div v-if="session.method.idea_limit > 0" class="ideasCount">
+            {{ 0 }} | {{ session.method.idea_limit }}
+            <p class="ideas-icon" v-if="submittedIdeas === session.method.idea_limit">✓</p>
+        </div>
+        <div v-else class="ideasCount">
+            {{ personalIdeasCount }} <!-- ideas. meines eigenen Contributors in der aktuellen session.collecting_round-->
+        </div>
+        <div class="collecting__buttons">
+            <button class="primary" type="submit"
+                @click="isListening = false, submitIdea(true);"
+                :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit">Idee speichern</button>
+            <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>
+        </div>
+    </div>
+
+</template>
+<script setup>
+import { ref, onMounted, computed} from 'vue';
+import LightbulbIcon from '../icons/LightbulbIcon.vue';
+import DefaultimageIcon from '../icons/DefaultimageIcon.vue';
+import MicrophoneIcon from '../icons/MicrophoneIcon.vue';
+import IconComponents from '../IconComponents.vue';
+import AiStarsIcon from '../icons/AiStarsIcon.vue';
+const getIconComponent = (iconName) => {
+    return IconComponents[iconName] || null;
+};
+const showInfo = ref(false);
+const props = defineProps({
+    personalContributor: {
+        type: Object,
+        required: true
+    },
+    session: {
+        type: Object,
+        required: true
+    },
+    ideas: {
+        type: Object,
+        required: true
+    },
+});
+const personalIdeasCount = computed(() => {
+  return props.ideas.filter(idea => 
+    idea.round === props.session.collecting_round &&
+    idea.contributor_id === props.personalContributor.id
+  ).length;
+});
+const personalContributor = ref(props.personalContributor)
+const emit = defineEmits(['stop', 'wait']);
+const session = ref(props.session);
+const textInput = ref('');
+const fileInput = ref(null);
+const imageFile = ref(null);
+const imageFileUrl = ref('');
+const errorMsg = ref('');
+const iceBreakerMsg = ref('');
+
+const iceBreaker = () => {
+    axios.post('/api/ice-breaker', {
+        session_id: session.value.id,
+        contributor_id: personalContributor.value.id
+    })
+        .then(response => {
+            iceBreakerMsg.value = response.data.iceBreaker_msg;
+        })
+        .catch(error => {
+            if (error.response && error.response.status === 403) {
+                errorMsg.value = 'Maximale Anzahl an Anfragen erreicht (3 pro Session)';
+            } else {
+                errorMsg.value = 'Ein Fehler ist aufgetreten';
+            }
+        });
+}
+
+const submitIdea = async () => {
+    if (submittedIdeas.value >= maxIdeaInput.value && maxIdeaInput.value !== null) {
+        errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
+        return;
+    }
+
+    if (imageFile.value || textInput.value) {
+        const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
+
+        const formData = new FormData();
+        formData.append('contributor_id', personalContributor.value.id);
+        formData.append('session_id', sessionId.value);
+        formData.append('round', currentRound.value);
+
+        if (compressedImage) {
+            formData.append('image_file', compressedImage);
+        }
+
+        formData.append('text_input', textInput.value);
+        isLoading.value = true;
+        try {
+            const response = await axios.post('/api/idea', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            console.log('Server response:', response.data);
+            textInput.value = '';
+            imageFile.value = null;
+            imageFileUrl.value = '';
+            submittedIdeas.value++;
+            iceBreakerMsg.value = "";
+        } catch (error) {
+            console.error('Error saving idea', error);
+        }
+    } else {
+        errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
+    }
+    isLoading.value = false;
+};
+
+const handleFileChange = (event) => {
+    imageFile.value = event.target.files[0];
+    imageFileUrl.value = URL.createObjectURL(imageFile.value)
+    console.log('File selected:', imageFileUrl.value);
+};
+
+const openFileInput = () => {
+    fileInput.value.click();
+}
+
+const compressImage = async (file, maxSizeInMB = 2) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                let quality = 0.7;
+                let dataUrl;
+
+                do {
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+                    if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
+                        width *= 0.9;
+                        height *= 0.9;
+                    }
+
+                    quality *= 0.9;
+                } while (dataUrl.length > maxSizeInMB * 1024 * 1024 && quality > 0.1);
+
+                fetch(dataUrl)
+                    .then(res => res.blob())
+                    .then(blob => resolve(new File([blob], file.name, { type: 'image/jpeg' })));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+};
+onMounted(() => {
+    if(session.collecting_round > 1){
+        showInfo.value = false;
+    }
+    else {showInfo.value = true;}
+});
+</script>

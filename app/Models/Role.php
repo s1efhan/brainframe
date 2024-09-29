@@ -10,7 +10,7 @@ class Role extends Model
     use HasFactory;
 
     protected $table = 'bf_roles'; // Name der Tabelle in der Datenbank
-
+    protected $orderBy = ['created_at' => 'desc'];
     protected $fillable = [
         'name',
         'description',

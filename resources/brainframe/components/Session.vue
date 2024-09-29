@@ -1,60 +1,68 @@
 <template>
-  <main>
+  <main v-if="session && ideas && votes">
+
     <h1 class="headline__session-target">
-      {{ sessionDetails.target }}
+      {{ session.target }} {{ session.phase }}
     </h1>
-    <div class="session_headline__details"
-      v-if="sessionDetails && personalContributor && sessionPhase != 'closingPhase'">
-      <div @click="toggleShowContributorsBoard">
+    <Rollenwahl v-if="!personalContributor" :session="session" :userId="userId" />
+    <div v-if="personalContributor && session.phase != 'closing'" class="session_headline__details">
+      <div @click="session.phase !== 'closing' && !session.isPaused ? showStats = !showStats : null">
         <ProfileIcon />
-        <p v-if="personalContributor.role_name != 'Default'">
-          {{ contributorsCount }} | {{ contributorsAmount }}
+        <p>
+          {{ contributors.filter(c => c.is_active).length }} | {{ contributors.length }}
         </p>
       </div>
-      <div v-if="sessionPhase != 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
-        @click="switchPhase('lobby')">⏸</div>
-      <div v-if="sessionPhase === 'lobby' &&  personalContributor.id === sessionHostId && currentRound"
-        @click="switchPhase(previousPhase)">▶</div>
-      <div>
-        <p>{{ methodName }} Methode</p>
+      <div v-if="session.phase ==='collecting'">
+        <p>
+          <BrainIcon />
+        </p>
+      </div>
+      <div v-if="session.phase ==='voting'">
+        <p>
+          <FunnelIcon />
+        </p>
+      </div>
+      <div v-if="session.phase ==='closing'">
+        <p>
+          <SwooshIcon />
+        </p>
+      </div>
+      <div @click="session.isPaused && personalContributor.isHost ? resumeSession() : pauseSession()">
+        <p>{{ session.isPaused ? 'pausiert' : 'gestartet' }}</p>
       </div>
       <div>
-        <p v-if="personalContributor.role_name != 'Default'" class="contributor-icon">
+        <p>{{ session.method.name }} Methode</p>
+      </div>
+      <div>
+        <p v-if="personalContributor.name != 'Default'">
           <component :is="getIconComponent(personalContributor.icon)" />
         </p>
-        <p>{{ personalContributor.role_name }}</p>
+        <p>{{ personalContributor.name }}</p>
       </div>
     </div>
-
-    <Rollenwahl v-if="!personalContributor || personalContributor.role_name === 'Default' && methodName"
-      :userId="userId" @contributorAdded="handleContributorAdded" :methodName="methodName" />
-    <Lobby
-      v-if="method && !showContributorsBoard && personalContributor && sessionDetails && personalContributor.role_name != 'Default' && sessionPhase === 'lobby' || isWaiting === true "
-      :method="method" :previousPhase="previousPhase" @switchPhase="switchPhase" :currentRound="currentRound"
-      :sessionPhase="sessionPhase" :sessionHostId="sessionHostId" :contributors="contributors" :sessionId="sessionId"
-      :personalContributor="personalContributor" :totalIdeasToVoteCount="totalIdeasToVoteCount"
-      :ideasCount="ideasCount" />
-    <CollectingPhase @getContributors="getContributors" @switchPhase="switchPhase"
-      v-if="method && !showContributorsBoard && personalContributor && sessionPhase === 'collectingPhase' && personalContributor.role_name != 'Default' "
-      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-      :sessionId="sessionId" :personalContributor="personalContributor" :ideasCount="ideasCount" />
-    <VotingPhase @switchPhase="switchPhase" @wait="wait"
-      v-if=" method && !showContributorsBoard && personalContributor && sessionPhase === 'votingPhase' && personalContributor.role_name != 'Default' "
-      :sessionId="sessionId" :votingPhase="votingPhase" :sessionHostId="sessionHostId"
-      :personalContributor="personalContributor" :contributorsCount="contributorsCount" />
-    <ClosingPhase @switchPhase="switchPhase"
-      v-if="method && !showContributorsBoard && personalContributor && sessionPhase === 'closingPhase' && personalContributor.role_name != 'Default' "
-      :sessionId="sessionId" :sessionHostId="sessionHostId" :personalContributor="personalContributor" />
-    <ContributorsBoard :sessionPhase="sessionPhase" :previousPhase="previousPhase"
-      v-if="showContributorsBoard && sessionDetails && method && personalContributor" @exit="handleExit"
-      :method="method" :currentRound="currentRound" :sessionHostId="sessionHostId" :contributors="contributors"
-      :sessionId="sessionId" :totalIdeasToVoteCount="totalIdeasToVoteCount" :personalContributor="personalContributor"
-      :ideasCount="ideasCount" />
+    <Lobby v-if="(session.isPaused || showStats) && personalContributor" :session="session" :contributors="contributors"
+      :personalContributor="personalContributor" @exit="showStats = false" @start="startSession" :ideas="ideas" />
+    <Collecting @stop="stopSession" :session="session" :personalContributor="personalContributor" :ideas="ideas"
+      v-if="session.phase === 'collecting' && !session.isPaused &&  !showStats && personalContributor"
+      @wait="showStats = true" />
+    <Voting v-if=" session.phase === 'voting' && !session.isPaused && !showStats && personalContributor"
+      :session="session" @wait="showStats = true" :contributors="contributors"
+      :personalContributor="personalContributor" :ideas="ideas" :votes="votes" />
+    <Closing
+      v-if=" session.phase === 'closing' && !session.isPaused && !showContributorsBoard && personalContributor" />
+    <div v-if="session.phase != 'closing' " class="timer__container">
+      <SandclockIcon />
+      <div class="timer"
+        :style="{ '--progress': `${(1 - session.seconds_left / session.method.time_limit) * 360}deg` }">
+        {{ session.seconds_left }}
+      </div>
+    </div>
   </main>
 
 </template>
 
 <script setup>
+import SandclockIcon from './icons/SandclockIcon.vue';
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { sessionId } from '../js/eventBus.js'
 import axios from 'axios';
@@ -62,18 +70,24 @@ import Rollenwahl from './Rollenwahl.vue';
 import { useRoute } from 'vue-router';
 import { useRouter } from 'vue-router';
 const route = useRoute();
-const router = useRouter();
+import SwooshIcon from '../components/icons/SwooshIcon.vue';
+import BrainIcon from '../components/icons/BrainIcon.vue';
+import PauseIcon from '../components/icons/PauseIcon.vue';
+import FunnelIcon from '../components/icons/FunnelIcon.vue';
 import ProfileIcon from '../components/icons/ProfileIcon.vue';
-import VotingPhase from '../components/phases/VotingPhase.vue';
-import CollectingPhase from '../components/phases/CollectingPhase.vue';
+import Voting from '../components/phases/Voting.vue';
+import Collecting from '../components/phases/Collecting.vue';
+import Closing from '../components/phases/Closing.vue';
 import Lobby from '../components/phases/Lobby.vue';
-import ClosingPhase from '../components/phases/ClosingPhase.vue';
-import ContributorsBoard from '../components/ContributorsBoard.vue';
 import IconComponents from '../components/IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
-
+const personalContributor = ref(null);
+const wait = () => {
+  console.log('wait');
+  showStats.value = true;
+}
 const props = defineProps({
   userId: {
     type: [String, Number],
@@ -82,49 +96,9 @@ const props = defineProps({
 });
 const emit = defineEmits(['updateSessionId']);
 
-// Session
-const methodId = ref(null);
-const methodName = ref(null);
-const sessionHostId = ref(null);
-const sessionDetails = ref([]);
-const method = ref(null);
-const currentRound = ref(null);
-const sessionPhase = ref('lobby');
-const previousPhase = ref('collectingPhase');
-
-// Benutzer und Teilnehmer
-const userId = ref(props.userId);
-const contributors = ref([]);
-const contributorsCount = ref(null);
-const contributorsAmount = ref(null);
-const personalContributor = ref(null);
-const showContributorsBoard = ref(false);
-
-// Ideen und Abstimmung
-const ideasCount = ref(null);
-const totalIdeasToVoteCount = ref(null);
-const votingPhase = ref(1);
-
-// UI und Zustand
-const headlineHeight = ref('auto');
-const baseHeight = 1.5;
-const isWaiting = ref(false);
-
-let pingInterval;
-
 const updateSessionId = () => {
   sessionId.value = route.params.id;
   emit('updateSessionId', sessionId.value);
-}
-const handleExit = () => {
-  showContributorsBoard.value = false;
-};
-const toggleShowContributorsBoard = () => {
-  if (sessionPhase.value !== 'lobby') {
-    showContributorsBoard.value = !showContributorsBoard.value;
-  } else {
-    console.log('Cannot toggle Contributors Board in lobby phase');
-  }
 }
 
 const adjustHeadline = () => {
@@ -147,122 +121,96 @@ const adjustHeadline = () => {
   });
 };
 
-const handleContributorAdded = () => {
-  getContributors();
+//session
+const session = ref(null);
+const userId = ref(props.userId);
+const contributors = ref(null);
+const ideas = ref(null);
+let pingInterval;
+
+// UI und Zustand
+const headlineHeight = ref('auto');
+const baseHeight = 1.5;
+const showStats = ref(false);
+
+const getSession = () => {
+  console.log("getSession");
+  axios.get(`/api/session/${sessionId.value}`)
+    .then(response => {
+      session.value = response.data.session;
+      console.log("session.value", session.value);
+    })
+    .catch(error => {
+      console.error('Error fetching session', error);
+    })
 };
 
-const wait = () => {
-  isWaiting.value = true;
-}
-
 const getContributors = () => {
+  console.log("getContributors");
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {
       contributors.value = response.data.contributors;
-      personalContributor.value = response.data.personal_contributor;
-      console.log("sessionHostId.value, personalContributor.value.id", sessionHostId.value, personalContributor.value.id)
+      console.log("contributors.value", contributors.value);
+      personalContributor.value = contributors.value.find(c => c.isMe);
+      console.log("personalContributor.value", personalContributor.value);
     })
     .catch(error => {
       console.error('Error fetching contributors', error);
-    });
+    })
+};
+const getIdeas = () => {
+  console.log("getIdeas");
+  axios.get(`/api/ideas/${sessionId.value}`)
+    .then(response => {
+      ideas.value = response.data.ideas;
+      console.log("ideas got", ideas.value)
+    })
+    .catch(error => {
+      console.error('Error fetching ideas', error);
+    })
+}
+const votes = ref(null);
+const getVotes = () => {
+  console.log("getVotes");
+  axios.get(`/api/votes/${sessionId.value}`)
+    .then(response => {
+      votes.value = response.data.votes;
+      console.log("votes got", votes.value)
+    })
+    .catch(error => {
+      console.error('Error fetching votes', error);
+    })
 }
 
- const switchPhase = (switchedPhase) => {
-  currentRound.value = 1;
-  isWaiting.value = false;
-  if (personalContributor.value.id == sessionHostId.value) {
-    axios.post('/api/phase', {
-      switched_phase: switchedPhase,
-      session_id: sessionId.value,
-      voting_phase: votingPhase.value
-    })
-      .then(response => {
-        console.log('Server response:', response.data);
-      })
-      .catch(error => {
-        console.error('Error switching Phase', error);
-      })
-      .finally(() => {
-        getSessionDetails();
-      });
-  }
-};
-
-const getSessionDetails = () => {
-  axios.get(`/api/session/${sessionId.value}`)
-    .then(
-      response => {
-        sessionDetails.value = response.data;
-        methodId.value = sessionDetails.value.method_id;
-        methodName.value = sessionDetails.value.method_name;
-        sessionPhase.value = sessionDetails.value.session_phase || 'lobby';
-        previousPhase.value = sessionDetails.value.previous_phase || 'collectingPhase';
-        contributorsAmount.value = sessionDetails.value.contributors_amount;
-        sessionHostId.value = sessionDetails.value.session_host;
-        currentRound.value = sessionDetails.value.current_round || 0;
-        ideasCount.value = sessionDetails.value.ideas_count;
-        totalIdeasToVoteCount.value = sessionDetails.value.total_ideas_to_vote_count;
-        votingPhase.value = sessionDetails.value.voting_phase || 1;
-        getMethodDetails();
-      })
-    .catch(error => {
-      console.error('Error fetching Session Details', error);
-      sessionId.value = null;
-      router.push('/brainframe/join')
-    });
-};
-
-const getMethodDetails = () => {
-  axios.get(`/api/method/${methodId.value}`)
-    .then(response => {
-      method.value = response.data;
-    })
-    .catch(error => {
-      console.error('Error fetching Method Details', error);
-    });
-};
 const joinSession = () => {
-  if (sessionId.value > 0 && userId) {
-    axios.post('/api/session/join', {
+  console.log('join', sessionId.value, userId.value)
+  if (sessionId.value && userId) {
+    axios.post('/api/contributor/join', {
       session_id: sessionId.value,
       user_id: userId.value
     })
       .then(response => {
-        contributorsCount.value = response.data.contributors_count;
+
       })
-      .catch(error => {
-        console.error('Error adding Contributor', error);
-      })
+      .catch(error => { console.error('Error joining session:', error) });
   }
 };
 const leaveSession = () => {
-  if (sessionId.value > 0 && userId)
-    // Option 1: Using Fetch API
-    fetch('/api/session/leave', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        session_id: sessionId.value,
-        user_id: userId.value
-      }),
-      keepalive: true
-    }).catch(error => console.error('Error leaving session:', error));
-};
+  console.log('leave', sessionId.value, userId.value)
+  if (sessionId.value && userId) {
+    axios.post('/api/contributor/leave', {
+      session_id: sessionId.value,
+      user_id: userId.value
+    })
+      .then(response => {
 
-
-const handleVisibilityChange = () => {
-  if (sessionId.value > 0 && userId)
-    if (document.hidden) {
-      leaveSession();
-    } else {
-      joinSession();
-    }
+      })
+      .catch(error => { console.error('Error leaving session:', error) });
+  }
 };
 const ping = () => {
-  if (sessionId.value > 0 && userId.value) {
-    axios.post('/api/session/ping', {
+  if (sessionId.value && userId.value) {
+    axios.post('/api/contributor/ping', {
       session_id: sessionId.value,
       user_id: userId.value,
     })
@@ -274,53 +222,162 @@ const ping = () => {
   }
 };
 
+const startSession = () => {
+  console.log("startSession", personalContributor.value.isHost)
+
+  if (personalContributor.value.isHost) {
+    if (session.value.phase === "voting") {
+      session.value.vote_round++;
+    }
+    else if (session.value.phase === "collecting") {
+      session.value.collecting_round++;
+    }
+    console.log(session.value.vote_round, "session.value.vote_round", session.value.collecting_round, "session.value.collecting_round")
+    axios.post('/api/session/start', {
+      session_id: sessionId.value,
+      vote_round: session.value.vote_round,
+      collecting_round: session.value.collecting_round
+    })
+      .then(response => {
+        console.log('Success starting Session', response);
+      })
+      .catch(error => {
+        console.error('Error starting Session', error);
+      })
+  }
+}
+const stopSession = () => {
+  console.log("stopSession", personalContributor.value.isHost)
+
+  if (personalContributor.value.isHost) {
+    axios.post('/api/session/stop', {
+      session_id: sessionId.value,
+      vote_round: session.value.vote_round,
+      collecting_round: session.value.collecting_round
+    })
+      .then(response => {
+        console.log('Success stopping Session', response);
+      })
+      .catch(error => {
+        console.error('Error stopping Session', error);
+      })
+  }
+}
+
+const resumeSession = () => {
+  console.log("resumeSession", personalContributor.value.isHost)
+
+  if (personalContributor.value.isHost) {
+    axios.post('/api/session/resume', {
+      session_id: sessionId.value,
+    })
+      .then(response => {
+        console.log('Success resuming Session', response);
+      })
+      .catch(error => {
+        console.error('Error resuming Session', error);
+      })
+  }
+}
+
+const pauseSession = () => {
+  console.log("pauseSession")
+  if (personalContributor.value.isHost) {
+    axios.post('/api/session/pause', {
+      session_id: sessionId.value,
+    })
+      .then(response => {
+        console.log('Success pausing Session', response);
+      })
+      .catch(error => {
+        console.error('Error pausing Session', error);
+      })
+  }
+}
+
+const handleVisibilityChange = () => {
+  if (sessionId.value > 0 && userId)
+    if (document.hidden) {
+      leaveSession();
+    } else {
+      joinSession();
+    }
+};
+
+const timer = ref(null);
+const startTimer = () => {
+  clearInterval(timer.value);
+  timer.value = setInterval(() => {
+    if (session.value.seconds_left > 0) {
+      session.value.seconds_left--;
+    } else {
+      stopTimer();
+    }
+  }, 1000);
+};
+
+const stopTimer = () => {
+  clearInterval(timer.value);
+};
+
 onMounted(() => {
   updateSessionId();
-  getSessionDetails();
+  getContributors();
+  getSession();
+  getIdeas();
+  startTimer();
+  getVotes();
   Echo.channel('session.' + sessionId.value)
-    .listen('SwitchPhase', (e) => {
-      getSessionDetails();
-      isWaiting.value = false;
-      console.log("switchedPhase");
+    .listen('UserPickedRole', (e) => {
+      console.log("e.formattedContributor", e.formattedContributor)
+      contributors.value.push(e.formattedContributor);
+
+      if (e.formattedContributor.user_id === userId.value) { //wenn man selbst rolle gewählt hat
+        personalContributor.value = e.formattedContributor;
+        personalContributor.value.isMe = true;
+        console.log("personalContributor Picked", personalContributor.value);
+      }
+      console.log("UserPickedRole", contributors.value);
     })
-    .listen('LastVote', (e) => {
-      isWaiting.value = false;
-      if (personalContributor.value.id == sessionHostId.value) {
-        votingPhase.value = e.votingPhase;
-        axios.post('/api/session/vote/update', {
-          session_id: sessionId.value,
-          voting_phase: votingPhase.value
-        })
-          .then(response => {
-            console.error('Success switching VotingPhase', response.data);
-          })
-          .catch(error => {
-            console.error('Error switching VotingPhase', error);
-          })
-      }
-      console.log("Last Vote Event received");
-      if (e.switchToClosing) {
-        switchPhase("closingPhase");
-      }
+    .listen('SessionStarted', (e) => {
+      console.log("Event: SessionStarted");
+      session.value.isPaused = false;
+      session.value.seconds_left = e.secondsLeft;
+      startTimer();
+    })
+    .listen('SessionPaused', (e) => {
+      console.log("Event: SessionPaused");
+      session.value.isPaused = true;
+      stopTimer();
+    })
+    .listen('SessionResumed', (e) => {
+      console.log("Event: SessionResumed");
+      session.value.isPaused = false;
+      session.value.seconds_left = e.secondsLeft;
+      startTimer();
+    })
+    .listen('SessionStopped', (e) => {
+      console.log("Event: SessionStopped");
+      session.value.isPaused = true;
+      stopTimer();
+      session.value.secondsleft = session.value.method.time_limit;
+      session.value.phase = e.phase
+      session.value.vote_round = e.vote_round;
+      session.value.collecting_round = e.collecting_round;
     })
     .listen('UserJoinedSession', (e) => {
-
-      if (e.newContributorsAmount !== null) {
-        contributorsAmount.value = e.newContributorsAmount;
-      }
-      if (e.newContributorsCount !== null || e.newContributorsAmount !== null) {
-        getContributors();
-      }
-    })
-    .listen('UserSentVote', (e) => {
-      console.log(`Contributor ${e.contributorId} hat ${e.voteCount} Ideen in Runde ${e.votingPhase}`);
-      const contributorIndex = contributors.value.findIndex(c => c.id == e.contributorId);
-      if (contributorIndex !== -1) {
-        contributors.value[contributorIndex].voted_ideas_count = e.voteCount;
-      }
+      console.log("User Joined", e.contributorId);
+      contributors.value.find(c => c.id === e.contributorId).is_active = true;
     })
     .listen('UserLeftSession', (e) => {
-      contributorsCount.value = e.newContributorsCount;
+      console.log("User Left", e.contributorId);
+      contributors.value.find(c => c.id === e.contributorId).is_active = false;
+    })
+    .listen('UserSentVote', (e) => {
+
+    })
+    .listen('UserSentIdea', (e) => {
+
     });
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('beforeunload', leaveSession);
@@ -335,6 +392,5 @@ onUnmounted(() => {
   leaveSession();
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', leaveSession);
-  clearInterval(pingInterval);
 });
 </script>

@@ -45,64 +45,27 @@ const getIconComponent = (iconName) => {
 };
 
 const props = defineProps({
-  ideasCount: {
-    type: [String, Number],
-    required: true
-  },
-  votedIdeasCount: {
-    type: [String, Number],
-    required: true
-  },
   ideas: {
-    type:  [Array, Object],
+    type: Object,
     required: true
   },
-  sessionId: {
-    type: [String, Number],
+  votes: {
+    type: Object,
     required: true
   },
-  contributorId: {
-    type: [String, Number],
+  personalContributor: {
+    type: Object,
     required: true
   },
-  votingPhase: {
-    type: Number,
-    required:true
+  session: {
+    type: Object,
+    required: true
   }
 });
-const emit = defineEmits(['lastVote']);
 
 const currentPair = ref([]);
 const previousPair = ref([]);
 const decisionsMade = ref(props.votedIdeasCount);
-const ideasCount = toRef(props, 'ideasCount');
-const ideas = ref(Object.values(props.ideas));
-const sessionId = toRef(props, 'sessionId');
-const contributorId = toRef(props, 'contributorId');
-const votingPhase = toRef(props, 'votingPhase');
-
-const sendVote = (ideaId, voteValue) => {
-  console.log('Sending vote:', sessionId.value, voteValue, ideaId, contributorId.value, 'left_right', voteValue);
-  axios.post('/api/vote', {
-    votes: [
-      {
-        session_id: sessionId.value,
-        idea_id: ideaId,
-        contributor_id: contributorId.value,
-        vote_type: 'left_right',
-        vote_value: voteValue,
-        voting_phase: votingPhase.value
-      }
-    ]
-  })
-  .then(response => {
-    console.log('Server response:', response.data);
-  })
-  .catch(error => {
-    console.error('Fehler beim Speichern deines Votes', error);
-  });
-};
-
 
 const setNextPair = () => {
   if (ideas.value.length >= 2) {
@@ -110,18 +73,17 @@ const setNextPair = () => {
     currentPair.value = ideas.value.slice(0, 2);
     decisionsMade.value = props.votedIdeasCount;
   } else {
-    emit('lastVote');
+    emit('wait');
     currentPair.value = [];
   }
 };
+const emit = defineEmits(['sendVote', 'wait']);
 
 const selectIdea = (selectedIndex) => {
   const selectedIdea = currentPair.value[selectedIndex];
   const unselectedIdea = currentPair.value[1 - selectedIndex];
-  
-  sendVote(selectedIdea.id, 1);  // Ausgewählte Idee bekommt 1
-  sendVote(unselectedIdea.id, 0);  // Nicht ausgewählte Idee bekommt 0
-  
+  emit('sendVote', { ideaId: selectedIdea.id, voteType: 'LeftRightVote', voteValue: 1 });
+  emit('sendVote', { ideaId: unselectedIdea.id, voteType: 'LeftRightVote', voteValue: 0 });
   ideas.value.splice(0, 2);  // Entfernt beide Ideen aus dem Array
   setNextPair();
 };

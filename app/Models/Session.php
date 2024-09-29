@@ -8,13 +8,17 @@ class Session extends Model
 { 
     public $incrementing = false;
     protected $table = 'bf_sessions';
-    protected $fillable = ['id', 'host_id', 'method_id', 'target', 'active_phase', 'active_round', 'previous_phase'];
+    protected $orderBy = ['created_at' => 'desc'];
+    protected $fillable = ['id', 'host_id', 'method_id', 'target', 'phase','seconds_left', 'collecting_round','vote_round', 'is_paused'];
       // Definiert die Beziehung zu User (host_id)
       public function host()
       {
           return $this->belongsTo(User::class, 'host_id');
       }
-  
+      public function contributors()
+      {
+          return $this->hasMany(Contributor::class, 'session_id');
+      }
       // Definiert die Beziehung zu Method (method_id)
       public function method()
       {

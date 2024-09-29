@@ -9,15 +9,15 @@ class Vote extends Model
 {
     use HasFactory;
     protected $table = 'bf_votes';
-
+    protected $orderBy = ['created_at' => 'desc'];
     protected $fillable = [
         'session_id',
         'idea_id',
         'contributor_id',
-        'vote_type',
-        'vote_value',
-        'vote_boolean',
-        'voting_phase'
+        'type',
+        'value',
+        'round',
+        'vote_type'
     ];
 
     // Definiert die Beziehung zu BfSession (session_id)
@@ -31,6 +31,7 @@ class Vote extends Model
     {
         return $this->belongsTo(Idea::class, 'idea_id', 'id');
     }
+    
 
     // Definiert die Beziehung zu BfContributor (contributor_id)
     public function contributor()

@@ -31,94 +31,61 @@ import ArrowLeftIcon from '../icons/ArrowLeftIcon.vue';
 import DislikeIcon from '../icons/DislikeIcon.vue';
 import LikeIcon from '../icons/LikeIcon.vue';
 import ArrowRightIcon from '../icons/ArrowRightIcon.vue';
-
 const props = defineProps({
-  ideasCount: {
-    type: [String, Number],
-    required: true
-  },
-  votedIdeasCount: {
-    type: [String, Number],
-    required: true
-  },
   ideas: {
-    type: Array,
+    type: Object,
     required: true
   },
-  sessionId: {
-    type: [String, Number],
+  votes: {
+    type: Object,
     required: true
   },
-  contributorId: {
-    type: [String, Number],
+  personalContributor: {
+    type: Object,
     required: true
   },
-  votingPhase: {
-    type: Number,
-    required:true
+  session: {
+    type: Object,
+    required: true
   }
 });
+
 import IconComponents from '../IconComponents.vue';
 const currentIdea = ref(null);
 const previousIdea = ref(null);
 const decisionsMade = ref(props.votedIdeasCount);
 const ideasCount = ref(null);
 const ideas = ref([]);
-const emit = defineEmits(['lastVote']);
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
-const sessionId = toRef(props, 'sessionId');
-const contributorId = toRef(props, 'contributorId');
-const votingPhase = toRef(props, 'votingPhase');
-const sendVote = (ideaId, voteValue) => {
-  console.log('Sending vote:', sessionId.value, voteValue, ideaId, contributorId.value, 'left_right', voteValue);
-  axios.post('/api/vote', {
-    votes: [
-      {
-        session_id: sessionId.value,
-        idea_id: ideaId,
-        contributor_id: contributorId.value,
-        vote_type: 'swipe',
-        vote_value: voteValue,
-        voting_phase: votingPhase.value
-      }
-    ]
-  })
-  .then(response => {
-    console.log('Server response:', response.data);
-  })
-  .catch(error => {
-    console.error('Fehler beim Speichern deines Votes', error);
-  });
-};
+
 onMounted(() => {
   ideasCount.value = props.ideasCount;
   ideas.value = props.ideas;
   setNextIdea();
 });
-
+const emit = defineEmits(['sendVote', 'wait']);
 const setNextIdea = () => {
   if (ideas.value.length > 0) {
     previousIdea.value = currentIdea.value;
     currentIdea.value = ideas.value[0];
   } else {
-    emit('lastVote');
+    emit('wait');
     currentIdea.value = null;
   }
   decisionsMade.value = props.votedIdeasCount + (props.ideasCount - ideas.value.length);
 };
 
 const swipeLeft = () => {
-  // "Nicht mögen" Logic
-  sendVote(currentIdea.value.id, 0);  // Sende "Nicht mögen" Abstimmung
+// Sende "Nicht mögen" Abstimmung
+  emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'SwipeVote', voteValue: 0 });
   ideas.value.shift();
   setNextIdea();
 };
-
 const swipeRight = () => {
   // "Mögen" Logic
-  sendVote(currentIdea.value.id, 1);  // Sende "Mögen" Abstimmung
+  emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'SwipeVote', voteValue: 1 });
   ideas.value.shift();
   setNextIdea();
 };

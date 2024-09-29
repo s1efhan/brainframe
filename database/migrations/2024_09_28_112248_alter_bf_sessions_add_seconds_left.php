@@ -10,10 +10,10 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    { 
+    {
         Schema::table('bf_sessions', function (Blueprint $table) {
-        $table->string('previous_phase')->nullable();
-    });
+            $table->integer('seconds_left')->default(0)->after('phase');
+        });
     }
 
     /**
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('bf_sessions', function (Blueprint $table) {
-            $table->dropColumn('previous_phase');
+            $table->dropColumn('seconds_left');
         });
     }
 };

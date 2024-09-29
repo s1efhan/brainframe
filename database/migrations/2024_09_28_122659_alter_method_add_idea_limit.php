@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bf_contributors', function (Blueprint $table) {
-            $table->boolean('is_active')->default(false);
-            $table->timestamp('last_ping')->nullable();
+        Schema::table('bf_methods', function (Blueprint $table) {
+            $table->integer('idea_limit')->default(0);
         });
     }
 
@@ -22,9 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bf_contributors', function (Blueprint $table) {
-            $table->dropColumn('is_active');
-            $table->dropColumn('last_ping');
+        Schema::table('bf_methods', function (Blueprint $table) {
+            $table->integer('idea_limit')->default(0);
         });
     }
 };

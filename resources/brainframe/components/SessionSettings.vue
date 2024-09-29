@@ -17,7 +17,7 @@
 import { ref, computed, onMounted} from 'vue';
 import axios from 'axios';
 
-const emit = defineEmits(['updateSession']);
+const emit = defineEmits(['createSession']);
 const methods = ref(null);
 const currentIndex = ref(0);
 
@@ -26,7 +26,7 @@ const currentMethod = computed(() => methods.value?.[currentIndex.value]);
 const changeMethod = (direction) => {
   if (methods.value) {
     currentIndex.value = (currentIndex.value + direction + methods.value.length) % methods.value.length;
-    emit('updateSession', currentMethod.value.id);
+    emit('createSession', currentMethod.value.id);
   }
 };
 
@@ -34,7 +34,7 @@ onMounted(() => {
   axios.get('/api/methods')
     .then(response => {
       methods.value = response.data;
-      emit('updateSession', response.data[0].id);
+      emit('createSession', response.data[0].id);
     })
     .catch(error => {
       console.error('Fehler beim Abrufen der Methoden', error);

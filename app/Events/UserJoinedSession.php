@@ -20,9 +20,8 @@ class UserJoinedSession implements ShouldBroadcast
      */
     public function __construct(
         public int $sessionId,
-        public int $userId,
-        public ?int $newContributorsCount = null,
-        public ?int $newContributorsAmount = null
+        public int $contributorId,
+        public int $activeCount
     ) {
     }
 

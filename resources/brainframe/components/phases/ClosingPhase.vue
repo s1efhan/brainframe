@@ -1,10 +1,5 @@
 <template>
-  <div v-if="isLoading" class="isLoading__container">
-    <div class="isLoading">
-      <l-dot-pulse size="70" speed="1" color="#33d2ca"></l-dot-pulse>
-    </div>
-  </div>
-  <div v-else class="collecting-pdf ">
+  <div class="collecting-pdf ">
     <table  class="session-data" id="first-table">
       <thead>
         <tr>

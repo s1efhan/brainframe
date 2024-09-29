@@ -9,8 +9,10 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Number;
 
-class MessageSent implements ShouldBroadcast
+class SessionStarted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -18,18 +20,16 @@ class MessageSent implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public string $name,
-        public string $text,
-    )
-    {
-        //
+        public Int $sessionId,
+        public Int $secondsLeft,
+        public String $phase,
+        public String $collectingRound,
+        public String $voteRound
+    ) {
     }
-    /**
-     * Get the channels the event should broadcast on.
-     * @return \Illuminate\Broadcasting\Channel
-     */
+
     public function broadcastOn(): Channel
     {
-        return new Channel('messages');
+        return new Channel('session.' . $this->sessionId);
     }
 }

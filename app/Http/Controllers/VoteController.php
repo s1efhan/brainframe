@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 use App\Models\Vote;
 use Illuminate\Http\Request;
-use App\Events\LastVote;
 use App\Models\Idea;
 use App\Models\Session;
 use App\Models\Contributor;
@@ -11,40 +10,45 @@ use Illuminate\Support\Facades\DB;
 use App\Events\UserSentVote;
 class VoteController extends Controller
 {
+    public function get($sessionId){
+        $session = Session::findOrFail($sessionId);
+        $votes = Vote::where('session_id', $sessionId)
+        ->get();
+        Log::info('contributors: '.json_encode($votes));
+        return response()->json([
+            'votes' => $votes
+        ]);
+    }
     public function vote(Request $request)
     {
-        $request->validate([
-            'votes' => 'required|array',
-            'votes.*.session_id' => 'required|exists:bf_sessions,id',
-            'votes.*.idea_id' => 'required|exists:bf_ideas,id',
-            'votes.*.contributor_id' => 'required|exists:bf_contributors,id',
-            'votes.*.vote_type' => 'required|in:swipe,left_right,star,ranking',
-            'votes.*.vote_value' => 'required|numeric',
-            'votes.*.voting_phase' => 'required|integer|min:1|max:4',
+        Log::info($request);
+        $validated = $request->validate([
+            'session_id' => 'required|exists:bf_sessions,id',
+            'idea_id' => 'required|exists:bf_ideas,id',
+            'contributor_id' => 'required|exists:bf_contributors,id',
+            'vote_round' => 'required|integer|min:1',
+            'vote_type' => 'required|in:star,ranking,left_right,swipe',
+            'vote_value' => 'required|integer|min:1|max:5',
         ]);
     
-        Log::info('Received vote request', ['votes_count' => count($request->votes)]);
+        Vote::updateOrCreate(
+            [
+                'session_id' => $validated['session_id'],
+                'idea_id' => $validated['idea_id'],
+                'contributor_id' => $validated['contributor_id'],
+                'round' => $validated['vote_round'],
+                'vote_type' => $validated['vote_type'], // Hinzugefügt
+            ],
+            [
+                'value' => $validated['vote_value'],
+            ]
+        );
     
-        DB::transaction(function () use ($request) {
-            foreach ($request->votes as $voteData) {
-                $this->processVote($voteData);
-            }
-            $this->checkAllVotesSubmitted($request->votes[0]);
-        });
+        event(new UserSentVote($validated['session_id'], $validated['contributor_id'], $validated['vote_round']));
     
-        $sessionId = $request->votes[0]['session_id'];
-        $contributorId = $request->votes[0]['contributor_id'];
-        $votingPhase = $request->votes[0]['voting_phase'];
-        $newVoteCount = Vote::where('session_id', $sessionId)
-            ->where('contributor_id', $contributorId)
-            ->where('voting_phase', $votingPhase)
-            ->count();
-    
-        event(new UserSentVote($sessionId, $contributorId, $newVoteCount, $votingPhase));
-    
-        return response()->json(['message' => 'Votes processed successfully'], 200);
+        return response()->json(['message' => 'Vote processed successfully'], 200);
     }
-
+/*
     private function checkAllVotesSubmitted($sampleVote)
     {
         $sessionId = $sampleVote['session_id'];
@@ -132,34 +136,5 @@ class VoteController extends Controller
                 return $ideas;
         }
     }
-    private function processVote($voteData)
-    {
-        Log::info('Processing vote', [
-            'session_id' => $voteData['session_id'],
-            'idea_id' => $voteData['idea_id'],
-            'contributor_id' => $voteData['contributor_id'],
-            'vote_type' => $voteData['vote_type'],
-            'vote_value' => $voteData['vote_value'],
-            'voting_phase' => $voteData['voting_phase']
-        ]);
-
-        if (in_array($voteData['vote_type'], ['swipe', 'left_right'])) {
-            $voteData['vote_boolean'] = (int) $voteData['vote_value'];
-            $voteData['vote_value'] = null;
-        } else {
-            $voteData['vote_boolean'] = null;
-        }
-
-        Vote::updateOrCreate(
-            [
-                'session_id' => $voteData['session_id'],
-                'idea_id' => $voteData['idea_id'],
-                'contributor_id' => $voteData['contributor_id'],
-                'voting_phase' => $voteData['voting_phase'],
-            ],
-            $voteData
-        );
-
-        Log::info('Vote processed successfully');
-    }
+        */
 }

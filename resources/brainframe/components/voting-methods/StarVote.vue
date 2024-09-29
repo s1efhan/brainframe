@@ -3,9 +3,9 @@
     <h2>Rate This Idea <br>★★✰</h2>
   </div>
   <div v-if="currentIdea" class="idea-card star-vote">
-    <h3>{{ currentIdea.ideaTitle }}</h3>
+    <h3>{{ currentIdea.title }}</h3>
     <div class="idea__description__container">
-      <div v-html="currentIdea.ideaDescription"></div>
+      <div v-html="currentIdea.description"></div>
     </div>
     <div class="star-rating">
   <button class="primary star" @click="rate(1)" @mouseover="hoverStar(1)" @mouseleave="resetStars">★</button>
@@ -22,9 +22,9 @@
     </div>
   </div>
   <p v-else>Fertig. Du musst warten, bis der Rest fertig mit Voten ist.</p>
-  <div v-if="ideasCount" class="ideasCount">
-    {{ decisionsMade }}/{{ ideasCount + votedIdeasCount }}
-  </div>
+  <div class="ideasCount">
+  {{ votedIdeas }}/{{ totalIdeasCount }}
+</div>
 </template>
 
 <script setup>
@@ -33,95 +33,84 @@ import axios from 'axios';
 import IconComponents from '../IconComponents.vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
 const props = defineProps({
-  ideasCount: {
-    type: [String, Number],
-    required: true,
-  },
-  votedIdeasCount: {
-    type: [String, Number],
-    required: true,
-  },
   ideas: {
-    type: Array,
-    required: true,
+    type: Object,
+    required: true
   },
-  sessionId: {
-    type: [String, Number],
-    required: true,
+  votes: {
+    type: Object,
+    required: true
   },
-  contributorId: {
-    type: [String, Number],
-    required: true,
+  personalContributor: {
+    type: Object,
+    required: true
   },
-  votingPhase: {
-    type: Number,
-    required: true,
-  },
+  session: {
+    type: Object,
+    required: true
+  }
 });
-const emit = defineEmits(['lastVote']);
-const currentIdea = ref(null);
-const previousIdea = ref(null);
-const decisionsMade = ref(props.votedIdeasCount);
-const ideasCount = ref(null);
-const ideas = ref(null);
+const totalIdeasCount = ref(0);
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
-const sessionId = toRef(props, 'sessionId');
-const contributorId = toRef(props, 'contributorId');
-const votingPhase = toRef(props, 'votingPhase');
+const ideas = toRef(props, 'ideas');
+const votes = toRef(props, 'votes');
+const personalContributor = toRef(props, 'personalContributor');
+const session = toRef(props, 'session');
+
+const votedIdeas = ref(0);
+const currentIdea = ref(null);
+const previousIdea = ref(null);
+const ideasToVote = ref([]);
+const initialize = () => {
+  // Konvertiere votes in ein besser nutzbares Format
+  const votesMap = votes.value.reduce((acc, vote) => {
+    if (!acc[vote.idea_id]) {
+      acc[vote.idea_id] = [];
+    }
+    acc[vote.idea_id].push(vote);
+    return acc;
+  }, {});
+
+  // Filtere Ideen, die in dieser Runde vom aktuellen Contributor noch nicht bewertet wurden
+  ideasToVote.value = ideas.value.filter(idea => 
+    !votesMap[idea.id] || 
+    !votesMap[idea.id].some(vote => 
+      vote.contributor_id === personalContributor.value.id && 
+      vote.round === session.value.vote_round
+    )
+  );
+
+  totalIdeasCount.value = ideas.value.length;
+  
+  votedIdeas.value = totalIdeasCount.value - ideasToVote.value.length;
+
+  setNextIdea();
+};
+
 const hoverStar = (starNumber) => {
   const stars = document.querySelectorAll('.star');
   stars.forEach((star, index) => {
     star.classList.toggle('active', index < starNumber);
   });
 };
-
+const emit = defineEmits(['sendVote', 'wait']);
 const resetStars = () => {
   const stars = document.querySelectorAll('.star');
   stars.forEach(star => star.classList.remove('active'));
 };
 
-const sendVote = (ideaId, voteValue) => {
-  console.log('Sending vote:', sessionId.value, voteValue, ideaId, contributorId.value, 'star', voteValue);
-  axios.post('/api/vote', {
-    votes: [
-      {
-        session_id: sessionId.value,
-        idea_id: ideaId,
-        contributor_id: contributorId.value,
-        vote_type: 'star',
-        vote_value: voteValue,
-        voting_phase: votingPhase.value
-      },
-    ],
-  })
-    .then(response => {
-      console.log('Server response:', response.data);
-    })
-    .catch(error => {
-      console.error('Fehler beim Speichern deines Votes', error);
-    });
-};
-
 onMounted(() => {
-  ideasCount.value = props.ideasCount;
-  ideas.value = Array.isArray(props.ideas) ? [...props.ideas] : { ...props.ideas };
-  console.log(ideas.value);
-  setNextIdea();
+  initialize();
 });
 
 const setNextIdea = () => {
-  if (Array.isArray(ideas.value) && ideas.value.length > 0) {
+  if (ideasToVote.value.length > 0) {
     previousIdea.value = currentIdea.value;
-    currentIdea.value = ideas.value.shift();
-  } else if (typeof ideas.value === 'object' && Object.keys(ideas.value).length > 0) {
-    const nextKey = Object.keys(ideas.value)[0];
-    previousIdea.value = currentIdea.value;
-    currentIdea.value = ideas.value[nextKey];
-    delete ideas.value[nextKey];
+    currentIdea.value = ideasToVote.value.shift();
   } else {
-    emit('lastVote');
+    emit('wait');
     currentIdea.value = null;
   }
 };
@@ -129,20 +118,16 @@ const setNextIdea = () => {
 
 const undoLastDecision = () => {
   if (previousIdea.value) {
-    if (Array.isArray(ideas.value)) {
-      ideas.value.unshift(currentIdea.value);
-    } else {
-      ideas.value[currentIdea.value.id] = currentIdea.value;
-    }
+    ideasToVote.value.unshift(currentIdea.value);
     currentIdea.value = previousIdea.value;
     previousIdea.value = null;
-    decisionsMade.value--;
+    votedIdeas.value--;
   }
 };
-
 const rate = (stars) => {
-  sendVote(currentIdea.value.id, stars);
-  decisionsMade.value++;
+  console.log("rate", currentIdea.value.id, stars);
+  emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'star', voteValue: stars });
+  votedIdeas.value++;
   setNextIdea();
 };
 </script>

@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bf_roles', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('description');
-            $table->string('icon')->nullable()->after('description');
-            $table->timestamps();
+        Schema::table('bf_sessions', function (Blueprint $table) {
+            $table->renameColumn('is_stopped', 'is_paused');
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('bf_roles');
+        Schema::table('bf_sessions', function (Blueprint $table) {
+            $table->renameColumn('is_stopped', 'is_paused');
+        });
     }
 };

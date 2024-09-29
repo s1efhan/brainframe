@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description');
+            $table->integer('time_limit')->default(0);
+            $table->integer('round_limit')->default(1);
             $table->timestamps();
         });
     }

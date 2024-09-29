@@ -8,38 +8,48 @@ use App\Http\Controllers\MethodController;
 use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\IdeaController;
+
+//UserController
 Route::post('/user', [UserController::class, 'store']);
 Route::post('/register', [UserController::class, 'register']);
-Route::post('/session/delete', [SessionController::class, 'deleteSession']);
-Route::post('/session/put', [SessionController::class, 'alterSession']);
 Route::post('/login', [UserController::class, 'login']);
-Route::get('/method/{methodId}', [MethodController::class, 'getDetails']);
-Route::get('/methods', [MethodController::class, 'get']);
-Route::post('/session/summary/send', [SessionController::class, 'sendPDF']);
-Route::get('/sessions/{sessionId}/roles', [RoleController::class, 'get']);
-Route::get('/{userId}/sessions', [SessionController::class, 'getUserSessions']);
-Route::post('/contributor', [ContributorController::class, 'create']);
-Route::get('/contributors/{sessionId}/{userId}', [ContributorController::class, 'get']);
-Route::post('/session', [SessionController::class, 'update']);
-Route::post('/session/invite', [SessionController::class, 'invite']);
-Route::post('/idea', [IdeaController::class, 'store']);
-Route::post('/phase', [MethodController::class, 'switchPhase']);
-Route::get('/ideas/{sessionId}/{votingPhase}/{contributorId}', [IdeaController::class, 'get']);
-Route::post('/collecting/start', [MethodController::class, 'startCollecting']);
-Route::post('/collecting/stop', [MethodController::class, 'stopCollecting']);
-Route::get('/collecting/timer/{sessionId}', [MethodController::class, 'getCountdown']);
-Route::post('/ideas/sendToGPT', [IdeaController::class, 'sendIdeasToGPT']);
-Route::post('/vote', [VoteController::class, 'vote']);
-Route::get('user/{userId}', [UserController::class, 'get']);
 Route::post('/logout', [UserController::class, 'logout']);
-Route::post('/ice-breaker', [IdeaController::class, 'iceBreaker']);
-Route::get('/{sessionId}/details', [SessionController::class, 'getClosingDetails']);
-Route::get('/{sessionId}/pdf', [SessionController::class, 'downloadSessionPDF']);
-Route::get('/ideas/6-3-5/{sessionId}/{personalContributorId}/{round}', [IdeaController::class, 'getPassedIdeas']);
-Route::post('/session/join', [SessionController::class, 'sessionJoin']);
-Route::post('/session/leave', [SessionController::class, 'sessionLeave']);
-Route::post('/session/ping', [SessionController::class, 'sessionPing']);
-Route::post('/session/vote/update', [SessionController::class, 'votingPhaseUpdate']);
+Route::get('/user/{userId}/stats', [UserController::class, 'getStats']);
+Route::get('/user/{userId}/sessions', [UserController::class, 'getSessions']);
+
+//SessionController
+Route::post('/session/create', [SessionController::class, 'alter']);
+Route::post('/session/delete', [SessionController::class, 'delete']);
+Route::post('/session/put', [SessionController::class, 'alter']);
+Route::post('/session/start', [SessionController::class, 'start']);
+Route::post('/session/stop', [SessionController::class, 'stop']);
+Route::post('/session/pause', [SessionController::class, 'pause']);
+Route::post('/session/resume', [SessionController::class, 'resume']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get'])
      ->where('sessionId', '[0-9]+');
+Route::post('/session/invitation/send', [SessionController::class, 'invite']);
+Route::post('/session/summary/send', [SessionController::class, 'sendSummary']);
+Route::get('/session/summary/download', [SessionController::class, 'downloadSummary']);
+Route::get('/session/ice-breaker', [SessionController::class, 'getIceBreaker']);
+
+//MethodController
+Route::get('/methods', [MethodController::class, 'get']);
+
+//RoleController
+Route::get('/roles/{sessionId}', [RoleController::class, 'get']);
+
+//ContributorController
+Route::post('/contributor/create', [ContributorController::class, 'create']);
+Route::get('/contributors/{sessionId}/{userId}', [ContributorController::class, 'get']);
+Route::post('/contributor/join', [ContributorController::class, 'join']);
+Route::post('/contributor/leave', [ContributorController::class, 'leave']);
+Route::post('/contributor/ping', [ContributorController::class, 'ping']);
+
+//IdeaController
+Route::post('/idea/store', [IdeaController::class, 'store']);
+Route::get('/ideas/{sessionId}', [IdeaController::class, 'get']);
+Route::post('/ideas/process', [IdeaController::class, 'process']);
+
+Route::post('/vote/store', [VoteController::class, 'vote']);
+Route::get('/votes/{sessionId}', [VoteController::class, 'get']);
 

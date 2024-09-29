@@ -17,11 +17,11 @@
       <button @click="updateSessionTarget" class="safe__target primary">speichern</button>
     </div>
       <SessionSettings 
-        @updateSession="updateSession" 
+        @createSession="createSession" 
         v-if="userId && sessionId && sessionTarget && !errorMsg"
       />
       <div v-if="sessionTarget && !errorMsg" class="create__session__container">
-        <button @click="createSession" class="primary">Session Erstellen</button>
+        <button @click="startSession" class="primary">Session Erstellen</button>
       </div>
       
     </main>
@@ -47,13 +47,13 @@
 const errorMsg = ref(null);
   const sessionTarget = ref('');
   const tempSessionTarget = ref('');
-  const sessionLink = ref(null);
   const sessionId = ref(null);
+  const sessionLink = ref(null);
   const targetTextarea = ref(null);
   const isTextareaFocused = ref(false);
   const userId = ref(props.userId);
   const rows = ref(1);
-  const createSession = () => {
+  const startSession = () => {
   if (sessionId.value) {
     router.push(`/brainframe/${sessionId.value}`);
   }
@@ -77,6 +77,7 @@ const errorMsg = ref(null);
     sessionTarget.value = tempSessionTarget.value;
   };
   
+
   const adjustTextarea = (event) => {
     const textarea = event.target;
     if (textarea.value.length > 60) {
@@ -87,31 +88,34 @@ const errorMsg = ref(null);
     textarea.style.height = textarea.scrollHeight + 'px';
     rows.value = textarea.value.split('\n').length;
   };
-  
-  
   const generateLink = () => {
-    sessionId.value = Math.floor(10000 + Math.random() * 90000);
-    sessionLink.value = `${window.location.origin}${router.resolve({ name: 'session', params: { id: sessionId.value } }).href}`;
-    updateSessionId(sessionId.value);
-  };
+  sessionId.value = Math.floor(10000 + Math.random() * 90000);
+  sessionLink.value = `${window.location.origin}${router.resolve({ name: 'session', params: { id: sessionId.value } }).href}`;
+  updateSessionId(sessionId.value);
+};
 
-  
-  const updateSession = (selectedMethod) => {
-    axios.post('/api/session', {
-      session_id: sessionId.value,
-      method_id: selectedMethod,
-      host_id: userId.value,
-      contributors_amount: 1,
-      session_target: sessionTarget.value,
-    }).catch(error => {
-      errorMsg.value = error.response.data.message;
-      console.error('Error saving session data', error);
-    });
-  };
-  
-  // Lifecycle Hooks
-  onMounted(() => {
-    generateLink();
-    targetTextarea.value.focus();
+const createSession = (selectedMethod) => {
+  console.log( "session_id: ", sessionId.value,
+               "new_method: ", selectedMethod,
+               "host_id: ", userId.value,
+               "new_target: ", sessionTarget.value);
+  axios.post('/api/session/create', {
+    session_id: sessionId.value,
+    method_id: selectedMethod,
+    user_id: userId.value,
+    target: sessionTarget.value,
+  }).then(response => {
+    console.log('Session created/updated successfully');
+    // Hier könnten Sie weitere Aktionen nach erfolgreicher Erstellung/Aktualisierung durchführen
+  }).catch(error => {
+    errorMsg.value = error.response.data.message;
+    console.error('Error saving session data', error);
   });
-  </script>
+};
+
+// Lifecycle Hooks
+onMounted(() => {
+  generateLink();
+  targetTextarea.value.focus();
+});
+</script>

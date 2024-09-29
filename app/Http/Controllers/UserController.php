@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Contributor;
+use App\Models\Session;
 use App\Models\Idea;
+use App\Models\Method;
+use App\Models\Role;
+use Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 class UserController extends Controller
 {
-    public function get(Request $request)
+    public function getStats(Request $request)
     {
         // 1. Benutzer finden
         $user = User::where('id', $request->userId)->first();
@@ -46,6 +50,29 @@ class UserController extends Controller
             'last_activity' => $formattedLastActivity,
             'name' => $userName,
         ]);
+    }
+    public function getSessions($userId)
+    {
+        $contributors = Contributor::where('user_id', $userId)->get();
+        $sessions = $contributors->map(function ($contributor) {
+            $session = Session::find($contributor->session_id);
+            $method = Method::find($session->method_id);
+            $role = Role::find($contributor->role_id);
+            return [
+                'session_id' => $contributor->session_id,
+                'target' => $session->target,
+                'role' => $role->icon,
+                'updated_at' => $session->updated_at,
+                'method_name' => $method->name,
+                'method_id' => $method->id,
+                'host_id' => $session->host_id,
+                'active_phase' => $session->active_phase,
+                'active_round' => $session->active_round
+            ];
+        })->sortByDesc('updated_at')->values();
+
+        Log::info('User Sessions:', $sessions->toArray());
+        return response()->json($sessions, 200);
     }
 
     public function store(Request $request)

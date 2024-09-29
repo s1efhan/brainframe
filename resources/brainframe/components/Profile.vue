@@ -51,7 +51,7 @@ watch(() => props.userId, (newVal) => {
   getUser();
 });
 const getUser = () => {
-  axios.get(`/api/user/${userId.value}`, {
+  axios.get(`/api/user/${userId.value}/stats`, {
     headers: { Authorization: `Bearer ${authToken.value}` }
   })
     .then(response => {

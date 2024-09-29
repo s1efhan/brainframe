@@ -15,6 +15,7 @@ class RoleController extends Controller
         $methodId = $session->method_id;
         $contributors = Contributor::where('session_id', $sessionId)->get();
         $contributorCount = $contributors->count();
+        
         if ($methodId === 4 && $contributorCount >= 6) { // Six Thinking Hats
             Log::info($contributorCount);
             $assignedRoles = $contributors->groupBy('role_id')

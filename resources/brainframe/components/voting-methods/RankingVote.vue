@@ -1,10 +1,10 @@
 <template>
   <div class="vote__headline__container">
-    <h2>Rank the Ideas descending <br>🥇🥈🥉</h2>
+    <h2>Rank the Ideas descending <br><PodiumIcon/></h2>
   </div>
-  <table v-if="ideas && ideasCount" class="rankingVote__table">
+  <table v-if="topIdeas.length" class="rankingVote__table">
     <tbody>
-      <template v-for="(idea, index) in ideas" :key="idea.id">
+      <template v-for="(idea, index) in topIdeas" :key="idea.id">
         <tr :data-index="index" draggable="true" @dragstart="dragStart(index, $event)"
           @dragover="dragOver(index, $event)" @drop="drop(index, $event)" @dragend="dragEnd($event)"
           @touchstart="touchStart(index, $event)" @touchmove="touchMove" @touchend="touchEnd"
@@ -18,7 +18,7 @@
           <td class="index">
             <div>{{ index + 1 }}</div>
           </td>
-          <td @click="toggleDetails(idea.id)" class="title">{{ idea.ideaTitle }}</td>
+          <td @click="toggleDetails(idea.id)" class="title">{{ idea.title }}</td>
           <td class="contributor__tag">
             <div class="contributor">
               <component :is="getIconComponent(idea.contributorIcon)" />
@@ -37,7 +37,7 @@
         <tr v-if="expandedIds.includes(idea.id)" class="details-row">
           <td  @click="toggleDetails(idea.id)" colspan="6">
             <div class="details__container">
-            <div v-html="idea.ideaDescription"></div></div>
+            <div v-html="idea.description"></div></div>
           </td>
         </tr>
         <tr class="chevron" @click.stop="toggleDetails(idea.id)">
@@ -48,59 +48,45 @@
       </template>
     </tbody>
   </table>
-  <div class="ranking-vote__submit__container">
+  <div v-if ="topIdeas"class="ranking-vote__submit__container">
     <button class="primary" @click="submitRanking">Senden</button>
   </div>
+  <div v-else>Fertig... Warte auf die anderen Teilnehmer</div>
 </template>
 
 <script setup>
-import { ref, onMounted, toRef } from 'vue';
-import axios from 'axios';
+import { ref, toRef, watchEffect } from 'vue';
 import ArrowUpIcon from '../icons/ArrowUpIcon.vue';
 import ArrowDownIcon from '../icons/ArrowDownIcon.vue';
+import PodiumIcon from '../icons/PodiumIcon.vue';
 import IconComponents from '../IconComponents.vue';
 
 const props = defineProps({
   ideas: {
-    type: [Array, Object],
+    type: Object,
     required: true
   },
-  ideasCount: {
-    type: Number,
+  votes: {
+    type: Object,
     required: true
   },
-  votedIdeasCount: {
-    type: Number,
+  personalContributor: {
+    type: Object,
     required: true
   },
-  sessionId: {
-    type: [String, Number],
-    required: true
-  },
-  contributorId: {
-    type: [String, Number],
-    required: true
-  },
-  votingPhase: {
-    type: Number,
+  session: {
+    type: Object,
     required: true
   }
 });
+const ideas = toRef(props, 'ideas');
+const votes = toRef(props, 'votes');
+const personalContributor = toRef(props, 'personalContributor');
+const session = toRef(props, 'session');
 const expandedIds = ref([]);
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
-
-const ideasCount = toRef(props, 'ideasCount');
-const ideas = toRef(props, 'ideas');
-const emit = defineEmits(['lastVote']);
-
-onMounted(() => {
-  if (ideasCount.value && ideas.value) {
-    console.log("ideasCount.value", ideasCount.value);
-    console.log("ideas.value", JSON.parse(JSON.stringify(ideas.value)));
-  }
-});
 const dragOver = (index, event) => {
   event.preventDefault();
   const draggedOverItem = event.target.closest('tr');
@@ -111,25 +97,19 @@ const dragOver = (index, event) => {
     draggedOverItem.classList.add('drag-over');
   }
 };
+const emit = defineEmits(['sendVote', 'wait']);
 const submitRanking = () => {
-  const votes = ideas.value.map((idea, index) => ({
-    session_id: props.sessionId,
-    idea_id: idea.id,
-    contributor_id: props.contributorId,
-    vote_type: 'ranking',
-    vote_value: Math.max(5 - index, 1),
-    voting_phase: props.votingPhase
-  }));
-
-  axios.post('/api/vote', { votes })
-    .then(response => {
-      console.log('Server response:', response.data);
-      emit('lastVote');
-    })
-    .catch(error => {
-      console.error('Fehler beim Speichern der Votes', error);
+  topIdeas.value.forEach((idea, index) => {
+    emit('sendVote', { 
+      ideaId: idea.id, 
+      voteType: 'ranking', 
+      voteValue: Math.max(topIdeas.value.length - index, 1) 
     });
+  });
+  topIdeas.value = [];
+  emit('wait');
 };
+
 
 const toggleDetails = (id) => {
   if (expandedIds.value.includes(id)) {
@@ -142,19 +122,57 @@ const toggleDetails = (id) => {
 
 const moveUp = (index) => {
   if (index > 0) {
-    const temp = ideas.value[index];
-    ideas.value[index] = ideas.value[index - 1];
-    ideas.value[index - 1] = temp;
+    const newArray = [...topIdeas.value];
+    [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+    topIdeas.value = newArray;
   }
 };
 
 const moveDown = (index) => {
-  if (index < ideas.value.length - 1) {
-    const temp = ideas.value[index];
-    ideas.value[index] = ideas.value[index + 1];
-    ideas.value[index + 1] = temp;
+  if (index < topIdeas.value.length - 1) {
+    const newArray = [...topIdeas.value];
+    [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+    topIdeas.value = newArray;
   }
 };
+
+const topIdeas = ref([]);
+watchEffect(() => {
+  const currentRound = session.value.vote_round;
+
+  let selectedIdeas;
+
+  if (currentRound > 1) {
+    const prevRound = currentRound - 1;
+    
+    // Sortiere die Ideen basierend auf den Votes der vorherigen Runde
+    const sortedIdeas = [...ideas.value].sort((a, b) => {
+      const aVotes = votes.value.filter(v => v.idea_id === a.id && v.round === prevRound);
+      const bVotes = votes.value.filter(v => v.idea_id === b.id && v.round === prevRound);
+      const aAvg = aVotes.reduce((sum, v) => sum + v.value, 0) / aVotes.length || 0;
+      const bAvg = bVotes.reduce((sum, v) => sum + v.value, 0) / bVotes.length || 0;
+      return bAvg - aAvg;
+    });
+    
+    // Wähle die Top 5 Ideen aus
+    selectedIdeas = sortedIdeas.slice(0, 5);
+  } else {
+    // Für die erste Runde: Nehme einfach die 5 Ideen
+    selectedIdeas = ideas.value.slice(0, 5);
+  }
+
+  // Filtere die ausgewählten Ideen, für die der aktuelle Contributor in dieser Runde noch nicht abgestimmt hat
+  topIdeas.value = selectedIdeas.filter(idea => 
+    !votes.value.some(v => 
+      v.idea_id === idea.id && 
+      v.round === currentRound && 
+      v.contributor_id === personalContributor.value.id
+    )
+  );
+  if (topIdeas.value.length < 1){
+    emit('wait');
+  }
+});
 
 // Touch functionality
 const isDragging = ref(false);
@@ -164,7 +182,7 @@ const draggedItemIndex = ref(null);
 const touchStart = (index, event) => {
   isDragging.value = true;
   draggedItemIndex.value = index;
-  draggedItem.value = ideas.value[index];
+  draggedItem.value = topIdeas.value[index];
   event.target.closest('tr').classList.add('dragging');
 };
 
@@ -178,8 +196,8 @@ const touchMove = (event) => {
   if (tableRow && tableRow.dataset.index) {
     const newIndex = parseInt(tableRow.dataset.index);
     if (newIndex !== draggedItemIndex.value) {
-      const removedItem = ideas.value.splice(draggedItemIndex.value, 1)[0];
-      ideas.value.splice(newIndex, 0, removedItem);
+      const removedItem = topIdeas.value.splice(draggedItemIndex.value, 1)[0];
+      topIdeas.value.splice(newIndex, 0, removedItem);
       draggedItemIndex.value = newIndex;
     }
   }
@@ -201,16 +219,17 @@ const dragStart = (index, event) => {
 };
 const drop = (index, event) => {
   if (draggedItemIndex.value !== null) {
-    const draggedItem = ideas.value.splice(draggedItemIndex.value, 1)[0];
-    ideas.value.splice(index, 0, draggedItem);
+    const draggedItem = topIdeas.value.splice(draggedItemIndex.value, 1)[0];
+    topIdeas.value.splice(index, 0, draggedItem);
     draggedItemIndex.value = null;
 
-    // Entfernen Sie die Klassen von allen Zeilen
     document.querySelectorAll('tr').forEach(row => {
       row.classList.remove('dragging', 'drag-over');
     });
   }
-}; const dragEnd = (event) => {
+};
+
+const dragEnd = (event) => {
   // Entfernen Sie die Klassen von allen Zeilen
   document.querySelectorAll('tr').forEach(row => {
     row.classList.remove('dragging', 'drag-over');

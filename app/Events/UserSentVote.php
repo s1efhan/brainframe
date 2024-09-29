@@ -18,8 +18,7 @@ class UserSentVote implements ShouldBroadcast
     public function __construct(
         public string $sessionId,
         public string $contributorId,
-        public int $voteCount,
-        public int $votingPhase
+        public int $round
     ) {}
 
     public function broadcastOn(): Channel

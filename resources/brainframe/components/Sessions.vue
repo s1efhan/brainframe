@@ -129,12 +129,13 @@ const getMethods = () => {
     }).catch(error => {
       console.error('Error fetching methods', error);
     });
-}; const sendAlterSession = (session) => {
+}; 
+const sendAlterSession = (session) => {
   axios.post('/api/session/put', {
     session_id: session.session_id,
     user_id: userId.value,
-    new_method: session.editedMethodId,
-    new_target: session.editedTarget
+    methodId: session.editedMethodId,
+    target: session.editedTarget
   })
     .then(response => {
       console.log('Server response:', response.data);
@@ -166,7 +167,7 @@ const deleteSession = (session) => {
     });
 };
 const getUserSessions = () => {
-  axios.get(`/api/${userId.value}/sessions`)
+  axios.get(`/api/user/${userId.value}/sessions`)
     .then(response => {
       userSessions.value = response.data;
       console.log('userSessions: ', userSessions.value);

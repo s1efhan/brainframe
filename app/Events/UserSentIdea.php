@@ -18,7 +18,6 @@ class UserSentIdea implements ShouldBroadcast
     public function __construct(
         public string $sessionId,
         public string $contributorId,
-        public int $ideaCount,
         public int $round
     ) {}
 

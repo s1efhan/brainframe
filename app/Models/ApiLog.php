@@ -14,6 +14,7 @@ class ApiLog extends Model
      *
      * @var array
      */
+    protected $orderBy = ['created_at' => 'desc'];
     protected $fillable = [
         'session_id',
         'contributor_id',

@@ -1,132 +1,105 @@
 <template>
-    <div v-if="sessionPhase === 'lobby'" class="lobby__headline__container">
-        <h2 class="lobby__headline">Lobby</h2>
-        <h3>. . . warte, bis der Host die Runde startet</h3>
-    </div>
+    <section class="contributors_board__container">
+        <div class="contributors_board">
+            <div class="info__container">
+                <button v-if="!session.isPaused" @click="emit('exit')" class="primary">X</button>
+                <div @click="showInfo = !showInfo" class="join__info">
+                    <p>i</p>
+                </div>
+            </div>
+            <div v-if="showInfo" class="info__text__container">
+                <div class="info__text">
+                    <h3>Board</h3>
+                    <ul>
+                        <li>Hier siehst du die bisherigen <strong>Stats deiner BrainStorming Session</strong></li>
+                        <br>
+                        <li v-if="session.isPaused">Der Host hat die Session für alle Teilnehmer pausiert. Der Countdown ist angehalten</li>
+                        <li v-else>Die Session ist nicht pausiert. Der Countdown läuft weiter</li>
+                    </ul>
+                </div>
+            </div>
+            <table v-if="ideas">
+                <thead>
+                    <tr>
+                        <th>Session PIN</th>
+                        <th>Methode</th>
+                        <th v-for="round in session.method.round_limit" :key="round">
+                            Runde {{ round }}
+                        </th>
+                        <th>Teilnehmer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ session.id }}</td>
+                        <td>{{ session.method.name }}</td>
+                        <td class="center" v-for="round in session.method.round_limit" :key="round">
+                            {{ ideas.filter(idea => Number(idea.round) === round).length }}
+                        </td>
+                        <td class="center">{{ contributors.length }}</td>
+                    </tr>
+                </tbody>
+            </table>
 
+            <table>
+                <thead>
+                    <tr>
+                        <th>Icon</th>
+                        <th>Name</th>
 
-  <div v-if="props.currentRound < 1" class="lobby__before__container">
-  <div v-if="sessionLink" @click="copyToClipboard(sessionLink)" class="session-link">
-    <router-link :to="'/brainframe/' + sessionId">{{ sessionLink }}</router-link>
-    <p>
-      <CopyIcon />
-    </p>
-  </div>
-  <div v-if="sessionLink" class="qr-code-container">
-    <canvas class="qr-code" ref="qrcodeCanvas"></canvas>
-  </div>
-  <div v-if="sessionLink && props.sessionHostId == props.personalContributor.id" class="email-list">
-    <div v-for="email in validatedEmails" :key="email" class="validated-email">
-      {{ email }} <span @click="removeEmail(email)" class="remove-email">x</span>
-    </div>
-  </div>
-  <div v-if="sessionLink && props.sessionHostId == props.personalContributor.id" class="email-input__container" v-for="(email, index) in contributorEmailAddresses"
-  :key="index">
-  
-  <input type="email" v-model="contributorEmailAddresses[index]" @keyup.enter="validateEmail(index, $event)"
-    @blur="validateEmail(index, $event)" placeholder="E-Mail-Adresse eingeben">
-  <button v-if="sessionLink" @click="sessionInvite" class="secondary">
-    Teilnehmer einladen
-  </button>
-</div>
-  <ContributorsBoard v-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
-    :currentRound="props.currentRound" :sessionHostId="props.sessionHostId" :contributors="props.contributors"
-    :sessionId="props.sessionId" :personalContributor="props.personalContributor" :ideasCount="props.ideasCount"
-    :previousPhase="props.previousPhase"  :sessionPhase="props.sessionPhase" :totalIdeasToVoteCount="props.totalIdeasToVoteCount"/>
-</div>
-<ContributorsBoard v-else-if="props.currentRound >= 0 || props.sessionHostId != props.personalContributor.id" :method="props.method" @exit="handleExit"
-    :currentRound="props.currentRound" :sessionHostId="props.sessionHostId" :contributors="props.contributors"
-    :sessionId="props.sessionId" :personalContributor="props.personalContributor" :ideasCount="props.ideasCount"
-   :sessionPhase="props.sessionPhase" :totalIdeasToVoteCount="props.totalIdeasToVoteCount":previousPhase="props.previousPhase" />
+                        <th>Zuletzt Aktiv</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="contributor in contributors" :key="contributor.id">
+                        <td>{{ contributor.icon }}</td>
+                        <td>{{ contributor.name }}</td>
+                        <td>Vor {{
+                            (() => {
+                            const diff = new Date() - new Date(contributor.last_active);
+                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                            return days > 0 ? `${days} ${days === 1 ? 'Tag' : 'Tage'}` : `${hours}h ${minutes}min`;
+                            })()
+                            }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="lobby__start__container">
+                <button class="primary" v-if="session.isPaused && personalContributor.isHost" @click="emit('start')">Runde starten</button>
+            </div>
+        </div>
+    </section>
 </template>
 
 <script setup>
-import ContributorsBoard from '../ContributorsBoard.vue';
-import { ref, onMounted, nextTick } from 'vue';
-import CopyIcon from '../icons/CopyIcon.vue';
-import QRCode from 'qrcode';
+import { ref } from 'vue';
+import SwooshIcon from '../icons/SwooshIcon.vue';
+
 const props = defineProps({
-  method: Object,
-  currentRound: Number,
-  sessionHostId: [String, Number],
-  contributors: Array,
-  sessionId: [String, Number],
-  personalContributor: Object,
-  ideasCount: Object,
-  maxIdeaInput: Number,
-  previousPhase: String,
-  sessionPhase: String,
-  totalIdeasToVoteCount: [null, Number]
+    personalContributor: {
+        type: Object,
+        required: true
+    },
+    session: {
+        type: Object,
+        required: true
+    },
+    contributors: {
+        type: Object,
+        required: true
+    },
+    ideas: {
+        type: Object,
+        required: true
+    },
 });
-const qrcodeCanvas = ref(null);
-const showQRCode = ref(false);
-const validatedEmails = ref([]);
-const contributorEmailAddresses = ref(['']);
-const sessionLink = ref(null);
-const emit = defineEmits(['switchPhase']);
-import { useRouter } from 'vue-router';
-const sessionId = ref(props.sessionId);
-const router = useRouter();
-const handleExit = () => {
-  if(props.sessionPhase === "votingPhase"){
-    emit('switchPhase', 'votingPhase');
-  } else
-  emit('switchPhase', 'previousPhase');
-}
-const removeEmail = (email) => {
-    validatedEmails.value = validatedEmails.value.filter(e => e !== email);
-  };
-const copyToClipboard = (copyText) => {
-  navigator.clipboard.writeText(copyText);
-};
-
-const validateEmail = (index, event) => {
-  const email = contributorEmailAddresses.value[index];
-  if (isValidEmail(email) && (event.key === 'Enter' || event.type === 'blur')) {
-    if (!validatedEmails.value.includes(email)) {
-      validatedEmails.value.push(email);
-    } else {
-      console.log('Diese E-Mail-Adresse wurde bereits hinzugefügt.');
-    }
-    // Leeren Sie das Eingabefeld in jedem Fall
-    contributorEmailAddresses.value[index] = '';
-  }
-};
-
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-const sessionInvite = () => {
-  const oldValidatedEmails = [...validatedEmails.value];
-
-  validatedEmails.value = [];
-  contributorEmailAddresses.value = [''];
-
-  axios.post('/api/session/invite', {
-    session_id: sessionId.value,
-    host_id: props.sessionHostId,
-    contributor_email_addresses: oldValidatedEmails
-  })
-  .then(response => {
-      console.log('Einladungen erfolgreich gesendet');
-  })
-  .catch(error => {
-    console.error('Error inviting to the session', error);
- validatedEmails.value = oldValidatedEmails;
-  });
-};
-
-const generateQRCode = () => {
-  if (sessionLink.value && qrcodeCanvas.value && !showQRCode.value) {
-    showQRCode.value = true;
-    QRCode.toCanvas(qrcodeCanvas.value, sessionLink.value, (error) => {
-      if (error) console.error(error);
-    });
-  }
-};
-
-onMounted(() => {
-  console.log('props.previousPhase',props.previousPhase)
-  sessionLink.value = `${window.location.origin}${router.resolve({ name: 'session', params: { id: sessionId.value } }).href}`;
-});
-nextTick(() => {generateQRCode()});
+const emit = defineEmits(['start', 'exit']);
+const showInfo = ref(true);
+const contributors = ref(props.contributors);
+const personalContributor = ref(props.personalContributor);
+const session = ref(props.session);
+const ideas = ref(props.ideas);
 </script>

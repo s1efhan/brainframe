@@ -19,9 +19,9 @@ class UserLeftSession implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
-        public string $sessionId,
-        public string $userId,
-        public string $newContributorsCount
+        public int $sessionId,
+        public int $contributorId,
+        public int $activeCount
     ) {
     }
 

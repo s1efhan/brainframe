@@ -14,6 +14,16 @@ use App\Events\SwitchPhase;
 use App\Models\ApiLog;
 class IdeaController extends Controller
 {
+    public function get($sessionId){
+        $session = Session::findOrFail($sessionId);
+        $ideas = Idea::where('session_id', $sessionId)
+        ->get();
+        Log::info('contributors: '.json_encode($ideas));
+        return response()->json([
+            'ideas' => $ideas
+        ]);
+    }
+    /*
     public function getPassedIdeas($sessionId, $personalContributorId, $currentRound)
     {
         Log::info("Start getPassedIdeas", ['sessionId' => $sessionId, 'personalContributorId' => $personalContributorId, 'currentRound' => $currentRound]);
@@ -356,7 +366,7 @@ class IdeaController extends Controller
                      'total_value' => $totalValue,
                      'average_vote' => $averageVote
                  ]);
-                 */
+             
                 return $idea;
             })->sortByDesc('averageVote');
 
@@ -710,4 +720,5 @@ class IdeaController extends Controller
         // Rückgabe einer erfolgreichen Antwort
         return response()->json(['message' => 'Idea stored successfully', 'idea' => $idea], 201);
     }
+            */
 }

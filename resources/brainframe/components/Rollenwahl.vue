@@ -10,8 +10,10 @@
   <div v-if="showInfo" class="info__text__container">
     <div class="info__text">
       <h3>Rollenwahl:</h3>
-      <ul v-if="props.methodName =='6 Thinking Hats'">
-        <li>Die Wahl deiner "Rolle" hat <strong>großen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel Session. <br>Sie bestimmt deine <strong>Perspektive beim Sammeln und Bewerten </strong>und ermöglicht es anonym über Ideen zu sprechen.</li>
+      <ul v-if="session.method.name =='6 Thinking Hats'">
+        <li>Die Wahl deiner "Rolle" hat <strong>großen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel
+          Session. <br>Sie bestimmt deine <strong>Perspektive beim Sammeln und Bewerten </strong>und ermöglicht es
+          anonym über Ideen zu sprechen.</li>
         <ul>
           <li><strong>Roter Hut:</strong> Emotionale Sichtweise, Gefühle und Intuition.</li>
           <li><strong>Schwarzer Hut:</strong> Kritische Sichtweise, Risiken und Probleme.</li>
@@ -22,11 +24,13 @@
         </ul>
       </ul>
       <ul v-else>
-        <li>Die Wahl deiner "Rolle" hat <strong>keinen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel Session. <br>Sie ist rein <strong>ästhetischer Natur </strong>und dient dazu vereinfacht und anonym über Ideen zu sprechen.</li>
+        <li>Die Wahl deiner "Rolle" hat <strong>keinen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel
+          Session. <br>Sie ist rein <strong>ästhetischer Natur </strong>und dient dazu vereinfacht und anonym über Ideen
+          zu sprechen.</li>
       </ul>
     </div>
   </div>
-  <form class="selectRole" v-if="showSelectRole" @submit.prevent="handleSubmit">
+  <form class="selectRole" v-if="showSelectRole" @submit.prevent="addContributor">
     <div class="role-select__container">
       <select id="roleSelect" v-model="selectedRole.id" @change="updateSelectedRole">
         <option v-for="role in roles" :key="role.id" :value="role.id">
@@ -34,7 +38,7 @@
         </option>
       </select>
       <div v-if="selectedRole.icon" class="role-icon">
-      <component :is="getIconComponent(selectedRole.icon)" /> {{ selectedRole.name }}
+        <component :is="getIconComponent(selectedRole.icon)" /> {{ selectedRole.name }}
       </div>
     </div>
     <button class="primary" type="submit">Rolle Wählen</button>
@@ -43,7 +47,6 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
 import axios from 'axios';
 import IconComponents from '../components/IconComponents.vue';
 
@@ -52,21 +55,34 @@ const props = defineProps({
     type: [String, Number],
     required: true
   },
-  methodName: {
-    type: [String, null],
+  session: {
+    type: [Object, null],
     required: true
   }
 });
 
+const getRoles = () => {
+  axios.get(`/api/roles/${session.value.id}`)
+    .then(response => {
+      roles.value = response.data;
+      if (roles.value.length > 0) {
+        const randomIndex = Math.floor(Math.random() * roles.value.length);
+        selectedRole.value = roles.value[randomIndex];
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching roles', error);
+    });
+};
+
 const showInfo = ref(false);
 const emit = defineEmits(['contributorAdded']);
 const showSelectRole = ref(true);
-const sessionId = ref('');
+const session = ref(props.session);
+const userId = ref(props.userId);
 const selectedRole = ref({ id: null, name: '', description: '', icon: '' });
 const roles = ref([]);
-const userId = ref('');
 
-const route = useRoute();
 
 const updateSelectedRole = () => {
   const role = roles.value.find(r => r.id === selectedRole.value.id);
@@ -79,26 +95,10 @@ const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
 
-const getRoles = () => {
-  axios.get(`/api/sessions/${sessionId.value}/roles`)
-    .then(response => {
-      roles.value = response.data;
-      if (roles.value.length > 0) {
-        selectedRole.value = { ...roles.value[0] };
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching roles', error);
-    });
-};
-
-const handleSubmit = () => {
-  addContributor();
-};
-
 const addContributor = () => {
-  axios.post('/api/contributor', {
-    session_id: sessionId.value,
+  console.log("addContributor, session.value.id", session.value.id, "selectedRole.value", selectedRole.value.id, "userId.value",userId.value);
+  axios.post('/api/contributor/create', {
+    session_id: session.value.id,
     user_id: userId.value,
     role_id: selectedRole.value.id
   })
@@ -114,15 +114,13 @@ const addContributor = () => {
 };
 
 onMounted(() => {
-  sessionId.value = route.params.id;
-  userId.value = props.userId;
-  console.log("sessionId Rollenwahl", sessionId.value)
-  Echo.channel('session.' + sessionId.value)
-  .listen('RolePick', (e) => {
-    console.log("rolePick event empfangen")
-       getRoles();
+  console.log("Rollenwahl Mounted: ", session.value.id, userId.value, session.value.method)
+  Echo.channel('session.' + session.value.id)
+    .listen('UserPickedRole', (e) => {
+      console.log("UserPickedRole event empfangen")
+      getRoles();
     });
-  if (sessionId.value) {
+  if (session.value.id) {
     getRoles();
   }
 });

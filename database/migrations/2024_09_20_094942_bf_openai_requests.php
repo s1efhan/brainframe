@@ -16,11 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger('session_id');
             $table->unsignedBigInteger('contributor_id')->nullable();
             $table->json('request_data');
-            $table->json('response_data');
-            $table->text('icebreaker_msg')->nullable();
+            $table->json('response_data')->nullable();
             $table->integer('prompt_tokens')->default(0);
             $table->integer('completion_tokens')->default(0);
-            $table->integer('total_tokens')->default(0);
             $table->timestamps();
 
             $table->foreign('session_id')->references('id')->on('bf_sessions')->onDelete('cascade');
