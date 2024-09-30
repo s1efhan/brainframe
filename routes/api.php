@@ -25,12 +25,14 @@ Route::post('/session/start', [SessionController::class, 'start']);
 Route::post('/session/stop', [SessionController::class, 'stop']);
 Route::post('/session/pause', [SessionController::class, 'pause']);
 Route::post('/session/resume', [SessionController::class, 'resume']);
+Route::post('/session/invite', [SessionController::class, 'invite']);
 Route::get('/session/{sessionId}', [SessionController::class, 'get'])
      ->where('sessionId', '[0-9]+');
-Route::post('/session/invitation/send', [SessionController::class, 'invite']);
 Route::post('/session/summary/send', [SessionController::class, 'sendSummary']);
-Route::get('/session/summary/download', [SessionController::class, 'downloadSummary']);
-Route::get('/session/ice-breaker', [SessionController::class, 'getIceBreaker']);
+Route::get('/session/{sessionId}/summary/download', [SessionController::class, 'downloadSummary']);
+Route::post('/session/ice-breaker', [SessionController::class, 'iceBreaker']);
+Route::get('/session/{sessionId}/closing', [SessionController::class, 'getClosing']);
+
 
 //MethodController
 Route::get('/methods', [MethodController::class, 'get']);

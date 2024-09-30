@@ -109,6 +109,7 @@ const setNextIdea = () => {
   if (ideasToVote.value.length > 0) {
     previousIdea.value = currentIdea.value;
     currentIdea.value = ideasToVote.value.shift();
+    console.log("idea: Star: ",currentIdea.value);
   } else {
     emit('wait');
     currentIdea.value = null;

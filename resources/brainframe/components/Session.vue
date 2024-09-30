@@ -40,16 +40,16 @@
         <p>{{ personalContributor.name }}</p>
       </div>
     </div>
-    <Lobby v-if="(session.isPaused || showStats) && personalContributor" :session="session" :contributors="contributors"
-      :personalContributor="personalContributor" @exit="showStats = false" @start="startSession" :ideas="ideas" />
+    <Lobby v-if="(session.isPaused  && session.phase != 'closing' || showStats && session.phase != 'closing') && personalContributor" :session="session" :contributors="contributors"
+      :personalContributor="personalContributor" :votes="votes" @exit="showStats = false" @start="startSession" @stop="stopSession" :ideas="ideasWithoutTags" />
     <Collecting @stop="stopSession" :session="session" :personalContributor="personalContributor" :ideas="ideas"
       v-if="session.phase === 'collecting' && !session.isPaused &&  !showStats && personalContributor"
       @wait="showStats = true" />
     <Voting v-if=" session.phase === 'voting' && !session.isPaused && !showStats && personalContributor"
       :session="session" @wait="showStats = true" :contributors="contributors"
-      :personalContributor="personalContributor" :ideas="ideas" :votes="votes" />
+      :personalContributor="personalContributor" :ideas="ideasWithTags"  :votes="votes" />
     <Closing
-      v-if=" session.phase === 'closing' && !session.isPaused && !showContributorsBoard && personalContributor" />
+      v-if=" session.phase === 'closing'" :session="session" :contributors="contributors" :personalContributor="personalContributor" :ideas="ideas" :votes="votes"/>
     <div v-if="session.phase != 'closing' " class="timer__container">
       <SandclockIcon />
       <div class="timer"
@@ -63,7 +63,7 @@
 
 <script setup>
 import SandclockIcon from './icons/SandclockIcon.vue';
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed} from 'vue';
 import { sessionId } from '../js/eventBus.js'
 import axios from 'axios';
 import Rollenwahl from './Rollenwahl.vue';
@@ -120,7 +120,12 @@ const adjustHeadline = () => {
     }
   });
 };
-
+const ideasWithTags = computed(() => {
+  return ideas.value ? ideas.value.filter(idea => idea.tag) : [];
+});
+const ideasWithoutTags = computed(() => {
+  return ideas.value ? ideas.value.filter(idea => !idea.tag) : [];
+});
 //session
 const session = ref(null);
 const userId = ref(props.userId);
@@ -267,7 +272,7 @@ const stopSession = () => {
 const resumeSession = () => {
   console.log("resumeSession", personalContributor.value.isHost)
 
-  if (personalContributor.value.isHost) {
+  if (personalContributor.value.isHost && session.value.seconds_left > 0) {
     axios.post('/api/session/resume', {
       session_id: sessionId.value,
     })
@@ -308,8 +313,11 @@ const timer = ref(null);
 const startTimer = () => {
   clearInterval(timer.value);
   timer.value = setInterval(() => {
-    if (session.value.seconds_left > 0) {
+    if (session.value.seconds_left > 0 && !session.value.isPaused) {
       session.value.seconds_left--;
+    } else if (session.value.seconds_left === 0 && !session.value.isPaused) {
+      stopTimer();
+      stopSession();
     } else {
       stopTimer();
     }
@@ -340,30 +348,24 @@ onMounted(() => {
       console.log("UserPickedRole", contributors.value);
     })
     .listen('SessionStarted', (e) => {
-      console.log("Event: SessionStarted");
-      session.value.isPaused = false;
-      session.value.seconds_left = e.secondsLeft;
+      console.log("Event: SessionStarted", e);
+      session.value = e.formattedSession;
       startTimer();
     })
     .listen('SessionPaused', (e) => {
-      console.log("Event: SessionPaused");
-      session.value.isPaused = true;
+      console.log("Event: SessionPaused", e);
+      session.value = e.formattedSession;
       stopTimer();
     })
     .listen('SessionResumed', (e) => {
-      console.log("Event: SessionResumed");
-      session.value.isPaused = false;
-      session.value.seconds_left = e.secondsLeft;
+      console.log("Event: SessionResumed", e);
+      session.value = e.formattedSession;
       startTimer();
     })
     .listen('SessionStopped', (e) => {
-      console.log("Event: SessionStopped");
-      session.value.isPaused = true;
+      console.log("Event: SessionStopped", e);
       stopTimer();
-      session.value.secondsleft = session.value.method.time_limit;
-      session.value.phase = e.phase
-      session.value.vote_round = e.vote_round;
-      session.value.collecting_round = e.collecting_round;
+      session.value = e.formattedSession;
     })
     .listen('UserJoinedSession', (e) => {
       console.log("User Joined", e.contributorId);
@@ -374,10 +376,12 @@ onMounted(() => {
       contributors.value.find(c => c.id === e.contributorId).is_active = false;
     })
     .listen('UserSentVote', (e) => {
-
+      console.log("sent vote:", e);
+      votes.value.push({ ...e.vote });
     })
     .listen('UserSentIdea', (e) => {
-
+      console.log("sent idea:", e);
+      ideas.value.push({ ...e.idea });
     });
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('beforeunload', leaveSession);
@@ -389,7 +393,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  leaveSession();
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', leaveSession);
 });

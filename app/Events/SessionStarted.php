@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
@@ -10,26 +9,36 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Number;
+use App\Models\Session;
 
 class SessionStarted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(
-        public Int $sessionId,
-        public Int $secondsLeft,
-        public String $phase,
-        public String $collectingRound,
-        public String $voteRound
-    ) {
+    public $formattedSession;
+
+    public function __construct(Session $session)
+    { 
+        $this -> formattedSession = [
+                'id' => $session->id,
+                'method' => [
+                    'id' => $session->method->id,
+                    'name' => $session->method->name,
+                    'description' => $session->method->description,
+                    'time_limit' => $session->method->time_limit,
+                    'round_limit' => $session->method->round_limit
+                ],
+                'target' => $session->target,
+                'seconds_left' => $session->seconds_left,
+                'collecting_round' => $session->collecting_round,
+                'vote_round' => $session->vote_round,
+                'phase' => $session->phase,
+                'isPaused' => $session->is_paused
+            ];
     }
 
     public function broadcastOn(): Channel
     {
-        return new Channel('session.' . $this->sessionId);
+        return new Channel('session.' . $this->formattedSession['id']);
     }
 }

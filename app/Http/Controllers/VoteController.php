@@ -31,7 +31,7 @@ class VoteController extends Controller
             'vote_value' => 'required|integer|min:1|max:5',
         ]);
     
-        Vote::updateOrCreate(
+        $vote = Vote::updateOrCreate(
             [
                 'session_id' => $validated['session_id'],
                 'idea_id' => $validated['idea_id'],
@@ -44,7 +44,7 @@ class VoteController extends Controller
             ]
         );
     
-        event(new UserSentVote($validated['session_id'], $validated['contributor_id'], $validated['vote_round']));
+        event(new UserSentVote($vote, $validated['session_id']));
     
         return response()->json(['message' => 'Vote processed successfully'], 200);
     }

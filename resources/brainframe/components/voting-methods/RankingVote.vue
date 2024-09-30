@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, toRef, watchEffect } from 'vue';
+import { ref, toRef, computed } from 'vue';
 import ArrowUpIcon from '../icons/ArrowUpIcon.vue';
 import ArrowDownIcon from '../icons/ArrowDownIcon.vue';
 import PodiumIcon from '../icons/PodiumIcon.vue';
@@ -79,10 +79,7 @@ const props = defineProps({
     required: true
   }
 });
-const ideas = toRef(props, 'ideas');
-const votes = toRef(props, 'votes');
-const personalContributor = toRef(props, 'personalContributor');
-const session = toRef(props, 'session');
+
 const expandedIds = ref([]);
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
@@ -118,37 +115,36 @@ const toggleDetails = (id) => {
     expandedIds.value = [id];
   }
 };
-
-
+// Funktionen zum Verschieben der Ideen
 const moveUp = (index) => {
   if (index > 0) {
-    const newArray = [...topIdeas.value];
-    [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
-    topIdeas.value = newArray;
+    const newOrder = [...currentOrder.value];
+    [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
+    currentOrder.value = newOrder;
   }
 };
 
 const moveDown = (index) => {
-  if (index < topIdeas.value.length - 1) {
-    const newArray = [...topIdeas.value];
-    [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
-    topIdeas.value = newArray;
+  if (index < currentOrder.value.length - 1) {
+    const newOrder = [...currentOrder.value];
+    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+    currentOrder.value = newOrder;
   }
 };
+// Eine ref für die aktuelle Sortierreihenfolge
+const currentOrder = ref([]);
 
-const topIdeas = ref([]);
-watchEffect(() => {
-  const currentRound = session.value.vote_round;
-
+const topIdeas = computed(() => {
+  const currentRound = props.session.vote_round;
   let selectedIdeas;
 
   if (currentRound > 1) {
     const prevRound = currentRound - 1;
     
     // Sortiere die Ideen basierend auf den Votes der vorherigen Runde
-    const sortedIdeas = [...ideas.value].sort((a, b) => {
-      const aVotes = votes.value.filter(v => v.idea_id === a.id && v.round === prevRound);
-      const bVotes = votes.value.filter(v => v.idea_id === b.id && v.round === prevRound);
+    const sortedIdeas = [...props.ideas].sort((a, b) => {
+      const aVotes = props.votes.filter(v => v.idea_id === a.id && v.round === prevRound);
+      const bVotes = props.votes.filter(v => v.idea_id === b.id && v.round === prevRound);
       const aAvg = aVotes.reduce((sum, v) => sum + v.value, 0) / aVotes.length || 0;
       const bAvg = bVotes.reduce((sum, v) => sum + v.value, 0) / bVotes.length || 0;
       return bAvg - aAvg;
@@ -158,21 +154,29 @@ watchEffect(() => {
     selectedIdeas = sortedIdeas.slice(0, 5);
   } else {
     // Für die erste Runde: Nehme einfach die 5 Ideen
-    selectedIdeas = ideas.value.slice(0, 5);
+    selectedIdeas = props.ideas.slice(0, 5);
   }
 
-  // Filtere die ausgewählten Ideen, für die der aktuelle Contributor in dieser Runde noch nicht abgestimmt hat
-  topIdeas.value = selectedIdeas.filter(idea => 
-    !votes.value.some(v => 
+  // Filtere die ausgewählten Ideen
+  const filteredIdeas = selectedIdeas.filter(idea => 
+    !props.votes.some(v => 
       v.idea_id === idea.id && 
       v.round === currentRound && 
-      v.contributor_id === personalContributor.value.id
+      v.contributor_id === props.personalContributor.id
     )
   );
-  if (topIdeas.value.length < 1){
-    emit('wait');
+
+  // Initialisiere oder aktualisiere die Sortierreihenfolge
+  if (currentOrder.value.length !== filteredIdeas.length) {
+    currentOrder.value = filteredIdeas.map(idea => idea.id);
   }
+
+  // Sortiere die Ideen gemäß der aktuellen Sortierreihenfolge
+  return filteredIdeas.sort((a, b) => {
+    return currentOrder.value.indexOf(a.id) - currentOrder.value.indexOf(b.id);
+  });
 });
+
 
 // Touch functionality
 const isDragging = ref(false);
@@ -222,7 +226,7 @@ const drop = (index, event) => {
     const draggedItem = topIdeas.value.splice(draggedItemIndex.value, 1)[0];
     topIdeas.value.splice(index, 0, draggedItem);
     draggedItemIndex.value = null;
-
+    currentOrder.value = topIdeas.value.map(idea => idea.id);
     document.querySelectorAll('tr').forEach(row => {
       row.classList.remove('dragging', 'drag-over');
     });

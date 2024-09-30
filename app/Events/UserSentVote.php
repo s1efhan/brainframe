@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
@@ -10,16 +9,21 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use App\Models\Vote;
 
 class UserSentVote implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public string $sessionId,
-        public string $contributorId,
-        public int $round
-    ) {}
+    public $vote;
+    public $sessionId;
+
+    public function __construct(Vote $vote, int $sessionId)
+    {
+        $this->vote = $vote;
+        $this->sessionId = $sessionId;
+        Log::info("userSentVote");
+    }
 
     public function broadcastOn(): Channel
     {

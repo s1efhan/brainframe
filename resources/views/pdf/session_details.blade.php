@@ -2,133 +2,187 @@
 <html lang="de">
 
 <head>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="viewport" content="initial-scale=1.0, width=device-width">
-    <meta charset="utf-8">
-    <link rel="icon" href="/favicon.ico">
+    <meta charset="UTF-8">
+    <title>{{ $session->target }} - Zusammenfassung</title>
 </head>
 
 <body>
     <header>
         <div>
-            Session: {{ $sessionDetails['session_id'] }} - {{ $sessionDetails['target'] }}
         </div>
-        <div><strong class="headline__join__brain">Brain</strong><strong>Frame</strong></div>
     </header>
     <div class="placeholder"></div>
+    Session: {{ $session['session_id'] }} - {{ $session['target'] }}
+    <div> <strong class="headline__join__brain">Brain</strong><strong>Frame</strong></div>
     <div class="collecting-pdf">
-        <div class="session-data">
-            <h2>Session Infos</h2>
-        </div>
-        <table class="session-data">
-
+        <table class="session-data" id="first-table">
             <thead>
                 <tr>
-                    <th>Methode</th>
+                    <th>Ziel</th>
                     <th>Teilnehmer</th>
                     <th>Ideen</th>
-                    <th>Token</th>
-                    <th>Dauer</th>
                     <th>Datum</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td class="center">{{ $sessionDetails['method'] }}</td>
-                    <td class="center">{{ $sessionDetails['contributors_count'] }}</td>
-                    <td class="center">{{ $sessionDetails['ideas_count'] }}</td>
-                    <td class="center">
-                        {{ $sessionDetails['input_token'] }} (input) <br>{{ $sessionDetails['output_token'] }} (output)
-                        <br> =>
-                        {{ number_format((($sessionDetails['input_token'] * 0.000015 + $sessionDetails['output_token'] * 0.000060) * 100), 2) }}
-                        ct
-                    </td>
-                    <td class="center">
-                        {{ floor($sessionDetails['duration'] / 60) }}h
-                        {{ round($sessionDetails['duration'] % 60) }}min
-                    </td>
-                    <td class="center">{{ date('d.m.Y', strtotime($sessionDetails['date'])) }}</td>
+                    <td>{{ $session->target }}</td>
+                    <td class="center">{{ count($contributors) }}</td>
+                    <td class="center">{{ count($ideas->where('tag', null)) }}</td>
+                    <td class="center">{{ \Carbon\Carbon::parse($session->created_at)->format('d.m.Y') }}</td>
                 </tr>
             </tbody>
         </table>
-        <div class="top-ideas">
-    <h2>Top Ideen</h2>
-    @if(isset($sessionDetails['top_ideas']))
-    <table>
-        <thead>
-            <tr>
-                <th>Platz</th>
-                <th>Idee</th>
-                <th>Beschreibung</th>
-                <th>Punkte</th>
-            </tr>
-        </thead>
-        <tbody>
-        @php
-            $sortedIdeas = collect($sessionDetails['top_ideas'])->sortByDesc('avg_vote_value');
-        @endphp
-        @foreach($sortedIdeas as $index => $idea)
-            <tr>
-                <td class="center">
-                    <div class="placement">{{ $index + 1 }}</div>
-                </td>
-                <td>{{ $idea['idea_title'] }}</td>
-                <td>{!! $idea['idea_description'] !!}</td>
-                <td class="center">
-                    <div class="voting-value">{{ number_format($idea['avg_vote_value'], 1) }} /5.0 </div>
-                </td>
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
-    @endif
-</div>
 
-        <div class="collecting-process">
-            <h2>{{ $sessionDetails['method'] }}</h2>
+        <table class="session-data">
+            <thead>
+                <tr>
+                    <th>Methode</th>
+                    <th>Session-ID</th>
+                    <th>Token</th>
+                    <th>Dauer</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="center">{{ $session->method['name'] }}</td>
+                    <td class="center">{{ $session->id }}</td>
+                    <td class="token">
+                        {{$prompt_tokens }} (prompt)<br>
+                        {{ $completion_tokens }} (completion)<br>
+                        =>
+                        {{ number_format((($prompt_tokens * 0.00000015 + $completion_tokens * 0.00000060) * 100), 2) }}
+                        ct
+                    </td>
+                    <td class="center">
+    @php
+        $duration = \Carbon\Carbon::parse($ideas->first()->created_at)->diffInMinutes($votes->last()->created_at);
+        $hours = floor($duration / 60);
+        $minutes = $duration % 60;
+    @endphp
+    @if ($hours > 0)
+        {{ $hours }}h
+    @endif
+    {{ $minutes }}min
+</td>
+
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="top-ideas">
+            <h2>Top Ideen</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rang</th>
+                        <th>Idee</th>
+                        <th>Beschreibung</th>
+                     <!--   <th>Beitragender</th> -->
+                        <th>Bewertung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $ideasWithTags = $ideas->filter(function ($idea) {
+                            return $idea->tag !== null && $idea->tag !== '';
+                        })->map(function ($idea) use ($votes) {
+                            $ideaVotes = $votes->where('idea_id', $idea->id);
+                            $maxRound = $ideaVotes->max('round');
+                            $relevantVotes = $ideaVotes->where('round', $maxRound);
+                            $avgRating = $relevantVotes->avg('value');
+                            $voteType = $relevantVotes->first()->vote_type ?? 'default';
+                            $maxVoteValue = [
+                                'ranking' => 5,
+                                'star' => 3,
+                                'swipe' => 1,
+                                'leftRightVote' => 1
+                            ][$voteType] ?? 1;
+
+                            return [
+                                'id' => $idea->id,
+                                'title' => $idea->title,
+                                'description' => $idea->description,
+                                'contributor_id' => $idea->contributor_id,
+                                'avgRating' => $avgRating,
+                                'maxRound' => $maxRound,
+                                'maxVoteValue' => $maxVoteValue
+                            ];
+                        })->sortByDesc('maxRound')->sortByDesc('avgRating')->values();
+                    @endphp
+
+                    @foreach($ideasWithTags->take(3) as $index => $idea)
+                                        <tr>
+                                            <td class="center">{{ $index + 1 }}</td>
+                                            <td>{{ $idea['title'] }}</td>
+                                            <td>{!! $idea['description'] !!}</td>
+                                           <!-- <td class="center">
+                                                @php
+                                                    $contributor = $contributors->firstWhere('id', $idea['contributor_id']);
+                                                    $name = $contributor ? $contributor->name : '';
+                                                @endphp
+                                              {{$name}} 
+                                            </td> -->
+                                            <td class="center">
+                                                {{ number_format($idea['avgRating'], 1) }}/{{ number_format($idea['maxVoteValue'], 1) }}
+                                            </td>
+                                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+       <!-- <div class="collecting-process">
+            <h2>{{ $session->method['name'] }}</h2>
             <div class="timeline">
+                @php
+                    $groupedIdeasByRound = $ideas->groupBy('round');
+                @endphp
                 @foreach($groupedIdeasByRound as $round => $groupedIdeas)
-                    <div>
-                        <div class="round">{{ $round }}</div>
-                        <ul>
-                            @foreach($groupedIdeas as $idea)
-                                <li>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
+                            <div class="tag">
+                                <div class="round">{{ $round }}</div>
+                                <ul>
+                                    @foreach($groupedIdeas as $idea)
+                                                        <li>
+                                                            @php
+                                                                $contributor = $contributors->firstWhere('id', $idea->contributor_id);
+                                                                $iconName = $contributor ? $contributor->icon : '';
+                                                            @endphp
+                                                
+                                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
                 @endforeach
             </div>
         </div>
-
-        @if(isset($sessionDetails['word_cloud_data']))
+                    -->
+        @if(isset($wordCloud))
             <div class="word-cluster">
                 <h2>Wort-Cluster</h2>
                 <ul>
-                    @foreach($sessionDetails['word_cloud_data'] as $item)
-                        <li class="count-{{ $item['count'] }}">
-                            {{ $item['word'] }}
-                        </li>
+                    @foreach($wordCloud as $item)
+                        <li class="count-{{ $item['count'] }}">{{ $item['word'] }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
 
-        <div class="tags-list">
-            <h2>#Tags</h2>
-            <ul>
-                @foreach($sessionDetails['tag_list'] as $tag)
-                    <li class="count-{{ $tag['count'] }}">
-                        #{{ $tag['tag'] }}
-                    </li>
-                @endforeach
-            </ul>
-        </div>
+        @if(isset($tagList))
+            <div class="tags-list">
+                <h2>#Tags</h2>
+                <ul>
+                    @foreach($tagList as $tag)
+                        <li class="count-{{ $tag['count'] }}">#{{ $tag['tag'] }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-        @if(isset($sessionDetails['next_steps']))
+        @if(isset($nextSteps))
             <div class="next-steps">
                 <h2>Nächste Schritte und Empfehlungen</h2>
-                <p>{!! $sessionDetails['next_steps'] !!}</p>
+                <p>{!! $nextSteps !!}</p>
             </div>
         @endif
     </div>
@@ -137,198 +191,78 @@
 </html>
 <style>
     body {
-        margin: 1cm;
-    }
-
-    .placeholder {
-        height: 2em;
-        width: 100%;
-    }
-strong {font-size: 1.5em; font-weight: bold}
-    svg {
-        height: 1em;
-        width: 1em;
-    }
-
-    header {
-        position: relative;
-        width: 100%;
-    }
-    .tags-list, .word-cluster, .top-ideas, .collecting-process, .next-steps {
-    page-break-inside: avoid;
-    break-inside: avoid; 
-}
-    header>div:first-child {
-        position: absolute;
-        left: 0;
-    }
-
-    header>div:last-child {
-        position: absolute;
-        right: 0;
-    }
-
-    .word-cluster,
-    .session-data,
-    .top-ideas,
-    .collecting-process {
-        text-align: center;
-    }
-
-    .word-cluster li {
-        text-align: left;
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 2cm;
     }
 
     h2 {
-        text-align: center;
-        border: solid;
-        border-radius: 5px;
-        padding: 0.25em 1em;
-        display: inline-block;
-        width: 25vw;
-        margin-right: auto;
+        padding-bottom: 0.5em;
+        margin-top: 1.5em;
     }
 
-    .timeline div,
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5em;
+    }
+
+    th,
+    td {
+        border: 1px solid #ddd;
+        padding: 0.8em;
+        text-align: left;
+    }
+
+    th {
+        font-weight: bold;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    .timeline,
     .word-cluster,
     .tags-list,
     .next-steps {
-        border: solid;
+        border: 1px solid;
         border-radius: 5px;
         padding: 1em;
-        margin: 2em 0;
+        margin-top: 1.5em;
+    }
+
+    .timeline div {
+        display: inline-block;
+        width: 18%;
+        margin: 0.5em;
+        vertical-align: top;
+    }
+
+    .word-cluster ul,
+    .tags-list ul {
+        padding: 0;
+        text-align: center;
+    }
+
+    .word-cluster li,
+    .tags-list li {
+        display: inline-block;
+        margin: 0.3em;
+        padding: 0.3em 0.6em;
+    }
+
+    .word-cluster li {
+        font-weight: bold;
+    }
+
+    .tags-list li {
+        border-radius: 3px;
     }
 
     .headline__join__brain {
         color: #33d2ca;
     }
-
-    li,
-    td {
-        text-align: left;
-    }
-
-    .collecting-pdf table {
-        border-collapse: collapse;
-        font-size: 0.9em;
-        width: 100%;
-    }
-
-    .collecting-pdf th,
-    .collecting-pdf td {
-        padding: 0.5em 0.8em;
-        border-bottom: solid;
-        word-wrap: break-word;
-    }
-
-    .collecting-pdf th {
-        border-top: solid;
-    }
-
-    .collecting-pdf .center {
-        text-align: center;
-    }
-
-    .collecting-pdf .top-ideas table {
-        table-layout: fixed;
-    }
-
-    .collecting-pdf .top-ideas th:nth-child(1),
-    .collecting-pdf .top-ideas td:nth-child(1) {
-        width: 10%;
-    }
-
-    .collecting-pdf .top-ideas th:nth-child(2),
-    .collecting-pdf .top-ideas td:nth-child(2) {
-        width: 20%;
-    }
-
-    .collecting-pdf .top-ideas th:nth-child(3),
-    .collecting-pdf .top-ideas td:nth-child(3) {
-        width: 50%;
-    }
-
-    .collecting-pdf .top-ideas th:nth-child(4),
-    .collecting-pdf .top-ideas td:nth-child(4) {
-        width: 20%;
-    }
-
-    .placement,
-    .voting-value {
-        border: solid;
-        padding: 0.5em 1em;
-        border-radius: 5px;
-    }
-
-    .timeline {
-        border: solid;
-        border-radius: 5px;
-    }
-
-    .timeline div {
-        display: inline-block;
-        width: auto;
-        min-width: 20%;
-        margin: 1em;
-        vertical-align: top;
-    }
-
-    .word-cluster ul {
-        padding: 0;
-        margin: 0;
-        list-style-type: none;
-        text-align: center;
-        font-size: 0;
-    }
-
-    .word-cluster ul li {
-        display: inline-block;
-        margin: 0.5em;
-        vertical-align: middle;
-        font-size: 16px;
-        padding:0.5em;
-    }
-
-    .word-cluster li.count-1 {
-        font-size: 12px;
-    }
-
-    .word-cluster li.count-2 {
-        font-size: 14px;
-    }
-
-    .word-cluster li.count-3 {
-        font-size: 16px;
-    }
-
-    .word-cluster li.count-4 {
-        font-size: 18px;
-    }
-
-    .word-cluster li.count-5 {
-        font-size: 20px;
-    }
-
-    .word-cluster li.count-6 {
-        font-size: 22px;
-    }
-
-    .word-cluster li.count-7 {
-        font-size: 24px;
-    }
-
-    .word-cluster li.count-8 {
-        font-size: 26px;
-    }
-
-    .word-cluster li.count-9 {
-        font-size: 28px;
-    }
-
-    .word-cluster li.count-10 {
-        font-size: 30px;
-    }
-
     .tags-list li {
         vertical-align: middle;
         margin: 0.5em;
@@ -387,49 +321,65 @@ strong {font-size: 1.5em; font-weight: bold}
         padding: 2em;
         font-size: 2.4em;
     }
-
-    .next-steps h2,
-    .tags-list h2,
-    .word-cluster h2 {
-        border: none;
-        border-radius: 0;
-        border-bottom: solid;
-        display: block;
-        width: 100%;
-        margin: 0;
-        padding: 0.5em 0;
-    }
-
-    .next-steps,
-    .tags-list,
-    .word-cluster {
-        box-sizing: border-box;
-        margin: 2em 0;
-        padding: 0;
-    }
-
-    .collecting-process .timeline>div {
-        max-width: 20%;
-    }
-
-    .collecting-process .timeline>div .round+ul {
+    .word-cluster ul {
         padding: 0;
         margin: 0;
-        width: 100%;
-        font-size: 0;
         list-style-type: none;
         text-align: center;
+        font-size: 0;
     }
 
-    .collecting-process .timeline>div .round+ul li {
+    .word-cluster ul li {
         display: inline-block;
-        width: 1em;
-        height: 1em;
-        margin: 0.2em;
-        padding: 0;
-        border-radius: 50%;
-        background-color: black;
+        margin: 0.5em;
+        vertical-align: middle;
         font-size: 16px;
-        vertical-align: top;
+        padding:0.5em;
+    }
+
+    .word-cluster li.count-1 {
+        font-size: 12px;
+    }
+
+    .word-cluster li.count-2 {
+        font-size: 14px;
+    }
+
+    .word-cluster li.count-3 {
+        font-size: 16px;
+    }
+
+    .word-cluster li.count-4 {
+        font-size: 18px;
+    }
+
+    .word-cluster li.count-5 {
+        font-size: 20px;
+    }
+
+    .word-cluster li.count-6 {
+        font-size: 22px;
+    }
+
+    .word-cluster li.count-7 {
+        font-size: 24px;
+    }
+
+    .word-cluster li.count-8 {
+        font-size: 26px;
+    }
+
+    .word-cluster li.count-9 {
+        font-size: 28px;
+    }
+
+    .word-cluster li.count-10 {
+        font-size: 30px;
+    }
+
+    @media print {
+        .page-break {
+            page-break-before: always;
+        }
     }
 </style>

@@ -83,7 +83,7 @@
         </div>
         <div class="collecting__buttons">
             <button class="primary" type="submit"
-                @click="isListening = false, submitIdea(true);"
+                @click="submitIdea"
                 :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit">Idee speichern</button>
             <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>
         </div>
@@ -117,8 +117,8 @@ const props = defineProps({
 });
 const personalIdeasCount = computed(() => {
   return props.ideas.filter(idea => 
-    idea.round === props.session.collecting_round &&
-    idea.contributor_id === props.personalContributor.id
+    idea.round == props.session.collecting_round &&
+    idea.contributor_id == props.personalContributor.id
   ).length;
 });
 const personalContributor = ref(props.personalContributor)
@@ -132,7 +132,7 @@ const errorMsg = ref('');
 const iceBreakerMsg = ref('');
 
 const iceBreaker = () => {
-    axios.post('/api/ice-breaker', {
+    axios.post('/api/session/ice-breaker', {
         session_id: session.value.id,
         contributor_id: personalContributor.value.id
     })
@@ -149,7 +149,7 @@ const iceBreaker = () => {
 }
 
 const submitIdea = async () => {
-    if (submittedIdeas.value >= maxIdeaInput.value && maxIdeaInput.value !== null) {
+    if (personalIdeasCount >= session.value.method.idea_limit &&session.value.method.idea_limit > 0) {
         errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
         return;
     }
@@ -159,24 +159,22 @@ const submitIdea = async () => {
 
         const formData = new FormData();
         formData.append('contributor_id', personalContributor.value.id);
-        formData.append('session_id', sessionId.value);
-        formData.append('round', currentRound.value);
+        formData.append('session_id', session.value.id);
+        formData.append('round',  session.value.collecting_round);
 
         if (compressedImage) {
             formData.append('image_file', compressedImage);
         }
-
         formData.append('text_input', textInput.value);
-        isLoading.value = true;
         try {
-            const response = await axios.post('/api/idea', formData, {
+            const response = await axios.post('/api/idea/store', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             console.log('Server response:', response.data);
             textInput.value = '';
             imageFile.value = null;
             imageFileUrl.value = '';
-            submittedIdeas.value++;
+           // personalIdeasCount++; geht nicht, stattdessen Event und ganze ideas updaten
             iceBreakerMsg.value = "";
         } catch (error) {
             console.error('Error saving idea', error);
@@ -184,7 +182,6 @@ const submitIdea = async () => {
     } else {
         errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
     }
-    isLoading.value = false;
 };
 
 const handleFileChange = (event) => {

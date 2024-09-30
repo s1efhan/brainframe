@@ -15,10 +15,10 @@ class UpdateCountdown implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public string $sessionId,
+        public Int $sessionId,
         public string $phase,
-        public string $round,
-        public string $secondsLeft
+        public Int $round,
+        public Int $secondsLeft
     )
     {
     }

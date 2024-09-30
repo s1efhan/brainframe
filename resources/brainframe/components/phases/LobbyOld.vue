@@ -58,7 +58,7 @@ const props = defineProps({
   sessionPhase: String,
   totalIdeasToVoteCount: [null, Number]
 });
-const qrcodeCanvas = ref(null);
+ 
 const showQRCode = ref(false);
 const validatedEmails = ref([]);
 const contributorEmailAddresses = ref(['']);
