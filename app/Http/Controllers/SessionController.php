@@ -19,6 +19,7 @@ use Log;
 use App\Events\SessionResumed;
 use App\Events\SessionStarted;
 use App\Events\SessionPaused;
+use App\Events\IdeasFormatted;
 use App\Events\SessionStopped;
 use GuzzleHttp\Client;
 
@@ -103,6 +104,7 @@ class SessionController extends Controller
                     'name' => $session->method->name,
                     'description' => $session->method->description,
                     'time_limit' => $session->method->time_limit,
+                    'idea_limit' => $session->method->idea_limit,
                     'round_limit' => $roundLimit
                 ],
                 'completion_tokens' => $completion_tokens,
@@ -164,11 +166,10 @@ class SessionController extends Controller
             }
         }
         $roundLimit = $session->method->name === '6-3-5'
-        ? max($session->contributors()->count(), 2)
-        : $session->method->round_limit;
+            ? max($session->contributors()->count(), 2)
+            : $session->method->round_limit;
 
         if ($collectingRound >= $roundLimit) {
-            $voteRound++;
             $session->update(['phase' => 'voting', 'is_paused' => true, 'seconds_left' => 0, 'vote_round' => $voteRound, 'collecting_round' => 0]);
         } else {
             $session->update(['is_paused' => true, 'seconds_left' => 0, 'vote_round' => $voteRound, 'collecting_round' => $collectingRound]);
@@ -184,7 +185,7 @@ class SessionController extends Controller
         Log::info("sendToGPT");
         $session = Session::findOrFail($sessionId);
         $round = $session->collecting_round;
-
+        Log::info("round: " . $round);
         $ideas = Idea::where('session_id', $sessionId)
             ->where('round', $round)
             ->select('id', 'text_input', 'contributor_id', 'round')
@@ -259,22 +260,27 @@ class SessionController extends Controller
 
             if (isset($responseBody['choices'][0]['message']['content'])) {
                 $content = $responseBody['choices'][0]['message']['content'];
-                // Entferne mögliche JSON-Codeblock-Markierungen
                 $content = preg_replace('/```json\s*|\s*```/', '', $content);
                 $newIdeas = json_decode($content, true);
-
+                Log::info($newIdeas);
+            
+                $createdIdeas = [];
                 if (is_array($newIdeas)) {
                     foreach ($newIdeas as $idea) {
-                        Idea::create([
+                        $createdIdea = Idea::create([
                             'title' => $idea['title'] ?? '',
                             'description' => $idea['description'] ?? '',
                             'tag' => $idea['tag'] ?? '',
                             'contributor_id' => $idea['contributor_id'] ?? 0,
                             'session_id' => $sessionId,
-                            'round' => $idea['round'] ?? 0
+                            'round' => $session->collecting_round
                         ]);
+                        $createdIdeas[] = $createdIdea;
                     }
-                    Log::info('New ideas saved successfully');
+                    
+                    // Event einmal mit allen erstellten Ideen auslösen
+                    event(new IdeasFormatted($createdIdeas, $sessionId));
+                    Log::info('New ideas saved and event broadcasted successfully');
                 } else {
                     Log::error('Invalid format for new ideas', ['content' => $content]);
                 }

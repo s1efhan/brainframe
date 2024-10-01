@@ -2,7 +2,7 @@
   <main v-if="session && ideas && votes && !isLoading">
 
     <h1 class="headline__session-target">
-      {{ session.target }} {{ session.phase }}
+      {{ session.target }} {{ session.phase }} {{ session.collecting_round }}
     </h1>
     <Rollenwahl v-if="!personalContributor" :session="session" :userId="userId" />
     <div v-if="personalContributor && session.phase != 'closing'" class="session_headline__details">
@@ -14,17 +14,17 @@
       </div>
       <div @click="session.isPaused && personalContributor.isHost ? resumeSession() : pauseSession()">
         <p v-if="session.isPaused">
-            <PauseIcon />
+          <PauseIcon />
         </p>
-          <p v-if="!session.isPaused && session.phase ==='collecting'">
-            <BrainIcon />
-          </p>
-          <p v-if="!session.isPaused && session.phase ==='voting'">
-            <FunnelIcon />
-          </p>
-          <p v-if="!session.isPaused && session.phase ==='closing'">
-            <SwooshIcon />
-          </p>
+        <p v-if="!session.isPaused && session.phase ==='collecting'">
+          <BrainIcon />
+        </p>
+        <p v-if="!session.isPaused && session.phase ==='voting'">
+          <FunnelIcon />
+        </p>
+        <p v-if="!session.isPaused && session.phase ==='closing'">
+          <SwooshIcon />
+        </p>
       </div>
       <div>
         <p>{{ session.method.name }} Methode</p>
@@ -40,7 +40,8 @@
       v-if="(session.isPaused  && session.phase != 'closing' || showStats && session.phase != 'closing') && personalContributor"
       :session="session" :contributors="contributors" :personalContributor="personalContributor" :votes="votes"
       @exit="showStats = false" @start="startSession" @stop="stopSession" :ideas="ideasWithoutTags" />
-    <Collecting @stop="stopSession" :contributors="contributors" :session="session" :personalContributor="personalContributor" :ideas="ideas"
+    <Collecting @stop="stopSession" :contributors="contributors" :session="session"
+      :personalContributor="personalContributor" :ideas="ideas"
       v-if="session.phase === 'collecting' && !session.isPaused &&  !showStats && personalContributor"
       @wait="showStats = true" />
     <Voting v-if=" session.phase === 'voting' && !session.isPaused && !showStats && personalContributor"
@@ -255,7 +256,7 @@ const startSession = () => {
 }
 const stopSession = () => {
   console.log("stopSession", personalContributor.value.isHost)
-isLoading.value = true;
+  isLoading.value = true;
   if (personalContributor.value.isHost) {
     axios.post('/api/session/stop', {
       session_id: sessionId.value,
@@ -269,8 +270,8 @@ isLoading.value = true;
         console.error('Error stopping Session', error);
       })
       .finally(() => {
-      isLoading.value = false;
-    });
+        isLoading.value = false;
+      });
   }
 }
 
@@ -388,6 +389,12 @@ onMounted(() => {
     .listen('UserSentIdea', (e) => {
       console.log("sent idea:", e);
       ideas.value.push({ ...e.idea });
+    })
+    .listen('IdeasFormatted', (e) => {
+      console.log("IdeasFormatted", e);
+      e.ideas.forEach(idea => {
+        ideas.value.push(idea);
+      });
     });
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('beforeunload', leaveSession);

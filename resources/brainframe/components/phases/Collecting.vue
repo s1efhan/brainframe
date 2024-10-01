@@ -75,11 +75,11 @@
     </div> 
     <div class="collecting__bottom__container">
         <div v-if="session.method.idea_limit > 0" class="ideasCount">
-            {{ 0 }} | {{ session.method.idea_limit }}
-            <p class="ideas-icon" v-if="submittedIdeas === session.method.idea_limit">✓</p>
+            {{ personalIdeasCount }} | {{ session.method.idea_limit }}
+            <p class="ideas-icon" v-if="personalIdeasCount === session.method.idea_limit">✓</p>
         </div>
         <div v-else class="ideasCount">
-            {{ personalIdeasCount }} <!-- ideas. meines eigenen Contributors in der aktuellen session.collecting_round-->
+            {{ personalIdeasCount }}
         </div>
         <div class="collecting__buttons">
             <button class="primary" type="submit"

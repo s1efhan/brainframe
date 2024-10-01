@@ -1,5 +1,5 @@
 <template>
-  <section v-if="session.vote_round < 1 && session.collecting_round < 1 && session.phase != 'closing'">
+  <section v-if="session.vote_round < 1 && session.collecting_round < 1 && session.phase === 'collecting'">
     <div v-if="sessionLink" @click="copyToClipboard(sessionLink)" class="session-link">
       <router-link :to="'/brainframe/' + session.id">{{ sessionLink }}</router-link>
       <p>
@@ -159,7 +159,7 @@ const ideasCount = computed(() => {
 const getVoteCount = (contributorId) => {
   return props.votes.filter(vote =>
     vote.contributor_id === contributorId &&
-    Number(vote.round) === session.vote_round
+    Number(vote.round) === props.session.vote_round
   ).length;
 };
 
@@ -182,10 +182,6 @@ const contributorEmailAddresses = ref(['']);
 const sessionLink = ref(null);
 const emit = defineEmits(['start', 'exit', 'stop']);
 const showInfo = ref(true);
-const contributors = ref(props.contributors);
-const personalContributor = ref(props.personalContributor);
-const session = ref(props.session);
-const ideas = ref(props.ideas);
 const removeEmail = (email) => {
   validatedEmails.value = validatedEmails.value.filter(e => e !== email);
 };
@@ -213,10 +209,10 @@ const sessionInvite = () => {
 
   validatedEmails.value = [];
   contributorEmailAddresses.value = [''];
-  if (personalContributor.value.isHost) {
+  if (props.personalContributor.isHost) {
     axios.post('/api/session/invite', {
-      session_id: session.value.id,
-      host_id: personalContributor.value.id,
+      session_id: props.session.id,
+      host_id: props.personalContributor.id,
       contributor_email_addresses: oldValidatedEmails
     })
       .then(response => {
@@ -238,8 +234,8 @@ const generateQRCode = () => {
   }
 };
 onMounted(() => {
-  sessionLink.value = `https://stefan-theissen.de/` + session.value.id;
-  if (session.value.collecting_round > 1 || session.value.vote_round > 0) {
+  sessionLink.value = `https://stefan-theissen.de/` + props.session.id;
+  if (props.session.collecting_round > 1 || props.session.vote_round > 0) {
     showInfo.value = false;
   }
   else { showInfo.value = true; }

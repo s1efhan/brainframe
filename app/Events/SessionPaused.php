@@ -28,7 +28,8 @@ class SessionPaused implements ShouldBroadcast
                     'name' => $session->method->name,
                     'description' => $session->method->description,
                     'time_limit' => $session->method->time_limit,
-                    'round_limit' =>  $roundLimit
+                    'round_limit' =>  $roundLimit,
+                    'idea_limit'=>$session->method->idea_limit
                 ],
                 'target' => $session->target,
                 'seconds_left' => $session->seconds_left,
