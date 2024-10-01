@@ -19,6 +19,9 @@ class SessionStopped implements ShouldBroadcast
 
     public function __construct(Session $session)
     { 
+        $roundLimit = $session->method->name === '6-3-5'
+        ? max($session->contributors()->count(), 2)
+        : $session->method->round_limit;
         $this -> formattedSession = [
                 'id' => $session->id,
                 'method' => [
@@ -26,7 +29,7 @@ class SessionStopped implements ShouldBroadcast
                     'name' => $session->method->name,
                     'description' => $session->method->description,
                     'time_limit' => $session->method->time_limit,
-                    'round_limit' => $session->method->round_limit
+                    'round_limit' => $roundLimit
                 ],
                 'target' => $session->target,
                 'seconds_left' => $session->seconds_left,
@@ -35,6 +38,7 @@ class SessionStopped implements ShouldBroadcast
                 'phase' => $session->phase,
                 'isPaused' => $session->is_paused
             ];
+            Log::info("sessionStopped: ", $this -> formattedSession);
     }
 
     public function broadcastOn(): Channel

@@ -400,7 +400,6 @@ onMounted(() => {
 watch(() => session.value, (newSession) => {
   if (newSession?.method?.name === '6-3-5') {
     session.value.method.round_limit = Math.max(contributors.value.length, 2);
-    console.log("session.method.round_limit", session.value.method.round_limit, "contributors.length", contributors.value.length);
   }
 }, { immediate: true, deep: true });
 onUnmounted(() => {

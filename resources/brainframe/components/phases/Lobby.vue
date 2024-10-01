@@ -155,9 +155,10 @@ const ideasCount = computed(() => {
     ).length;
   };
 });
+
 const getVoteCount = (contributorId) => {
   return props.votes.filter(vote =>
-    props.vote.contributor_id === contributorId &&
+    vote.contributor_id === contributorId &&
     Number(vote.round) === session.vote_round
   ).length;
 };

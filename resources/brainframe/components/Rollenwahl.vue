@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import IconComponents from '../components/IconComponents.vue';
 

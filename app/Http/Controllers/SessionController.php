@@ -91,6 +91,10 @@ class SessionController extends Controller
             ->first();
         $prompt_tokens = $tokenCounts->prompt_tokens ?? 0;
         $completion_tokens = $tokenCounts->completion_tokens ?? 0;
+        $roundLimit = $session->method->name === '6-3-5'
+            ? max($session->contributors()->count(), 2)
+            : $session->method->round_limit;
+
         return response()->json([
             'session' => [
                 'id' => $session->id,
@@ -99,7 +103,7 @@ class SessionController extends Controller
                     'name' => $session->method->name,
                     'description' => $session->method->description,
                     'time_limit' => $session->method->time_limit,
-                    'round_limit' => $session->method->round_limit
+                    'round_limit' => $roundLimit
                 ],
                 'completion_tokens' => $completion_tokens,
                 'prompt_tokens' => $prompt_tokens,
@@ -159,8 +163,11 @@ class SessionController extends Controller
                 $session->update(['phase' => 'closing', 'is_paused' => true, 'seconds_left' => 0, 'vote_round' => 0, 'collecting_round' => 0]);
             }
         }
+        $roundLimit = $session->method->name === '6-3-5'
+        ? max($session->contributors()->count(), 2)
+        : $session->method->round_limit;
 
-        if ($collectingRound >= $session->method->round_limit) {
+        if ($collectingRound >= $roundLimit) {
             $voteRound++;
             $session->update(['phase' => 'voting', 'is_paused' => true, 'seconds_left' => 0, 'vote_round' => $voteRound, 'collecting_round' => 0]);
         } else {
@@ -617,14 +624,14 @@ class SessionController extends Controller
         ];
         $format = request('format', 'html');
 
-            $html = view('pdf.session_details', $data)->render();
-            $pdf = PDF::loadHTML($html);
-            $filename = $session->target ?? 'session_details';
-            $filename .= '.pdf';
-            return $pdf->download($filename);
+        $html = view('pdf.session_details', $data)->render();
+        $pdf = PDF::loadHTML($html);
+        $filename = $session->target ?? 'session_details';
+        $filename .= '.pdf';
+        return $pdf->download($filename);
 
         // Standardmäßig HTML zurückgeben
-     //   return view('pdf.session_details', $data);
+        //   return view('pdf.session_details', $data);
     }
 
     private function getClosingPdf($sessionId)
