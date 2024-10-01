@@ -66,8 +66,9 @@ class UserController extends Controller
                 'method_name' => $method->name,
                 'method_id' => $method->id,
                 'host_id' => $session->host_id,
-                'active_phase' => $session->active_phase,
-                'active_round' => $session->active_round
+                'phase' => $session->phase,
+                'vote_round' => $session->vote_round,
+                'collecting_round'=> $session->collecting_round
             ];
         })->sortByDesc('updated_at')->values();
 

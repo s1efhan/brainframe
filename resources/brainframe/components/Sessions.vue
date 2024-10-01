@@ -48,7 +48,7 @@
           </td>
           <td>
             <template
-              v-if="session.isEditing && (session.active_phase === null || session.active_phase ==='collectingPhase') && (session.active_round > 1 || session.active_round === null)">
+              v-if="session.isEditing && session.phase === 'collecting' && session.collecting_round < 1">
               <select v-model="session.editedMethodId">
                 <option v-for="method in methods" :key="method.id" :value="method.id">
                   {{ method.name }}
@@ -59,16 +59,17 @@
               {{ session.method_name }}
             </template>
           </td>
-          <td class="center" v-if="session.active_phase == 'closingPhase'"><SwooshIcon/></td>
-          <td class="center" v-if="session.active_phase == 'collectingPhase' || !session.active_phase"><BrainIcon/></td>
-          <td class="center" v-if ="session.active_phase == 'lobby'"><PauseIcon/></td>
-          <td class="center" v-if ="session.active_phase == 'votingPhase'"><FunnelIcon/></td>
+          <td class="center">
+            <SwooshIcon v-if="session.phase === 'closing'"/>
+            <BrainIcon v-if="session.phase === 'collecting'"/>
+            <FunnelIcon v-if="session.phase === 'votingPhase'"/>
+          </td>
           <td v-if="session.host_id === userId" class="settings">
             <template v-if="session.isEditing">
               <button @click="sendAlterSession(session)">Speichern</button>
             </template>
             <template v-else>
-              <div v-if="session.active_phase === null || session.active_phase === 'collectingPhase'">
+              <div v-if="session.phase === 'collecting' && session.collecting_round < 1">
                 <BrushIcon @click="alterSession(session)" />
               </div>
               <div v-if="!session.confirmDelete" @click="session.confirmDelete = true" class="x">X</div>
@@ -84,7 +85,6 @@
     </table>
     <p v-else>Keine Sitzungen gefunden.</p>
   </div>
-  
   </main>
 </template>
 
@@ -99,55 +99,67 @@ import PinIcon from '../components/icons/PinIcon.vue';
 import CalendarIcon from '../components/icons/CalendarIcon.vue';
 import ProfileIcon from '../components/icons/ProfileIcon.vue';
 import BrainIcon from '../components/icons/BrainIcon.vue';
-import PauseIcon from '../components/icons/PauseIcon.vue';
 import FunnelIcon from '../components/icons/FunnelIcon.vue';
 import IconComponents from '../components/IconComponents.vue';
+
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
+
 const props = defineProps({
   userId: {
     type: [String, Number],
     required: true
   }
 });
+
 const responseMsg = ref(null);
 const userSessions = ref([]);
 const userId = ref(props.userId);
-const methods = ref(null);
+const methods = ref([]);
+
 const alterSession = (session) => {
   session.isEditing = true;
   session.editedTarget = session.target;
   session.editedMethodId = session.method_id;
 };
+
 const getMethods = () => {
   axios.get('/api/methods')
     .then(response => {
       methods.value = response.data;
-      const defaultMethod = methods.value.find(m => m.id === 1);
-      if (defaultMethod) methods.value[0] = { ...defaultMethod };
     }).catch(error => {
       console.error('Error fetching methods', error);
+      responseMsg.value = 'Fehler beim Laden der Methoden';
     });
 }; 
+
 const sendAlterSession = (session) => {
+  // Stellen Sie sicher, dass method_id einen Wert hat
+  const methodId = session.editedMethodId || session.method_id;
+  
+  if (!methodId) {
+    responseMsg.value = 'Fehler: Keine Methode ausgewählt';
+    return;
+  }
+
   axios.post('/api/session/put', {
     session_id: session.session_id,
     user_id: userId.value,
-    methodId: session.editedMethodId,
+    method_id: methodId,
     target: session.editedTarget
   })
     .then(response => {
       console.log('Server response:', response.data);
       responseMsg.value = response.data.message;
       session.target = session.editedTarget;
-      session.method_id = session.editedMethodId;
-      session.method_name = methods.value.find(m => m.id === session.editedMethodId).name;
+      session.method_id = methodId;
+      session.method_name = methods.value.find(m => m.id === methodId)?.name || 'Unbekannte Methode';
       session.isEditing = false;
     })
     .catch(error => {
       console.error('Fehler bei update der Session', error);
-      responseMsg.value = response.data.error;
+      responseMsg.value = error.response?.data?.message || 'Ein Fehler ist aufgetreten';
     });
 };
 
@@ -163,18 +175,19 @@ const deleteSession = (session) => {
     })
     .catch(error => {
       console.error('Fehler beim Löschen der Session', error);
-      responseMsg.value = response.data.error;
+      responseMsg.value = error.response?.data?.message || 'Ein Fehler ist aufgetreten';
     });
 };
+
 const getUserSessions = () => {
   axios.get(`/api/user/${userId.value}/sessions`)
     .then(response => {
       userSessions.value = response.data;
       console.log('userSessions: ', userSessions.value);
-      console.log('meine Id: ', userId.value);
     })
     .catch(error => {
       console.error('Error fetching sessions', error);
+      responseMsg.value = 'Fehler beim Laden der Sitzungen';
     });
 };
 

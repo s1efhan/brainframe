@@ -193,9 +193,12 @@
     body {
         font-family: Arial, sans-serif;
         line-height: 1.6;
-        margin: 2cm;
+        margin: 1cm;
     }
-
+.session-data, .top-ideas, .word-cluster, .tags-list, .next-steps {
+    page-break-inside: avoid;
+        break-inside: avoid;
+}
     h2 {
         padding-bottom: 0.5em;
         margin-top: 1.5em;
@@ -271,56 +274,6 @@
         border-radius: 5px;
         border: solid;
     }
-
-    .tags-list li.count-1 {
-        padding: 0.1em;
-        font-size: 0.6em;
-    }
-
-    .tags-list li.count-2 {
-        padding: 0.3em;
-        font-size: 0.8em;
-    }
-
-    .tags-list li.count-3 {
-        padding: 0.6em;
-        font-size: 1em;
-    }
-
-    .tags-list li.count-4 {
-        padding: 0.8em;
-        font-size: 1.2em;
-    }
-
-    .tags-list li.count-5 {
-        padding: 1em;
-        font-size: 1.4em;
-    }
-
-    .tags-list li.count-6 {
-        padding: 1.2em;
-        font-size: 1.6em;
-    }
-
-    .tags-list li.count-7 {
-        padding: 1.4em;
-        font-size: 1.8em;
-    }
-
-    .tags-list li.count-8 {
-        padding: 1.6em;
-        font-size: 2em;
-    }
-
-    .tags-list li.count-9 {
-        padding: 1.8em;
-        font-size: 2.2em;
-    }
-
-    .tags-list li.count-10 {
-        padding: 2em;
-        font-size: 2.4em;
-    }
     .word-cluster ul {
         padding: 0;
         margin: 0;
@@ -377,9 +330,4 @@
         font-size: 30px;
     }
 
-    @media print {
-        .page-break {
-            page-break-before: always;
-        }
-    }
 </style>

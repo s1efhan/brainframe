@@ -732,16 +732,13 @@ border-top:none;
 
 .passed-ideas__container {
     display: flex;
-    margin: 4em;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: var(--text);
     box-sizing: border-box;
     color: var(--secondary);
     overflow: hidden;
-    border-radius: 15px;
-    border: solid var(--secondary);
+    margin: 2em;
 
     h3 {
         margin-top: 2em;
@@ -749,13 +746,16 @@ border-top:none;
         border: solid var(--accent);
         padding: 0.5em;
         border-radius: 5px;
-        margin-bottom: 0.3em;
+        margin-bottom: 1em;
         box-sizing: border-box;
     }
 
     ul {
+        background-color: var(--text);
+        border-radius: 15px;
+        border: solid var(--secondary);
         box-sizing: border-box;
-        width: 100%;
+        width: 70%;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1028,6 +1028,11 @@ border-top:none;
             th {
                 color: var(--accent)
             }
+            .active_round {
+                background-color: var(--secondary);
+                color:var(--accent);
+              }
+              th.active_round {border-bottom: solid var(--accent)}
         }
 
         .center {

@@ -617,16 +617,14 @@ class SessionController extends Controller
         ];
         $format = request('format', 'html');
 
-        if ($format === 'pdf') {
             $html = view('pdf.session_details', $data)->render();
             $pdf = PDF::loadHTML($html);
             $filename = $session->target ?? 'session_details';
             $filename .= '.pdf';
             return $pdf->download($filename);
-        }
 
         // Standardmäßig HTML zurückgeben
-        return view('pdf.session_details', $data);
+     //   return view('pdf.session_details', $data);
     }
 
     private function getClosingPdf($sessionId)

@@ -64,15 +64,15 @@
     </form>
     <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1" class="passed-ideas__container">
         <h3>Inspirationen deiner Session Nachbarn</h3>
-        <ul v-for="(idea, index) in passedIdeas">
+        <ul v-for="(idea, index) in neighbourIdeas">
             <li :class="'round-'+ idea.round">
-                <div>{{ idea.idea_title }}</div>
+                <div>{{ idea.title }}</div>
                 <div>
-                    <component :is="getIconComponent(idea.contributorIcon)" />
+                    <component :is="getIconComponent(props.contributors.find(c => c.id === idea.contributor_id).icon)" />
                 </div>
             </li>
         </ul>
-    </div>
+    </div> 
     <div class="collecting__bottom__container">
         <div v-if="session.method.idea_limit > 0" class="ideasCount">
             {{ 0 }} | {{ session.method.idea_limit }}
@@ -98,6 +98,7 @@ import MicrophoneIcon from '../icons/MicrophoneIcon.vue';
 import IconComponents from '../IconComponents.vue';
 import AiStarsIcon from '../icons/AiStarsIcon.vue';
 const getIconComponent = (iconName) => {
+    console.log("iconName", iconName);
     return IconComponents[iconName] || null;
 };
 const showInfo = ref(false);
@@ -114,7 +115,65 @@ const props = defineProps({
         type: Object,
         required: true
     },
+    contributors: {
+        type: Object,
+        required: true
+    }
 });
+const neighbourIdeas = computed(() => {
+  const currentRound = parseInt(props.session.collecting_round);
+  const currentContributorId = props.personalContributor.id;
+  console.log(`Current round: ${currentRound}, Current contributor ID: ${currentContributorId}`);
+
+  if (currentRound <= 1) {
+    console.log('Round 1 or less, returning empty array');
+    return [];
+  }
+
+  console.log(`Total ideas in props: ${props.ideas.length}`);
+  console.log('Sample of props.ideas:', props.ideas.slice(0, 2));
+
+  const validIdeas = props.ideas.filter(idea => {
+    console.log(`Checking idea:`, idea);
+    console.log(`Has tag: ${Boolean(idea.tag)}`);
+    return idea.tag;
+  });
+  console.log(`Valid ideas: ${validIdeas.length}`);
+
+  if (validIdeas.length === 0) {
+    console.log('No valid ideas found. Check if "tag" is the correct property to filter by.');
+    console.log('Available properties on idea object:', Object.keys(props.ideas[0] || {}));
+  }
+
+  // Verwenden Sie props.contributors anstelle von sortedContributors
+  console.log(`Contributors: ${props.contributors.map(c => c.id).join(', ')}`);
+
+  const neighbourIdeas = [];
+  for (let i = 1; i < currentRound; i++) {
+    const targetRound = currentRound - i;
+    const neighbourId = findNeighbourId(props.contributors.map(c => c.id), currentContributorId, i);
+    console.log(`Looking for ideas from neighbour ${neighbourId} in round ${targetRound}`);
+
+    const neighbourIdeasInRound = validIdeas.filter(idea =>
+      idea.contributor_id === neighbourId &&
+      parseInt(idea.round) === targetRound
+    );
+    console.log(`Found ${neighbourIdeasInRound.length} ideas for this neighbour and round`);
+    neighbourIdeas.push(...neighbourIdeasInRound);
+  }
+
+  console.log(`Total neighbour ideas found: ${neighbourIdeas.length}`);
+  return neighbourIdeas;
+});
+
+function findNeighbourId(contributorIds, currentId, offset) {
+  const currentIndex = contributorIds.indexOf(currentId);
+  const neighbourIndex = (currentIndex + offset) % contributorIds.length;
+  const neighbourId = contributorIds[neighbourIndex];
+  console.log(`Finding neighbour: current index ${currentIndex}, offset ${offset}, neighbour index ${neighbourIndex}, neighbour ID ${neighbourId}`);
+  return neighbourId;
+}
+
 const personalIdeasCount = computed(() => {
   return props.ideas.filter(idea => 
     idea.round == props.session.collecting_round &&
@@ -235,5 +294,6 @@ onMounted(() => {
         showInfo.value = false;
     }
     else {showInfo.value = true;}
+    console.log("neighbourIdeas", neighbourIdeas.value);
 });
 </script>

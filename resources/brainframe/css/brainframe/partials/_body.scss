@@ -19,7 +19,12 @@ body {
 img {
     max-width: 100vw;
 }
-
+.impressum, .datenschutz {
+    h1{color: var(--accent)}
+    padding: 1em;
+    color: var(--accent);
+    p{padding: 0.5em;}
+}
 h2 {
     text-align: center;
     color: var(--accent);

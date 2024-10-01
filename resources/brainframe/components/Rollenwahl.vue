@@ -1,4 +1,8 @@
 <template>
+ <section v-if="session.method.name === '6-3-5' && (session.collecting_round > 0 || session.phase === 'voting')">
+    <p>Die Session hat schon gestartet. Leider kann man bei der 6-3-5 Methode nicht nachträglich beitreten. Du kannst dir aber am Ende das Ergebnis ansehen</p>
+  </section>
+  <section v-else>
   <div class="selectRole__head">
     <h2>Wähle dein Pseudonym</h2>
     <div class="info__container">
@@ -43,6 +47,7 @@
     </div>
     <button class="primary" type="submit">Rolle Wählen</button>
   </form>
+</section>
 </template>
 
 <script setup>
@@ -114,7 +119,7 @@ const addContributor = () => {
 };
 
 onMounted(() => {
-  console.log("Rollenwahl Mounted: ", session.value.id, userId.value, session.value.method)
+  console.log("Rollenwahl Mounted: ", session.value, userId.value)
   Echo.channel('session.' + session.value.id)
     .listen('UserPickedRole', (e) => {
       console.log("UserPickedRole event empfangen")

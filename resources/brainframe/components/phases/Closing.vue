@@ -311,13 +311,9 @@ const calculateCost = computed(() => {
 });
 
 const downloadPDF = () => {
-    const format = 'pdf'; // Ändern Sie dies zu 'pdf' für den finalen Download
     const url = `/api/session/${props.session.id}/summary/download`;
 
-    if (format === 'html') {
-        // Öffnen Sie die HTML-Vorschau in einem neuen Tab
-        window.open(url, '_blank');
-    } else {
+   
         // Behalten Sie die bestehende PDF-Download-Logik bei
         axios.get(url, { responseType: 'blob' })
             .then(response => {
@@ -330,7 +326,6 @@ const downloadPDF = () => {
             .catch(error => {
                 console.error('Error Downloading PDF', error);
             });
-    }
 };
 
 const formatDate = (dateString) => {

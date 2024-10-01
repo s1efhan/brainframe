@@ -1,5 +1,5 @@
 <template>
-  <main v-if="session && ideas && votes">
+  <main v-if="session && ideas && votes && !isLoading">
 
     <h1 class="headline__session-target">
       {{ session.target }} {{ session.phase }}
@@ -12,23 +12,19 @@
           {{ contributors.filter(c => c.is_active).length }} | {{ contributors.length }}
         </p>
       </div>
-      <div v-if="session.phase ==='collecting'">
-        <p>
-          <BrainIcon />
-        </p>
-      </div>
-      <div v-if="session.phase ==='voting'">
-        <p>
-          <FunnelIcon />
-        </p>
-      </div>
-      <div v-if="session.phase ==='closing'">
-        <p>
-          <SwooshIcon />
-        </p>
-      </div>
       <div @click="session.isPaused && personalContributor.isHost ? resumeSession() : pauseSession()">
-        <p>{{ session.isPaused ? 'pausiert' : 'gestartet' }}</p>
+        <p v-if="session.isPaused">
+            <PauseIcon />
+        </p>
+          <p v-if="!session.isPaused && session.phase ==='collecting'">
+            <BrainIcon />
+          </p>
+          <p v-if="!session.isPaused && session.phase ==='voting'">
+            <FunnelIcon />
+          </p>
+          <p v-if="!session.isPaused && session.phase ==='closing'">
+            <SwooshIcon />
+          </p>
       </div>
       <div>
         <p>{{ session.method.name }} Methode</p>
@@ -40,16 +36,18 @@
         <p>{{ personalContributor.name }}</p>
       </div>
     </div>
-    <Lobby v-if="(session.isPaused  && session.phase != 'closing' || showStats && session.phase != 'closing') && personalContributor" :session="session" :contributors="contributors"
-      :personalContributor="personalContributor" :votes="votes" @exit="showStats = false" @start="startSession" @stop="stopSession" :ideas="ideasWithoutTags" />
-    <Collecting @stop="stopSession" :session="session" :personalContributor="personalContributor" :ideas="ideas"
+    <Lobby
+      v-if="(session.isPaused  && session.phase != 'closing' || showStats && session.phase != 'closing') && personalContributor"
+      :session="session" :contributors="contributors" :personalContributor="personalContributor" :votes="votes"
+      @exit="showStats = false" @start="startSession" @stop="stopSession" :ideas="ideasWithoutTags" />
+    <Collecting @stop="stopSession" :contributors="contributors" :session="session" :personalContributor="personalContributor" :ideas="ideas"
       v-if="session.phase === 'collecting' && !session.isPaused &&  !showStats && personalContributor"
       @wait="showStats = true" />
     <Voting v-if=" session.phase === 'voting' && !session.isPaused && !showStats && personalContributor"
       :session="session" @wait="showStats = true" :contributors="contributors"
-      :personalContributor="personalContributor" :ideas="ideasWithTags"  :votes="votes" />
-    <Closing
-      v-if=" session.phase === 'closing'" :session="session" :contributors="contributors" :personalContributor="personalContributor" :ideas="ideas" :votes="votes"/>
+      :personalContributor="personalContributor" :ideas="ideasWithTags" :votes="votes" />
+    <Closing v-if=" session.phase === 'closing'" :session="session" :contributors="contributors"
+      :personalContributor="personalContributor" :ideas="ideas" :votes="votes" />
     <div v-if="session.phase != 'closing' " class="timer__container">
       <SandclockIcon />
       <div class="timer"
@@ -58,12 +56,13 @@
       </div>
     </div>
   </main>
+  <main v-if="isLoading"><l-quantum size="45" speed="1.75" color="white"></l-quantum></main>
 
 </template>
 
 <script setup>
 import SandclockIcon from './icons/SandclockIcon.vue';
-import { ref, onMounted, onUnmounted, nextTick, computed} from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { sessionId } from '../js/eventBus.js'
 import axios from 'axios';
 import Rollenwahl from './Rollenwahl.vue';
@@ -83,6 +82,9 @@ import IconComponents from '../components/IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
+import { quantum } from "ldrs";
+const isLoading = ref(false);
+quantum.register();
 const personalContributor = ref(null);
 const wait = () => {
   console.log('wait');
@@ -253,7 +255,7 @@ const startSession = () => {
 }
 const stopSession = () => {
   console.log("stopSession", personalContributor.value.isHost)
-
+isLoading.value = true;
   if (personalContributor.value.isHost) {
     axios.post('/api/session/stop', {
       session_id: sessionId.value,
@@ -266,6 +268,9 @@ const stopSession = () => {
       .catch(error => {
         console.error('Error stopping Session', error);
       })
+      .finally(() => {
+      isLoading.value = false;
+    });
   }
 }
 
@@ -345,6 +350,7 @@ onMounted(() => {
         personalContributor.value.isMe = true;
         console.log("personalContributor Picked", personalContributor.value);
       }
+      session.value.method.round_limit = Math.max(contributors.value.length, 2);
       console.log("UserPickedRole", contributors.value);
     })
     .listen('SessionStarted', (e) => {
@@ -391,7 +397,12 @@ onMounted(() => {
     adjustHeadline();
   });
 });
-
+watch(() => session.value, (newSession) => {
+  if (newSession?.method?.name === '6-3-5') {
+    session.value.method.round_limit = Math.max(contributors.value.length, 2);
+    console.log("session.method.round_limit", session.value.method.round_limit, "contributors.length", contributors.value.length);
+  }
+}, { immediate: true, deep: true });
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', leaveSession);
