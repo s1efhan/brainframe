@@ -4,9 +4,9 @@
       <div class="method-display">
         <h2>{{ currentMethod.name }}</h2>
         <div class="session-settings__method-carousel__buttons">
-          <button @click="changeMethod(-1)">&lt;</button>
+          <button @click="changeMethod(-1)"><ArrowLeftIcon/></button>
           <p v-html="currentMethod.description"></p>
-          <button @click="changeMethod(1)">&gt;</button>
+          <button @click="changeMethod(1)"><ArrowRightIcon/></button>
         </div>
       </div>
     </div>
@@ -16,7 +16,8 @@
 <script setup>
 import { ref, computed, onMounted} from 'vue';
 import axios from 'axios';
-
+import ArrowLeftIcon from './icons/ArrowLeftIcon.vue';
+import ArrowRightIcon from './icons/ArrowRightIcon.vue';
 const emit = defineEmits(['createSession']);
 const methods = ref(null);
 const currentIndex = ref(0);

@@ -36,6 +36,10 @@
         <p>{{ personalContributor.name }}</p>
       </div>
     </div>
+    <div v-if="errorMsg" class="error">
+      <p>{{ errorMsg }}</p>
+    </div>
+
     <Lobby
       v-if="(session.isPaused  && session.phase != 'closing' || showStats && session.phase != 'closing') && personalContributor"
       :session="session" :contributors="contributors" :personalContributor="personalContributor" :votes="votes"
@@ -57,7 +61,9 @@
       </div>
     </div>
   </main>
-  <main v-if="isLoading"><l-quantum size="45" speed="1.75" color="white"></l-quantum></main>
+  <main class="isLoading" v-if="isLoading">
+    <div> <l-dot-pulse size="43" speed="1.3" color="#91b4b2"></l-dot-pulse></div>
+  </main>
 
 </template>
 
@@ -83,14 +89,11 @@ import IconComponents from '../components/IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
-import { quantum } from "ldrs";
-const isLoading = ref(false);
-quantum.register();
+import { dotPulse } from 'ldrs'
+const isLoading = ref(true);
+dotPulse.register();
 const personalContributor = ref(null);
-const wait = () => {
-  console.log('wait');
-  showStats.value = true;
-}
+
 const props = defineProps({
   userId: {
     type: [String, Number],
@@ -130,6 +133,7 @@ const ideasWithoutTags = computed(() => {
   return ideas.value ? ideas.value.filter(idea => !idea.tag) : [];
 });
 //session
+const errorMsg = ref(null);
 const session = ref(null);
 const userId = ref(props.userId);
 const contributors = ref(null);
@@ -267,6 +271,7 @@ const stopSession = () => {
         console.log('Success stopping Session', response);
       })
       .catch(error => {
+        errorMsg.value = error.response?.data?.error || 'Ein unerwarteter Fehler ist aufgetreten';
         console.error('Error stopping Session', error);
       })
       .finally(() => {
@@ -334,13 +339,29 @@ const stopTimer = () => {
   clearInterval(timer.value);
 };
 
-onMounted(() => {
-  updateSessionId();
-  getContributors();
-  getSession();
-  getIdeas();
-  startTimer();
-  getVotes();
+onMounted(async () => {
+  try {
+    await Promise.all([
+      updateSessionId(),
+      getContributors(),
+      getSession(),
+      getIdeas(),
+      getVotes()
+    ]);
+    startTimer();
+    setupEventListeners();
+    setupWindowListeners();
+    await nextTick();
+    await joinSession();
+    adjustHeadline();
+    isLoading.value = false;
+  } catch (error) {
+    console.error("Fehler beim Laden:", error);
+    isLoading.value = false;
+  }
+});
+
+const setupEventListeners = () => {
   Echo.channel('session.' + sessionId.value)
     .listen('UserPickedRole', (e) => {
       console.log("e.formattedContributor", e.formattedContributor)
@@ -396,14 +417,13 @@ onMounted(() => {
         ideas.value.push(idea);
       });
     });
+}
+const setupWindowListeners = () => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('beforeunload', leaveSession);
   pingInterval = setInterval(ping, 30000);
-  nextTick(() => {
-    joinSession();
-    adjustHeadline();
-  });
-});
+}
+
 watch(() => session.value, (newSession) => {
   if (newSession?.method?.name === '6-3-5') {
     session.value.method.round_limit = Math.max(contributors.value.length, 2);

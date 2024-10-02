@@ -1,6 +1,6 @@
 <template>
-       <h2 class="collecting__header">
-      <LightbulbIcon />
+    <h2 class="collecting__header">
+        <LightbulbIcon />
     </h2>
     <div class="roundCountInfo__container">
 
@@ -42,7 +42,7 @@
 
                 <button @click="openFileInput">
                     <img class="input__image" v-if="imageFileUrl" :src="imageFileUrl" alt="uploadedImageIdea"
-                        height="100">
+                        height="100" @click="openFileInput">
                     <DefaultimageIcon class="input__image" @click="openFileInput" v-else />
                 </button>
                 <!--
@@ -53,8 +53,8 @@
        <l-waveform size="35" stroke="2.5" speed="0.8" color="white"></l-waveform></button>
       -->
                 <button @click="iceBreaker">
-
-                    <AiStarsIcon />
+                    <AiStarsIcon v-if="iceBreakerMsg" />
+                    <l-dot-pulse v-else size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
                 </button>
             </div>
 
@@ -68,11 +68,12 @@
             <li :class="'round-'+ idea.round">
                 <div>{{ idea.title }}</div>
                 <div>
-                    <component :is="getIconComponent(props.contributors.find(c => c.id === idea.contributor_id).icon)" />
+                    <component
+                        :is="getIconComponent(props.contributors.find(c => c.id === idea.contributor_id).icon)" />
                 </div>
             </li>
         </ul>
-    </div> 
+    </div>
     <div class="collecting__bottom__container">
         <div v-if="session.method.idea_limit > 0" class="ideasCount">
             {{ personalIdeasCount }} | {{ session.method.idea_limit }}
@@ -82,16 +83,16 @@
             {{ personalIdeasCount }}
         </div>
         <div class="collecting__buttons">
-            <button class="primary" type="submit"
-                @click="submitIdea"
-                :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit">Idee speichern</button>
+            <button class="primary" type="submit" @click="submitIdea"
+                :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit">Idee
+                speichern</button>
             <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>
         </div>
     </div>
 
 </template>
 <script setup>
-import { ref, onMounted, computed} from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import LightbulbIcon from '../icons/LightbulbIcon.vue';
 import DefaultimageIcon from '../icons/DefaultimageIcon.vue';
 import MicrophoneIcon from '../icons/MicrophoneIcon.vue';
@@ -101,6 +102,9 @@ const getIconComponent = (iconName) => {
     console.log("iconName", iconName);
     return IconComponents[iconName] || null;
 };
+import { dotPulse } from 'ldrs'
+
+dotPulse.register()
 const showInfo = ref(false);
 const props = defineProps({
     personalContributor: {
@@ -121,64 +125,64 @@ const props = defineProps({
     }
 });
 const neighbourIdeas = computed(() => {
-  const currentRound = parseInt(props.session.collecting_round);
-  const currentContributorId = props.personalContributor.id;
-  console.log(`Current round: ${currentRound}, Current contributor ID: ${currentContributorId}`);
+    const currentRound = parseInt(props.session.collecting_round);
+    const currentContributorId = props.personalContributor.id;
+    console.log(`Current round: ${currentRound}, Current contributor ID: ${currentContributorId}`);
 
-  if (currentRound <= 1) {
-    console.log('Round 1 or less, returning empty array');
-    return [];
-  }
+    if (currentRound <= 1) {
+        console.log('Round 1 or less, returning empty array');
+        return [];
+    }
 
-  console.log(`Total ideas in props: ${props.ideas.length}`);
-  console.log('Sample of props.ideas:', props.ideas.slice(0, 2));
+    console.log(`Total ideas in props: ${props.ideas.length}`);
+    console.log('Sample of props.ideas:', props.ideas.slice(0, 2));
 
-  const validIdeas = props.ideas.filter(idea => {
-    console.log(`Checking idea:`, idea);
-    console.log(`Has tag: ${Boolean(idea.tag)}`);
-    return idea.tag;
-  });
-  console.log(`Valid ideas: ${validIdeas.length}`);
+    const validIdeas = props.ideas.filter(idea => {
+        console.log(`Checking idea:`, idea);
+        console.log(`Has tag: ${Boolean(idea.tag)}`);
+        return idea.tag;
+    });
+    console.log(`Valid ideas: ${validIdeas.length}`);
 
-  if (validIdeas.length === 0) {
-    console.log('No valid ideas found. Check if "tag" is the correct property to filter by.');
-    console.log('Available properties on idea object:', Object.keys(props.ideas[0] || {}));
-  }
+    if (validIdeas.length === 0) {
+        console.log('No valid ideas found. Check if "tag" is the correct property to filter by.');
+        console.log('Available properties on idea object:', Object.keys(props.ideas[0] || {}));
+    }
 
-  // Verwenden Sie props.contributors anstelle von sortedContributors
-  console.log(`Contributors: ${props.contributors.map(c => c.id).join(', ')}`);
+    // Verwenden Sie props.contributors anstelle von sortedContributors
+    console.log(`Contributors: ${props.contributors.map(c => c.id).join(', ')}`);
 
-  const neighbourIdeas = [];
-  for (let i = 1; i < currentRound; i++) {
-    const targetRound = currentRound - i;
-    const neighbourId = findNeighbourId(props.contributors.map(c => c.id), currentContributorId, i);
-    console.log(`Looking for ideas from neighbour ${neighbourId} in round ${targetRound}`);
+    const neighbourIdeas = [];
+    for (let i = 1; i < currentRound; i++) {
+        const targetRound = currentRound - i;
+        const neighbourId = findNeighbourId(props.contributors.map(c => c.id), currentContributorId, i);
+        console.log(`Looking for ideas from neighbour ${neighbourId} in round ${targetRound}`);
 
-    const neighbourIdeasInRound = validIdeas.filter(idea =>
-      idea.contributor_id === neighbourId &&
-      parseInt(idea.round) === targetRound
-    );
-    console.log(`Found ${neighbourIdeasInRound.length} ideas for this neighbour and round`);
-    neighbourIdeas.push(...neighbourIdeasInRound);
-  }
+        const neighbourIdeasInRound = validIdeas.filter(idea =>
+            idea.contributor_id === neighbourId &&
+            parseInt(idea.round) === targetRound
+        );
+        console.log(`Found ${neighbourIdeasInRound.length} ideas for this neighbour and round`);
+        neighbourIdeas.push(...neighbourIdeasInRound);
+    }
 
-  console.log(`Total neighbour ideas found: ${neighbourIdeas.length}`);
-  return neighbourIdeas;
+    console.log(`Total neighbour ideas found: ${neighbourIdeas.length}`);
+    return neighbourIdeas;
 });
 
 function findNeighbourId(contributorIds, currentId, offset) {
-  const currentIndex = contributorIds.indexOf(currentId);
-  const neighbourIndex = (currentIndex + offset) % contributorIds.length;
-  const neighbourId = contributorIds[neighbourIndex];
-  console.log(`Finding neighbour: current index ${currentIndex}, offset ${offset}, neighbour index ${neighbourIndex}, neighbour ID ${neighbourId}`);
-  return neighbourId;
+    const currentIndex = contributorIds.indexOf(currentId);
+    const neighbourIndex = (currentIndex + offset) % contributorIds.length;
+    const neighbourId = contributorIds[neighbourIndex];
+    console.log(`Finding neighbour: current index ${currentIndex}, offset ${offset}, neighbour index ${neighbourIndex}, neighbour ID ${neighbourId}`);
+    return neighbourId;
 }
 
 const personalIdeasCount = computed(() => {
-  return props.ideas.filter(idea => 
-    idea.round == props.session.collecting_round &&
-    idea.contributor_id == props.personalContributor.id
-  ).length;
+    return props.ideas.filter(idea =>
+        idea.round == props.session.collecting_round &&
+        idea.contributor_id == props.personalContributor.id
+    ).length;
 });
 const personalContributor = ref(props.personalContributor)
 const emit = defineEmits(['stop', 'wait']);
@@ -188,9 +192,12 @@ const fileInput = ref(null);
 const imageFile = ref(null);
 const imageFileUrl = ref('');
 const errorMsg = ref('');
-const iceBreakerMsg = ref('');
+const iceBreakerMsg = ref('Trage hier deine Idee ein.');
 
 const iceBreaker = () => {
+    iceBreakerMsg.value = null;
+    const fileInput = ref(null);
+    const textInput = ref('');
     axios.post('/api/session/ice-breaker', {
         session_id: session.value.id,
         contributor_id: personalContributor.value.id
@@ -208,7 +215,7 @@ const iceBreaker = () => {
 }
 
 const submitIdea = async () => {
-    if (personalIdeasCount >= session.value.method.idea_limit &&session.value.method.idea_limit > 0) {
+    if (personalIdeasCount >= session.value.method.idea_limit && session.value.method.idea_limit > 0) {
         errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
         return;
     }
@@ -219,7 +226,7 @@ const submitIdea = async () => {
         const formData = new FormData();
         formData.append('contributor_id', personalContributor.value.id);
         formData.append('session_id', session.value.id);
-        formData.append('round',  session.value.collecting_round);
+        formData.append('round', session.value.collecting_round);
 
         if (compressedImage) {
             formData.append('image_file', compressedImage);
@@ -233,7 +240,7 @@ const submitIdea = async () => {
             textInput.value = '';
             imageFile.value = null;
             imageFileUrl.value = '';
-           // personalIdeasCount++; geht nicht, stattdessen Event und ganze ideas updaten
+            // personalIdeasCount++; geht nicht, stattdessen Event und ganze ideas updaten
             iceBreakerMsg.value = "";
         } catch (error) {
             console.error('Error saving idea', error);
@@ -290,10 +297,10 @@ const compressImage = async (file, maxSizeInMB = 2) => {
     });
 };
 onMounted(() => {
-    if(session.collecting_round > 1){
+    if (session.value.collecting_round > 1) {
         showInfo.value = false;
     }
-    else {showInfo.value = true;}
+    else { showInfo.value = true; }
     console.log("neighbourIdeas", neighbourIdeas.value);
 });
 </script>

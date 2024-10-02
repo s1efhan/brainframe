@@ -80,7 +80,7 @@
         </thead>
         <tbody>
           <tr v-for="contributor in contributors" :key="contributor.id">
-            <td>{{ contributor.icon }}</td>
+           <td class="center"> <component :is="getIconComponent(contributor)" /> </td>
             <td>{{ contributor.name }}</td>
             <td v-if="session.phase !== 'voting'">
               {{ ideasCount(contributor.id, session.collecting_round) }}
@@ -123,6 +123,10 @@
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
 import SwooshIcon from '../icons/SwooshIcon.vue';
+import IconComponents from '../IconComponents.vue';
+const getIconComponent = (contributor) => {
+    return contributor ? IconComponents[contributor.icon] || null : null;
+};
 import CopyIcon from '../icons/CopyIcon.vue';
 import QRCode from 'qrcode';
 const props = defineProps({
@@ -149,7 +153,7 @@ const props = defineProps({
 });
 const ideasCount = computed(() => {
   return (contributorId, round) => {
-    return ideas.value.filter(idea =>
+    return props.ideas.filter(idea =>
       idea.contributor_id === contributorId &&
       Number(idea.round) === round
     ).length;
@@ -234,7 +238,7 @@ const generateQRCode = () => {
   }
 };
 onMounted(() => {
-  sessionLink.value = `https://stefan-theissen.de/` + props.session.id;
+  sessionLink.value = `https://stefan-theissen.de/brainframe` + props.session.id;
   if (props.session.collecting_round > 1 || props.session.vote_round > 0) {
     showInfo.value = false;
   }

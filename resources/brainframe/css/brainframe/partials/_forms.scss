@@ -265,16 +265,16 @@ input:focus {
                 width: 1em;
                 height: 1em;
             }
-
             &:hover,
-            &:focus {
+            &:focus{
                 border: solid var(--accent);
+            svg{
                 color: var(--accent);
-                fill: var(--accent);
+                fill: var(--accent);}
             }
+
         }
     }
-
     .input__image {
         fill: var(--secondary);
     }

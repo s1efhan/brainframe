@@ -150,7 +150,7 @@ class SessionController extends Controller
         $collectingRound = $request->input('collecting_round');
         Log::info($collectingRound);
         $session = Session::findOrFail($sessionId);
-
+        event(new SessionPaused($session));
         if ($session->phase === 'collecting') {
             $ideasSent = $this->sendIdeasToGPT($sessionId);
             if (!$ideasSent) {
