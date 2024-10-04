@@ -41,8 +41,9 @@
             <div class="input__container" id="input__container">
 
                 <button @click="openFileInput">
-                    <img class="input__image" v-if="imageFileUrl" :src="imageFileUrl" alt="uploadedImageIdea"
+                    <img class="input__image" v-if="imageFileUrl && showImage" :src="imageFileUrl" alt="uploadedImageIdea"
                         height="100" @click="openFileInput">
+                    <l-dot-pulse v-if="!showImage" size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
                     <DefaultimageIcon class="input__image" @click="openFileInput" v-else />
                 </button>
                 <!--
@@ -213,13 +214,15 @@ const iceBreaker = () => {
             }
         });
 }
-
+const showImage = ref(true);
 const submitIdea = async () => {
     if (personalIdeasCount >= session.value.method.idea_limit && session.value.method.idea_limit > 0) {
         errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
         return;
     }
-
+    if (imageFile.value){
+        showImage.value = false;
+    }
     if (imageFile.value || textInput.value) {
         const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
 
@@ -241,10 +244,11 @@ const submitIdea = async () => {
             imageFile.value = null;
             imageFileUrl.value = '';
             // personalIdeasCount++; geht nicht, stattdessen Event und ganze ideas updaten
-            iceBreakerMsg.value = "";
+            iceBreakerMsg.value = "Trage hier deine Idee ein.";
         } catch (error) {
             console.error('Error saving idea', error);
         }
+        showImage.value = true;
     } else {
         errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
     }

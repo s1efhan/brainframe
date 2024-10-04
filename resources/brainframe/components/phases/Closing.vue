@@ -78,7 +78,6 @@
                         <th>
                             <StarIcon />
                         </th>
-                        <th>Höchste Runde</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -91,8 +90,7 @@
                                 <component
                                     :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
                             </td>
-                            <td class="center">{{ idea.avgRating.toFixed(1) }}/{{ idea.maxVoteValue.toFixed(1) }}</td>
-                            <td class="center"> {{ idea.maxRound }}</td>
+                            <td class="center">{{ idea.avgRating.toFixed(1) }}/{{ idea.maxVoteValue.toFixed(1) }} ({{ idea.maxRound }})</td>
                         </tr>
                         <tr class="chevron" @click="toggleDetails(idea.id)">
                             <td colspan="6">
@@ -190,9 +188,9 @@ import ProfileIcon from '../icons/ProfileIcon.vue';
 import StarIcon from '../icons/StarIcon.vue';
 import AiStarsIcon from '../icons/AiStarsIcon.vue';
 import LightbulbIcon from '../icons/LightbulbIcon.vue';
-import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 
-const route = useRoute();
+const router = useRouter();
 const showSendContainer = ref(false);
 const props = defineProps({
     personalContributor: {
@@ -254,7 +252,6 @@ const ideasWithTags = computed(() => {
         0;
       
       const voteType = relevantVotes.length ? relevantVotes[0].vote_type : 'default';
-      console.log(`Idee ${idea.id}: Vote-Typ = ${voteType}`);
       
       const maxVoteValue = getMaxVoteValue(voteType);
       return { ...idea, avgRating, maxRound, maxVoteValue, voteType };

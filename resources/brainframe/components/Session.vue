@@ -2,7 +2,7 @@
   <main v-if="session && ideas && votes && !isLoading">
 
     <h1 class="headline__session-target">
-      {{ session.target }} {{ session.phase }} {{ session.collecting_round }}
+      {{ session.target }}
     </h1>
     <Rollenwahl v-if="!personalContributor" :session="session" :userId="userId" />
     <div v-if="personalContributor && session.phase != 'closing'" class="session_headline__details">
@@ -379,21 +379,25 @@ const setupEventListeners = () => {
       console.log("Event: SessionStarted", e);
       session.value = e.formattedSession;
       startTimer();
+      showStats.value = false;
     })
     .listen('SessionPaused', (e) => {
       console.log("Event: SessionPaused", e);
       session.value = e.formattedSession;
       stopTimer();
+      showStats.value = false;
     })
     .listen('SessionResumed', (e) => {
       console.log("Event: SessionResumed", e);
       session.value = e.formattedSession;
       startTimer();
+      showStats.value = false;
     })
     .listen('SessionStopped', (e) => {
       console.log("Event: SessionStopped", e);
       stopTimer();
       session.value = e.formattedSession;
+      showStats.value = false;
     })
     .listen('UserJoinedSession', (e) => {
       console.log("User Joined", e.contributorId);

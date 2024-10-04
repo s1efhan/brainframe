@@ -3,41 +3,40 @@
     <h2>Swipe to Vote <SwipeIcon/></h2>
   </div>
   <div v-if="currentIdea" class="idea-card" @touchstart="touchStart" @touchend="touchEnd">
-    <h3>{{ currentIdea.ideaTitle }}</h3>
+    <h3>{{ currentIdea.text_input }}</h3>
     <div class="idea__description__container">
       <button class="swipe__arrow__left secondary" @click="swipeLeft"><ArrowLeftIcon/><DislikeIcon/></button>
-      <div class="idea__description" v-html="currentIdea.ideaDescription"></div>
+      <div class="idea__description" v-html="currentIdea.description || currentIdea.text_input"></div>
       <button class="swipe__arrow__right secondary" @click="swipeRight"><ArrowRightIcon/><LikeIcon/></button>
     </div>
     <div class="idea-card__bottom">
-      <button @click="undoLastDecision" class="secondary undo":disabled="!previousIdea">↺</button>
-      <div class="tag">#{{ currentIdea.tag }}</div>
-      <div class="contributor__icon"> <ProfileIcon/><component :is="getIconComponent(currentIdea.contributorIcon)" /></div>
+      <button @click="undoLastDecision" class="secondary undo" :disabled="!previousIdea">↺</button>
+      <div class="tag" v-if="currentIdea.tag">#{{ currentIdea.tag }}</div>
+      <div class="contributor__icon"><ProfileIcon/></div>
     </div>
   </div>
   <p v-else>Fertig. Du musst warten, bis der Rest fertig mit Voten ist.</p>
-
-  <div v-if="ideasCount" class="ideasCount">
-    {{ decisionsMade }}/{{ ideasCount +  props.votedIdeasCount}}
+  <div class="ideasCount">
+    {{ votedIdeas }}/{{ totalIdeasCount }}
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, toRef } from 'vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
-import axios from 'axios';
 import SwipeIcon from '../icons/SwipeIcon.vue';
 import ArrowLeftIcon from '../icons/ArrowLeftIcon.vue';
 import DislikeIcon from '../icons/DislikeIcon.vue';
 import LikeIcon from '../icons/LikeIcon.vue';
 import ArrowRightIcon from '../icons/ArrowRightIcon.vue';
+
 const props = defineProps({
   ideas: {
-    type: Object,
+    type: Array,
     required: true
   },
   votes: {
-    type: Object,
+    type: Array,
     required: true
   },
   personalContributor: {
@@ -50,56 +49,91 @@ const props = defineProps({
   }
 });
 
-import IconComponents from '../IconComponents.vue';
+const emit = defineEmits(['sendVote', 'wait']);
+
+const ideas = toRef(props, 'ideas');
+const votes = toRef(props, 'votes');
+const personalContributor = toRef(props, 'personalContributor');
+const session = toRef(props, 'session');
+
+const totalIdeasCount = ref(0);
+const votedIdeas = ref(0);
 const currentIdea = ref(null);
 const previousIdea = ref(null);
-const decisionsMade = ref(props.votedIdeasCount);
-const ideasCount = ref(null);
-const ideas = ref([]);
-const getIconComponent = (iconName) => {
-  return IconComponents[iconName] || null;
+const ideasToVote = ref([]);
+
+const initialize = () => {
+  const votesMap = votes.value.reduce((acc, vote) => {
+    if (!acc[vote.idea_id]) {
+      acc[vote.idea_id] = [];
+    }
+    acc[vote.idea_id].push(vote);
+    return acc;
+  }, {});
+
+  // Berechne den durchschnittlichen vote_value für jede Idee
+  const avgVoteValues = ideas.value.map(idea => {
+    const ideaVotes = votesMap[idea.id] || [];
+    const avgVoteValue = ideaVotes.reduce((sum, vote) => sum + vote.vote_value, 0) / (ideaVotes.length || 1);
+    return { id: idea.id, avgVoteValue };
+  });
+
+  // Sortiere Ideen nach durchschnittlichem vote_value und wähle die oberen 50%
+  const sortedIdeas = avgVoteValues.sort((a, b) => b.avgVoteValue - a.avgVoteValue);
+  const topHalfIds = new Set(sortedIdeas.slice(0, Math.ceil(sortedIdeas.length / 2)).map(idea => idea.id));
+
+  ideasToVote.value = ideas.value.filter(idea =>
+    topHalfIds.has(idea.id) &&
+    (!votesMap[idea.id] ||
+      !votesMap[idea.id].some(vote =>
+        vote.contributor_id === personalContributor.value.id &&
+        vote.round === session.value.vote_round
+      ))
+  );
+
+  totalIdeasCount.value = ideasToVote.value.length;
+  votedIdeas.value = 0;
+  setNextIdea();
 };
 
+
 onMounted(() => {
-  ideasCount.value = props.ideasCount;
-  ideas.value = props.ideas;
-  setNextIdea();
+  initialize();
 });
-const emit = defineEmits(['sendVote', 'wait']);
+
 const setNextIdea = () => {
-  if (ideas.value.length > 0) {
+  if (ideasToVote.value.length > 0) {
     previousIdea.value = currentIdea.value;
-    currentIdea.value = ideas.value[0];
+    currentIdea.value = ideasToVote.value.shift();
   } else {
     emit('wait');
     currentIdea.value = null;
   }
-  decisionsMade.value = props.votedIdeasCount + (props.ideasCount - ideas.value.length);
+};
+
+const vote = (voteValue) => {
+  emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'swipe', voteValue: voteValue });
+  votedIdeas.value++;
+  setNextIdea();
 };
 
 const swipeLeft = () => {
-// Sende "Nicht mögen" Abstimmung
-  emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'SwipeVote', voteValue: 0 });
-  ideas.value.shift();
-  setNextIdea();
+  vote(0);
 };
+
 const swipeRight = () => {
-  // "Mögen" Logic
-  emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'SwipeVote', voteValue: 1 });
-  ideas.value.shift();
-  setNextIdea();
+  vote(1);
 };
 
 const undoLastDecision = () => {
   if (previousIdea.value) {
-    ideas.value.unshift(previousIdea.value);
+    ideasToVote.value.unshift(currentIdea.value);
     currentIdea.value = previousIdea.value;
     previousIdea.value = null;
-    decisionsMade.value = props.ideasCount - ideas.value.length;
+    votedIdeas.value--;
   }
 };
 
-// Touch-Funktionalität für das Wischen
 let touchStartX = 0;
 let touchEndX = 0;
 
@@ -113,7 +147,7 @@ const touchEnd = (event) => {
 };
 
 const handleSwipe = () => {
-  const swipeThreshold = 50; // Mindestdistanz für ein Wischen
+  const swipeThreshold = 50;
   if (touchEndX < touchStartX - swipeThreshold) {
     swipeLeft();
   } else if (touchEndX > touchStartX + swipeThreshold) {

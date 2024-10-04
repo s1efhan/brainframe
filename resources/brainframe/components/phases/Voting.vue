@@ -71,7 +71,8 @@ const pickVotingMethod = () => {
 
     if (session.value.vote_round > 1) {
        
-        voteCountPrevRound.value = Object.keys(votes[session.vote_round - 1] || {}).length;
+        voteCountPrevRound.value = new Set(votes.value.filter(vote => vote.round === session.value.vote_round - 1).map(vote => vote.idea_id)).size;
+        console.log("voteCountPrevRound", voteCountPrevRound.value)
         if (voteCountPrevRound.value <= 15) {
             votingMethod.value = 'RankingVote'
         } else if (voteCountPrevRound.value <= 30) {

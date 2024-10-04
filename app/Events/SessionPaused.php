@@ -36,7 +36,7 @@ class SessionPaused implements ShouldBroadcast
                 'collecting_round' => $session->collecting_round,
                 'vote_round' => $session->vote_round,
                 'phase' => $session->phase,
-                'isPaused' => $session->is_paused
+                'isPaused' => true
             ];
     }
 

@@ -238,7 +238,7 @@ const generateQRCode = () => {
   }
 };
 onMounted(() => {
-  sessionLink.value = `https://stefan-theissen.de/brainframe` + props.session.id;
+  sessionLink.value = `https://stefan-theissen.de/brainframe/` + props.session.id;
   if (props.session.collecting_round > 1 || props.session.vote_round > 0) {
     showInfo.value = false;
   }

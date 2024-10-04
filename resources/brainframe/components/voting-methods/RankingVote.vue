@@ -96,6 +96,9 @@ const topIdeas = computed(() => {
     !props.votes.some(v => v.idea_id === idea.id && v.round === currentRound && v.contributor_id === props.personalContributor.id)
   );
 
+  if(filteredIdeas < 1){
+    emit('wait');
+  }
   if (currentOrder.value.length !== filteredIdeas.length) {
     currentOrder.value = filteredIdeas.map(idea => idea.id);
   }
