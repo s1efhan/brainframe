@@ -201,6 +201,7 @@ class SessionController extends Controller
 
         $ideasFormatted = $ideas->map(function ($idea) use ($session) {
             return [
+                'id' => $idea->id,  // Fügen Sie die ursprüngliche ID hinzu
                 'target' => $session->target,
                 'contributor_id' => $idea->contributor_id,
                 'title' => $idea->text_input,
@@ -208,6 +209,7 @@ class SessionController extends Controller
                 'round' => $idea->round ?? null
             ];
         })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         Log::info(message: $ideasFormatted . " not Empty");
         try {
 
@@ -227,17 +229,17 @@ class SessionController extends Controller
                        1) Erstelle einen umfassenden title, der die Konzepte und Basis der Idea widerspiegelt.
                        2) Fülle description mit mindestens 2 bis zu 3 Stichpunkten, die verschiedene Aspekte der Idea abdeckt, sei kreativ.
                        3) Wähle einen thematischen tag, der die Kernessenz der Idea erfasst und die Ideen zu Gruppen zuordbar macht.
-                       4) Formatiere die Ausgabe als JSON-Array mit den Feldern: contributor_id, title, description, tag wie im Beispiel.
+                       4) Formatiere die Ausgabe als JSON-Array mit den Feldern: id, contributor_id, title, description, tag wie im Beispiel.
                     
-                       Beispiel:
-                    {
-                      "contributor_id": 1",
-                      "title": "Lifestyle-Marken spielen gegeneinander",
-                      "description": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
-                      "tag": "Gesellschaftskritik",
-                      "round": "2"
-                    }
-                    '
+                  Beispiel:
+{
+  "id": 1,
+  "contributor_id": "1",
+  "title": "Lifestyle-Marken spielen gegeneinander",
+  "description": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
+  "tag": "Gesellschaftskritik",
+  "round": "2"
+}'
                         ],
                         [
                             'role' => 'user',
@@ -262,25 +264,35 @@ class SessionController extends Controller
                 $content = $responseBody['choices'][0]['message']['content'];
                 $content = preg_replace('/```json\s*|\s*```/', '', $content);
                 $newIdeas = json_decode($content, true);
-                Log::info($newIdeas);
-            
+                Log::info("Decoded new ideas:", $newIdeas);
+
                 $createdIdeas = [];
                 if (is_array($newIdeas)) {
                     foreach ($newIdeas as $idea) {
-                        $createdIdea = Idea::create([
-                            'title' => $idea['title'] ?? '',
-                            'description' => $idea['description'] ?? '',
-                            'tag' => $idea['tag'] ?? '',
-                            'contributor_id' => $idea['contributor_id'] ?? 0,
-                            'session_id' => $sessionId,
-                            'round' => $session->collecting_round
-                        ]);
-                        $createdIdeas[] = $createdIdea;
+                        Log::info("Processing idea:", $idea);
+                        $originalIdea = $ideas->firstWhere('id', $idea['id']);
+                        Log::info("Original idea found:", $originalIdea ? $originalIdea->toArray() : 'null');
+
+                        if ($originalIdea) {
+                            $createdIdea = Idea::create([
+                                'title' => $idea['title'] ?? '',
+                                'description' => $idea['description'] ?? '',
+                                'tag' => $idea['tag'] ?? '',
+                                'contributor_id' => $idea['contributor_id'] ?? 0,
+                                'session_id' => $sessionId,
+                                'round' => $session->collecting_round,
+                                'original_idea_id' => $originalIdea->id
+                            ]);
+                            $createdIdeas[] = $createdIdea;
+                            Log::info("Created new idea:", $createdIdea->toArray());
+                        } else {
+                            Log::warning("Original idea not found for id: " . $idea['id']);
+                        }
                     }
-                    
+
                     // Event einmal mit allen erstellten Ideen auslösen
                     event(new IdeasFormatted($createdIdeas, $sessionId));
-                    Log::info('New ideas saved and event broadcasted successfully');
+                    Log::info('New ideas saved and event broadcasted successfully. Created ideas count: ' . count($createdIdeas));
                 } else {
                     Log::error('Invalid format for new ideas', ['content' => $content]);
                 }
@@ -456,10 +468,9 @@ class SessionController extends Controller
         $stopWords = ['der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'für', 'und', 'oder', 'aber', 'doch', 'sondern', 'denn'];
 
         foreach ($ideas as $idea) {
-            $text = strtolower($idea->title . ' ' . strip_tags($idea->description));
-            $text = preg_replace('/[^a-z0-9\s]/', '', $text);
-            $words = explode(' ', $text);
-
+            $text = mb_strtolower($idea->title . ' ' . strip_tags($idea->description), 'UTF-8');
+            $text = preg_replace('/[^\p{L}\p{N}\s]/u', '', $text);
+            $words = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
             foreach ($words as $word) {
                 $word = trim($word);
                 if (strlen($word) > 3 && !in_array($word, $stopWords)) {
@@ -550,7 +561,120 @@ class SessionController extends Controller
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
     }
-
+    public function downloadCSV($sessionId)
+    {
+        $session = Session::with(['method', 'host', 'contributors.role', 'contributors.user'])->findOrFail($sessionId);
+        $ideas = Idea::where('session_id', $sessionId)->with('contributor.role')->get();
+        $votes = Vote::where('session_id', $sessionId)->get();
+        $contributors = $session->contributors;
+    
+        $hostContributor = $contributors->firstWhere('user_id', $session->host_id);
+        $hostEmail = $session->host->email ?? 'N/A';
+        $hostRole = $hostContributor ? $hostContributor->role->name : 'N/A';
+    
+        $endTime = $votes->max('created_at');
+        $maxRound = $ideas->max('round');
+    
+        $csvData = [
+            ['Session Information'],
+            ['Target', $session->target],
+            ['Method', $session->method->name],
+            ['Host', $hostEmail . ' (' . $hostRole . ')'],
+            ['Start Time', $session->created_at],
+            ['End Time', $endTime],
+            ['Total Contributors', $contributors->count()],
+            [''],
+            ['Ideas'],
+            ['Round', 'Idea ID', 'Title', 'Description', 'Tag', 'Contributor', 'Highest Round', 'Avg Rating', 'Votes Count', 'Created At']
+        ];
+    
+        $groupedIdeas = $ideas->groupBy(function ($idea) {
+            return $idea->original_idea_id ?? $idea->id;
+        });
+    
+        foreach ($groupedIdeas as $originalIdeaId => $relatedIdeas) {
+            $originalIdea = $relatedIdeas->firstWhere('original_idea_id', null) ?? $relatedIdeas->first();
+            $taggedIdea = $relatedIdeas->firstWhere('tag', '!=', null);
+    
+            $highestRound = $relatedIdeas->max('round');
+            $ideaVotes = $votes->whereIn('idea_id', $relatedIdeas->pluck('id'))
+                               ->where('round', $highestRound);
+            $avgRating = $ideaVotes->avg('value');
+    
+            $csvData[] = [
+                $originalIdea->round,
+                $originalIdea->id,
+                $taggedIdea ? $taggedIdea->title : $originalIdea->title,
+                $taggedIdea ? strip_tags($taggedIdea->description) : strip_tags($originalIdea->description),
+                $taggedIdea ? $taggedIdea->tag : 'N/A',
+                $originalIdea->contributor->role->name,
+                $highestRound,
+                number_format($avgRating, 2),
+                $ideaVotes->count(),
+                $originalIdea->created_at
+            ];
+        }
+    
+        $csvData[] = [''];
+        $csvData[] = ['Votes'];
+        $csvData[] = ['Round', 'Idea ID', 'Idea Title', 'Contributor', 'Value', 'Vote Type'];
+    
+        foreach ($votes as $vote) {
+            $idea = $ideas->find($vote->idea_id);
+            $contributor = $contributors->find($vote->contributor_id);
+            $csvData[] = [
+                $vote->round,
+                $vote->idea_id,
+                $idea->title,
+                $contributor->role->name,
+                $vote->value,
+                $vote->vote_type
+            ];
+        }
+    
+        $csvData[] = [''];
+        $csvData[] = ['Session Summary'];
+        $csvData[] = ['Total Ideas', $ideas->whereNull('tag')->count()];
+        $csvData[] = ['Total Votes', $votes->count()];
+    
+        $phases = [
+            'Collecting' => [
+                'start' => $ideas->min('created_at'),
+                'end' => $ideas->max('created_at')
+            ],
+            'Voting' => [
+                'start' => $votes->min('created_at'),
+                'end' => $votes->max('created_at')
+            ]
+        ];
+    
+        foreach ($phases as $phaseName => $phase) {
+            $duration = ceil($phase['start']->diffInMinutes($phase['end']));
+            $csvData[] = [$phaseName . ' Phase Duration (minutes)', $duration];
+        }
+    
+        $totalDuration = ceil($phases['Collecting']['start']->diffInMinutes($phases['Voting']['end']));
+        $csvData[] = ['Total Session Duration (minutes)', $totalDuration];
+    
+        $tokenCounts = ApiLog::where('session_id', $sessionId)
+            ->selectRaw('SUM(prompt_tokens) as prompt_tokens, SUM(completion_tokens) as completion_tokens')
+            ->first();
+        $csvData[] = ['Prompt Tokens', $tokenCounts->prompt_tokens ?? 0];
+        $csvData[] = ['Completion Tokens', $tokenCounts->completion_tokens ?? 0];
+        $csvData[] = ['Estimated OpenAI API Cost (cents)', number_format(($tokenCounts->prompt_tokens * 0.00003 + $tokenCounts->completion_tokens * 0.00006), 2, '.', '')];
+    
+        $output = fopen('php://temp', 'w');
+        foreach ($csvData as $row) {
+            fputcsv($output, $row);
+        }
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+    
+        return response($csv)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="' . $session->target . '_summary.csv"');
+    }
     public function sendSummary(Request $request)
     {
         $sessionId = $request->input('session_id');

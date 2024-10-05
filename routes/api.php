@@ -8,6 +8,7 @@ use App\Http\Controllers\MethodController;
 use App\Http\Controllers\ContributorController;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\IdeaController;
+use App\Http\Controllers\SurveyController;
 
 //UserController
 Route::post('/user', [UserController::class, 'store']);
@@ -30,6 +31,7 @@ Route::get('/session/{sessionId}', [SessionController::class, 'get'])
      ->where('sessionId', '[0-9]+');
 Route::post('/session/summary/send', [SessionController::class, 'sendSummary']);
 Route::get('/session/{sessionId}/summary/download', [SessionController::class, 'downloadSummary']);
+Route::get('/session/{sessionId}/summary/download-csv', [SessionController::class, 'downloadCSV']);
 Route::post('/session/ice-breaker', [SessionController::class, 'iceBreaker']);
 Route::get('/session/{sessionId}/closing', [SessionController::class, 'getClosing']);
 
@@ -55,3 +57,5 @@ Route::post('/ideas/process', [IdeaController::class, 'process']);
 Route::post('/vote/store', [VoteController::class, 'vote']);
 Route::get('/votes/{sessionId}', [VoteController::class, 'get']);
 
+Route::get('/survey/{sessionId}/{userId}', [SurveyController::class, 'get']);
+Route::post('/survey/store', [SurveyController::class, 'store']);

@@ -148,6 +148,7 @@
         <div class="summary__buttons">
             <button class="secondary" @click="toggleshowSendContainer">Zusammenfassung senden</button>
             <button class="accent" @click="downloadPDF">PDF herunterladen</button>
+            <button class="secondary" @click="downloadCSV">CSV herunterladen</button>
         </div>
         <div v-if="showSendContainer" class="send__container">
             <div class="email-list">
@@ -290,14 +291,30 @@ const getClosingDetails = () => {
 }
 
 const errorMsg = ref(null);
-
+const downloadCSV = () => {
+    const url = `/api/session/${props.session.id}/summary/download-csv`;
+    
+    axios.get(url, { responseType: 'blob' })
+        .then(response => {
+            const blob = new Blob([response.data], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `${session.value.target}_summary.csv`;
+            link.click();
+        })
+        .catch(error => {
+            console.error('Error Downloading CSV', error);
+        });
+};
 const groupedIdeasByRound = computed(() => {
     return ideas.value.reduce((acc, idea) => {
-        const round = idea.round || 'Unbekannt';
-        if (!acc[round]) {
-            acc[round] = [];
+        if (idea.tag) {  // Nur Ideen mit einem Tag berücksichtigen
+            const round = idea.round || 'Unbekannt';
+            if (!acc[round]) {
+                acc[round] = [];
+            }
+            acc[round].push(idea);
         }
-        acc[round].push(idea);
         return acc;
     }, {});
 });

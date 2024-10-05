@@ -12,6 +12,7 @@ import SechsDreiFünf from '../components/articles/6-3-5-Article.vue';
 import WaltDisney from '../components/articles/Walt-Disney-Article.vue';
 import CrazyEight from '../components/articles/Crazy-8-Article.vue';
 import SixThinkingHats from '../components/articles/6-Thinking-Hats-Article.vue';
+import Survey from '../components/Survey.vue';
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -31,6 +32,7 @@ const router = createRouter({
       { name: 'Walt-Disney', path: '/brainframe/knowledge/walt-disney', component: WaltDisney },
       { name: '6-Thinking-Hats', path: '/brainframe/knowledge/6-thinking-hats', component: SixThinkingHats },
       { name: 'Crazy-8', path: '/brainframe/knowledge/crazy-8', component: CrazyEight },
+      { name: 'Survey', path: '/brainframe/:sessionId/survey', component: Survey },
     ],
 });
 
