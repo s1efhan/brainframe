@@ -638,7 +638,7 @@ class SessionController extends Controller
         $csvData[] = ['Total Votes', $votes->count()];
     
         $phases = [
-            'Collecting' => [
+            'Collecting'  => [
                 'start' => $ideas->min('created_at'),
                 'end' => $ideas->max('created_at')
             ],

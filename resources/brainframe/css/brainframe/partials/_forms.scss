@@ -265,16 +265,20 @@ input:focus {
                 width: 1em;
                 height: 1em;
             }
+
             &:hover,
-            &:focus{
+            &:focus {
                 border: solid var(--accent);
-            svg{
-                color: var(--accent);
-                fill: var(--accent);}
+
+                svg {
+                    color: var(--accent);
+                    fill: var(--accent);
+                }
             }
 
         }
     }
+
     .input__image {
         fill: var(--secondary);
     }
@@ -542,41 +546,57 @@ input:focus {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+
     button {
         color: var(--secondary);
         background-color: var(--text);
         border: solid thin var(--secondary);
         border-radius: 15px;
     }
-.dragging {
-    color: var(--accent);
-    background-color: var(--text);
-    .dragAndDrop{
+
+    .dragging {
         color: var(--accent);
+        background-color: var(--text);
+
+        .dragAndDrop {
+            color: var(--accent);
+        }
     }
-}
-.drag-over {opacity: 20%;}
-.chevron {
-    cursor: pointer;
-    border-top:none;
-  }
-  
-  .chevron td {
-    padding-bottom: 0.5em;
-  }
-  
-  .chevron-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.3s ease;
-  }
-  .details__container{ display:flex; align-items: center; justify-content: center; padding-bottom: 0.5em; cursor:pointer;}
-  .chevron-container.rotated {
-    transform: rotate(180deg);
-  }
+
+    .drag-over {
+        opacity: 20%;
+    }
+
+    .chevron {
+        cursor: pointer;
+        border-top: none;
+    }
+
+    .chevron td {
+        padding-bottom: 0.5em;
+    }
+
+    .chevron-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+
+    .details__container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 0.5em;
+        cursor: pointer;
+    }
+
+    .chevron-container.rotated {
+        transform: rotate(180deg);
+    }
+
     .buttons {
         display: flex;
         flex-direction: column;
@@ -584,14 +604,15 @@ input:focus {
         justify-content: center;
         height: 100%;
         margin: 0.2em 0.5em;
+
         svg {
-            height:3em;
+            height: 3em;
             width: 1.2em;
             padding: 0 0.5em;
         }
 
         button {
-            padding:0;
+            padding: 0;
             margin: 0.2em;
         }
     }
@@ -626,7 +647,8 @@ input:focus {
     .details-row {
         padding: 1em;
         padding-left: 2em;
-border-top:none;
+        border-top: none;
+
         li {
             padding: 0.2em;
         }
@@ -760,7 +782,8 @@ border-top:none;
         flex-direction: column;
         align-items: center;
         text-align: left;
-padding: 0.5em;
+        padding: 0.5em;
+
         li {
             box-sizing: border-box;
             padding: 0.5em 2em;
@@ -1028,11 +1051,15 @@ padding: 0.5em;
             th {
                 color: var(--accent)
             }
+
             .active_round {
                 background-color: var(--secondary);
-                color:var(--accent);
-              }
-              th.active_round {border-bottom: solid var(--accent)}
+                color: var(--accent);
+            }
+
+            th.active_round {
+                border-bottom: solid var(--accent)
+            }
         }
 
         .center {
@@ -1088,6 +1115,90 @@ padding: 0.5em;
             border-radius: 100%;
             height: 2.5em;
             width: 2.5em;
+        }
+    }
+}
+
+.survey__container {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 0.5em;
+
+    .options {
+        padding: 0.4em;
+        font-size: 1.1em;
+
+        label {
+            margin: 1em;
+        }
+    }
+
+    h1 {
+        margin: 0.2em 0 0.7em;
+        color: var(--accent);
+        padding: 0.2em 0.6em;
+        font-size: 1.4em;
+    }
+
+    .navigation {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        align-items: center;
+        justify-content: space-evenly;
+    }
+
+    .submitted_count {
+        margin-top: 1em;
+        color: var(--accent)
+    }
+
+    .current_question {
+        background-color: var(--secondary);
+        margin: 1em 0;
+        padding: 1em;
+        border-radius: 15px;
+        width: 100%;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        hyphens: auto;
+        box-sizing: border-box;
+
+        &__label {
+            box-sizing: border-box;
+            margin-bottom: 1em;
+            color: var(--background);
+        }
+    }
+
+}
+
+.survey__email__input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    background-color: var(--background);
+
+    form {
+        margin: 4em;
+        width: 80%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background-color: var(--text);
+        border: solid var(--primary) 5px;
+        border-radius: 15px;
+        padding: 1em;
+
+        input,
+        button {
+            margin: 1em;
         }
     }
 }

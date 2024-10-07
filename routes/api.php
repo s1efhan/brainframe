@@ -59,3 +59,5 @@ Route::get('/votes/{sessionId}', [VoteController::class, 'get']);
 
 Route::get('/survey/{sessionId}/{userId}', [SurveyController::class, 'get']);
 Route::post('/survey/store', [SurveyController::class, 'store']);
+Route::post('/survey/email/store', [SurveyController::class, 'storeEmail']);
+Route::post('/survey/email/verify', [SurveyController::class, 'verifyEmail']);

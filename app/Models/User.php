@@ -9,7 +9,7 @@ class User extends Model
     public $incrementing = false;
     protected $orderBy = ['created_at' => 'desc'];
         protected $table = 'users';
-    protected $fillable = ['id', 'email', 'password', 'token'];
+    protected $fillable = ['id', 'email', 'password', 'token', 'survey_activated', 'survey_email'];
 
     public function sessions()
     {

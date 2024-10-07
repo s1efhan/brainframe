@@ -58,6 +58,7 @@ class ContributorController extends Controller
                 'is_active'=> $contributor->last_ping > now()->subSeconds(40),
                 'isHost' => $contributor->user_id === $session->host_id,
                 'isMe' => $contributor->user_id == $userId,
+                'survey_activated'=>$contributor->user->survey_activated,
                 'ideas' => $contributor->ideas ? $contributor->ideas->map(function ($idea) {
                     return [
                         'contributor_id' => $idea->contributor_id,

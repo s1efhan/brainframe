@@ -1,13 +1,12 @@
 <template>
-    <div>
+    <div class="survey__container">
         <h1>Umfrage zur Nutzung von anonymen, KI-unterstützten, digital-strukturierten Ideen-Findungstools am Beispiel
             (BrainFrame)</h1>
-
+            <h2>Frage {{ currentIndex + 1 }} von {{ totalQuestions }}</h2>
             <div v-if="currentQuestion">
-      <h2>Frage {{ currentIndex + 1 }} von {{ totalQuestions }}</h2>
-      <div v-if="currentQuestion.type === 'quantitative'">
-    <p>{{ currentQuestion.label }}</p>
-    <div v-for="option in ratingOptions" :key="option.id">
+      <div class="current_question" v-if="currentQuestion.type === 'quantitative'">
+    <p class="current_question__label">{{ currentQuestion.label }}</p>
+    <div class="options" v-for="option in ratingOptions" :key="option.id">
         <input type="radio" 
                :id="currentQuestion.key + '_' + option.id" 
                :name="currentQuestion.key"
@@ -38,11 +37,11 @@
         </div>
 
         <div class="navigation">
-            <button @click="previousQuestion" :disabled="currentIndex === 0">Zurück</button>
-            <button @click="nextQuestion" v-if="currentIndex < totalQuestions - 1">Weiter</button>
-            <button @click="submitSurvey" v-else>Umfrage abschließen</button>
+            <button class="accent" @click="previousQuestion" :disabled="currentIndex === 0">Zurück</button>
+            <button class="primary" @click="nextQuestion" v-if="currentIndex < totalQuestions - 1">Weiter</button>
+            <button class="primary" @click="submitSurvey" v-else>Umfrage abschließen</button>
         </div>
-        <p>Beantwortet: {{ answeredQuestions.length }} / {{ questions.length }}</p>
+        <p class="submitted_count">{{ answeredQuestions.length }} / {{ questions.length }}</p>
     </div>
 </template>
 
@@ -214,38 +213,3 @@ onMounted(() => {
 });
 
 </script>
-
-<style scoped>
-div {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-h1,
-h2 {
-    text-align: center;
-}
-
-.navigation {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-}
-
-button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-</style>

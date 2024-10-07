@@ -60,6 +60,24 @@
                 </tr>
             </tbody>
         </table>
+        <div class="survey__email__input" v-if="!props.personalContributor.survey_activated">
+            <form @submit.prevent="isValidEmail(surveyEmail)">
+                <div v-if="isValidEmail(surveyEmail)" class="validated-email">
+                    {{ surveyEmail }} <span v-if="!showCodeInput" @click="surveyEmail = '', showCodeInput = false"
+                        class="remove-email">x</span>
+                </div>
+                <input v-if="!isValidEmail(surveyEmail)" v-model="surveyEmail" type="email"
+                    @input="isValidEmail(surveyEmail)">
+                <label for="permission_for_survey">Ich bin einverstanden damit, dass meine E-Mail Adresse für den
+                    einmaligen Versand einer wissenschaftlichen Umfrage zum Thema Digitales Ideen-Sammeln verwendet
+                    wird.</label>
+                <input id="permission_for_survey" type="checkbox" v-model="isChecked" :disabled="showCodeInput">
+                <button v-if="!showCodeInput && isValidEmail(surveyEmail)" class="primary"
+                    @click="storeSurveyEmail">Email verifizieren</button>
+                    <input v-if="showCodeInput" v-model="surveyVerificationKey" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="z.B 123456">
+                <button v-if="showCodeInput" class="primary" @click="verifyEmail">Senden</button>
+            </form>
+        </div>
         <div class="top-ideas">
             <h2>Top Ideen</h2>
             <table>
@@ -82,27 +100,32 @@
                 </thead>
                 <tbody>
                     <template v-for="(idea, index) in ideasWithTags.slice(0, visibleIdeas)" :key="idea.id">
-                        <tr>
-                            <td class="center">{{ index + 1 }}</td>
-                            <td>{{ idea.title }}</td>
-                            <td v-html="idea.description"></td>
-                            <td class="center">
-                                <component
-                                    :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
-                            </td>
-                            <td class="center">{{ idea.avgRating.toFixed(1) }}/{{ idea.maxVoteValue.toFixed(1) }} ({{ idea.maxRound }})</td>
-                        </tr>
-                        <tr class="chevron" @click="toggleDetails(idea.id)">
-                            <td colspan="6">
-                                <div class="chevron-container" :class="{ 'rotated': expandedIds.includes(idea.id) }">▼
-                                </div>
-                            </td>
-                        </tr>
-                        <tr v-if="expandedIds.includes(idea.id)" class="details-row">
-                            <td colspan="5">
-                                <div v-html="idea.description"></div>
-                            </td>
-                        </tr>
+                        <template v-if="index === 0 || index === 1 || props.personalContributor.survey_activated">
+                            <tr :class="{ 'blurred': index === 1 && !props.personalContributor.survey_activated }">
+                                <td class="center">{{ index + 1 }}</td>
+                                <td>{{ idea.title }}</td>
+                                <td v-html="idea.description"></td>
+                                <td class="center">
+                                    <component
+                                        :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
+                                </td>
+                                <td class="center">{{ idea.avgRating.toFixed(1) }}/{{ idea.maxVoteValue.toFixed(1) }}
+                                    ({{ idea.maxRound }})</td>
+                            </tr>
+                            <tr v-if="index === 0 || props.personalContributor.survey_activated" class="chevron"
+                                @click="toggleDetails(idea.id)">
+                                <td colspan="6">
+                                    <div class="chevron-container"
+                                        :class="{ 'rotated': expandedIds.includes(idea.id) }">▼</div>
+                                </td>
+                            </tr>
+                            <tr v-if="(index === 0 || props.personalContributor.survey_activated) && expandedIds.includes(idea.id)"
+                                class="details-row">
+                                <td colspan="5">
+                                    <div v-html="idea.description"></div>
+                                </td>
+                            </tr>
+                        </template>
                     </template>
                     <tr v-if="visibleIdeas < ideasWithTags.length">
                         <td colspan="5" class="center">
@@ -112,11 +135,11 @@
                 </tbody>
             </table>
         </div>
-
         <div class="collecting-process">
             <h2>{{ session.method.name }}</h2>
             <div class="timeline">
-                <div v-for="(groupedIdeas, round) in groupedIdeasByRound" :key="round" class="tag">
+                <div :class="{ 'blurred': !personalContributor.survey_activated }"
+                    v-for="(groupedIdeas, round) in groupedIdeasByRound" :key="round" class="tag">
                     <div class="round">{{ round }}</div>
                     <ul>
                         <li v-for="idea in groupedIdeas" :key="idea.id">
@@ -130,7 +153,8 @@
         <div class="word-cluster" v-if="wordCloud">
             <h2>Wort-Cluster</h2>
             <ul>
-                <li :class="'count-' + item.count" v-for="item in wordCloud" :key="item.word">
+                <li :class="['count-' + item.count, { 'blurred': !props.personalContributor.survey_activated }]"
+                    v-for="item in wordCloud" :key="item.word">
                     {{ item.word }}
                 </li>
             </ul>
@@ -140,7 +164,8 @@
         <div class="tags-list">
             <h2>#Tags</h2>
             <ul>
-                <li :class="'count- ' + tag.count" v-for="tag in tagList" :key="tag.tag">
+                <li :class="['count-' + tag.count, { 'blurred': !props.personalContributor.survey_activated }]"
+                    v-for="tag in tagList" :key="tag.tag">
                     #{{ tag.tag }}
                 </li>
             </ul>
@@ -165,7 +190,7 @@
         <div v-if="errorMsg" class="error">{{ errorMsg }}</div>
         <div class="next-steps">
             <h2>Nächste Schritte und Empfehlungen</h2>
-            <p v-html="nextSteps"></p>
+            <p :class="{ 'blurred': !props.personalContributor.survey_activated }" v-html="nextSteps"></p>
         </div>
         <div class="newSession__buttons">
             <button class="accent" @click="router.push('/brainframe/create')">Neue Session Starten</button>
@@ -190,7 +215,7 @@ import StarIcon from '../icons/StarIcon.vue';
 import AiStarsIcon from '../icons/AiStarsIcon.vue';
 import LightbulbIcon from '../icons/LightbulbIcon.vue';
 import { useRouter } from 'vue-router';
-
+const showCodeInput = ref(false);
 const router = useRouter();
 const showSendContainer = ref(false);
 const props = defineProps({
@@ -215,6 +240,7 @@ const props = defineProps({
         required: true
     }
 });
+const isChecked = ref(false);
 const toggleDetails = (id) => {
     if (expandedIds.value.includes(id)) {
         expandedIds.value = expandedIds.value.filter(expandedId => expandedId !== id);
@@ -222,45 +248,54 @@ const toggleDetails = (id) => {
         expandedIds.value.push(id);
     }
 };
+const surveyEmail = ref(props.personalContributor.email);
 const expandedIds = ref([]);
 const ideas = ref(props.ideas);
 const session = ref(props.session);
 const votes = ref(props.votes);
 const contributors = ref(props.contributors);
 const visibleIdeas = ref(3);
-const showMoreIdeas = () => visibleIdeas.value += 5;
+const showMoreIdeas = () => {
+    if (props.personalContributor.survey_activated) {
+        visibleIdeas.value += 5;
+        return true;
+    }
+    errorMsg.value = "Melde dich für die Umfrage (5-10 min), um die Mehr zu den Session Ergebnissen zu erfahren"
+    alert(errorMsg.value);
+    return false;
+};
 const getMaxVoteValue = (vote_type) => {
-  switch (vote_type) {
-    case 'ranking': return 5;
-    case 'star': return 3;
-    case 'swipe': return 1;
-    case 'leftRightVote': return 1;
-    default: return 1;
-  }
+    switch (vote_type) {
+        case 'ranking': return 5;
+        case 'star': return 3;
+        case 'swipe': return 1;
+        case 'leftRightVote': return 1;
+        default: return 1;
+    }
 };
 
 const ideasWithTags = computed(() => {
-  if (!ideas.value || !votes.value) return [];
-  
-  return ideas.value
-    .filter(idea => idea.tag !== null && idea.tag !== '')
-    .map(idea => {
-      const ideaVotes = votes.value.filter(v => v.idea_id === idea.id);
-      const maxRound = Math.max(...ideaVotes.map(v => v.round));
-      const relevantVotes = ideaVotes.filter(v => v.round === maxRound);
-      const avgRating = relevantVotes.length ?
-        relevantVotes.reduce((sum, v) => sum + v.value, 0) / relevantVotes.length :
-        0;
-      
-      const voteType = relevantVotes.length ? relevantVotes[0].vote_type : 'default';
-      
-      const maxVoteValue = getMaxVoteValue(voteType);
-      return { ...idea, avgRating, maxRound, maxVoteValue, voteType };
-    })
-    .sort((a, b) => {
-      if (a.maxRound !== b.maxRound) return b.maxRound - a.maxRound;
-      return b.avgRating - a.avgRating;
-    });
+    if (!ideas.value || !votes.value) return [];
+
+    return ideas.value
+        .filter(idea => idea.tag !== null && idea.tag !== '')
+        .map(idea => {
+            const ideaVotes = votes.value.filter(v => v.idea_id === idea.id);
+            const maxRound = Math.max(...ideaVotes.map(v => v.round));
+            const relevantVotes = ideaVotes.filter(v => v.round === maxRound);
+            const avgRating = relevantVotes.length ?
+                relevantVotes.reduce((sum, v) => sum + v.value, 0) / relevantVotes.length :
+                0;
+
+            const voteType = relevantVotes.length ? relevantVotes[0].vote_type : 'default';
+
+            const maxVoteValue = getMaxVoteValue(voteType);
+            return { ...idea, avgRating, maxRound, maxVoteValue, voteType };
+        })
+        .sort((a, b) => {
+            if (a.maxRound !== b.maxRound) return b.maxRound - a.maxRound;
+            return b.avgRating - a.avgRating;
+        });
 });
 
 const ideasWithoutTags = computed(() => {
@@ -292,19 +327,25 @@ const getClosingDetails = () => {
 
 const errorMsg = ref(null);
 const downloadCSV = () => {
-    const url = `/api/session/${props.session.id}/summary/download-csv`;
-    
-    axios.get(url, { responseType: 'blob' })
-        .then(response => {
-            const blob = new Blob([response.data], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = `${session.value.target}_summary.csv`;
-            link.click();
-        })
-        .catch(error => {
-            console.error('Error Downloading CSV', error);
-        });
+    if (props.personalContributor.survey_activated) {
+        const url = `/api/session/${props.session.id}/summary/download-csv`;
+
+        axios.get(url, { responseType: 'blob' })
+            .then(response => {
+                const blob = new Blob([response.data], { type: 'text/csv' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = `${session.value.target}_summary.csv`;
+                link.click();
+            })
+            .catch(error => {
+                console.error('Error Downloading CSV', error);
+            });
+    }
+    else {
+        errorMsg.value = "Melde dich für die Umfrage (5-10 min), um die ausführlichen Session Ergebnisse zu downloaden";
+        alert(errorMsg.value)
+    }
 };
 const groupedIdeasByRound = computed(() => {
     return ideas.value.reduce((acc, idea) => {
@@ -321,13 +362,12 @@ const groupedIdeasByRound = computed(() => {
 
 const calculateCost = computed(() => {
     if (!session.value) return 0;
-    return ((session.value.prompt_tokens * 0.00000015 + session.value.completion_tokens * 0.00000060) * 100 ).toFixed(2);
+    return ((session.value.prompt_tokens * 0.00000015 + session.value.completion_tokens * 0.00000060) * 100).toFixed(2);
 });
 
 const downloadPDF = () => {
-    const url = `/api/session/${props.session.id}/summary/download`;
-
-   
+    if (props.personalContributor.survey_activated) {
+        const url = `/api/session/${props.session.id}/summary/download`;
         // Behalten Sie die bestehende PDF-Download-Logik bei
         axios.get(url, { responseType: 'blob' })
             .then(response => {
@@ -340,6 +380,11 @@ const downloadPDF = () => {
             .catch(error => {
                 console.error('Error Downloading PDF', error);
             });
+    }
+    else {
+        errorMsg.value = "Melde dich für die Umfrage (5-10 min), um die ausführlichen Session Ergebnisse zu downloaden";
+        alert(errorMsg.value)
+    }
 };
 
 const formatDate = (dateString) => {
@@ -386,23 +431,67 @@ const validateEmail = (index, event) => {
         }
     }
 };
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const getIconComponent = (contributor) => {
     return contributor ? IconComponents[contributor.icon] || null : null;
 };
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const surveyVerificationKey = ref(null);
 
+const verifyEmail = () => {
+    console.log("verifyEmail");
+    axios.post(`/api/survey/email/verify`, {
+        survey_email: surveyEmail.value,
+        session_id: props.session.id,
+        survey_verification_key: surveyVerificationKey.value,
+        user_id: Number(localStorage.getItem('user_id'))
+    })
+    .then(response => {
+        showSendContainer.value = !showSendContainer.value;
+        props.personalContributor.survey_activated = true;
+    })
+    .catch(error => {
+        console.error('Error in verification process', error);
+    });
+}
+const storeSurveyEmail = () => {
+    if(isChecked.value){
+        showCodeInput.value = true; 
+        console.log("storeSurveyEmail")
+        axios.post(`/api/survey/email/store`, {
+        survey_email: surveyEmail.value,
+        session_id: props.session.id,
+        is_checked: isChecked.value,
+        user_id:  Number(localStorage.getItem('user_id'))
+    })
+        .then(response => {
+            showSendContainer.value = !showSendContainer.value;
+        }).catch(error => {
+            console.error('Error storing the email', error);
+        });
+}
+    else {
+        alert("Du musst der Verwendung deiner Email Adresse zustimmen, um an der Umfrage teilzunehmen.")
+    }
+}
 
 const toggleshowSendContainer = () => {
-    showSendContainer.value = !showSendContainer.value;
-    errorMsg.value = null;
-    if (showSendContainer.value && session.value && session.value.contributor_emails) {
-        session.value.contributor_emails.forEach(email => { // gibts nicht
-            if (isValidEmail(email) && !validatedEmails.value.includes(email)) {
-                validatedEmails.value.push(email);
-            }
-        });
+    if (props.personalContributor.survey_activated) {
+        showSendContainer.value = !showSendContainer.value;
+        errorMsg.value = null;
+        if (showSendContainer.value && session.value && session.value.contributor_emails) {
+            session.value.contributor_emails.forEach(email => { // gibts nicht
+                if (isValidEmail(email) && !validatedEmails.value.includes(email)) {
+                    validatedEmails.value.push(email);
+                }
+            });
+        }
     }
-}; // die emails finden sich in contributors.email
+    else {
+        errorMsg.value = "Melde dich für die Umfrage (5-10 min), um die ausführlichen Session Ergebnisse zu teilen"
+        alert(errorMsg.value)
+    }
+};
 
 const removeEmail = (email) => {
     validatedEmails.value = validatedEmails.value.filter(e => e !== email);
@@ -410,10 +499,9 @@ const removeEmail = (email) => {
 
 </script>
 <style scoped>
-
 .chevron {
     cursor: pointer;
-    text-align:center;
+    text-align: center;
 }
 
 .chevron div {
@@ -422,5 +510,10 @@ const removeEmail = (email) => {
 
 .chevron .rotated {
     transform: rotate(180deg);
+}
+
+.blurred {
+    filter: blur(4px);
+    pointer-events: none;
 }
 </style>
