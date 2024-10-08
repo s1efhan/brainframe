@@ -101,7 +101,7 @@ class IdeaController extends Controller
                             [
                                 "role" => "user",
                                 "content" => [
-                                    ["type" => "text", "text" => "Was siehst du. Was könnte das Bild für eine Idee darstellen? Beschreibe das Bild für einen blinden, falls nötig. Fasse in 3 Sätzen die idee zusammen"],
+                                    ["type" => "text", "text" => "Was siehst du. Was könnte das Bild für eine Idee darstellen? Beschreibe das Bild für einen blinden, falls nötig. Fasse in 3 Sätzen die idee zusammen. Es hat vorraussichtlich mit: ".$session->target." zu tun."],
                                     [
                                         "type" => "image_url",
                                         "image_url" => [

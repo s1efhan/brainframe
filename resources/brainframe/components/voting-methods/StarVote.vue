@@ -146,5 +146,6 @@ const rate = (stars) => {
   emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'star', voteValue: stars });
   votedIdeas.value++;
   setNextIdea();
+  resetStars();
 };
 </script>

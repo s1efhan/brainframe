@@ -36,7 +36,7 @@
   </div>
   <form class="selectRole" v-if="showSelectRole" @submit.prevent="addContributor">
     <div class="role-select__container">
-      <select id="roleSelect" v-model="selectedRole.id" @change="updateSelectedRole">
+      <select id="roleSelect" v-model="selectedRoleId">
         <option v-for="role in roles" :key="role.id" :value="role.id">
           {{ role.name }}
         </option>
@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import IconComponents from '../components/IconComponents.vue';
 
@@ -66,18 +66,17 @@ const props = defineProps({
   }
 });
 
-const getRoles = () => {
-  axios.get(`/api/roles/${session.value.id}`)
-    .then(response => {
-      roles.value = response.data;
-      if (roles.value.length > 0) {
-        const randomIndex = Math.floor(Math.random() * roles.value.length);
-        selectedRole.value = roles.value[randomIndex];
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching roles', error);
-    });
+const getRoles = async () => {
+  try {
+    const response = await axios.get(`/api/roles/${session.value.id}`);
+    roles.value = response.data;
+    if (roles.value.length > 0) {
+      const randomIndex = Math.floor(Math.random() * roles.value.length);
+      selectedRoleId.value = roles.value[randomIndex].id;
+    }
+  } catch (error) {
+    console.error('Error fetching roles', error);
+  }
 };
 
 const showInfo = ref(false);
@@ -85,7 +84,10 @@ const emit = defineEmits(['contributorAdded']);
 const showSelectRole = ref(true);
 const session = ref(props.session);
 const userId = ref(props.userId);
-const selectedRole = ref({ id: null, name: '', description: '', icon: '' });
+const selectedRole = computed(() => {
+  return roles.value.find(r => r.id === selectedRoleId.value) || { id: null, name: '', description: '', icon: '' };
+});
+const selectedRoleId = ref(null);
 const roles = ref([]);
 
 
@@ -101,6 +103,7 @@ const getIconComponent = (iconName) => {
 };
 
 const addContributor = () => {
+  updateSelectedRole();
   console.log("addContributor, session.value.id", session.value.id, "selectedRole.value", selectedRole.value.id, "userId.value",userId.value);
   axios.post('/api/contributor/create', {
     session_id: session.value.id,
@@ -119,7 +122,7 @@ const addContributor = () => {
 };
 
 onMounted(() => {
-  console.log("Rollenwahl Mounted: ", session.value, userId.value)
+  console.log("Rollenwahl Mounted: ", session.value, userId.value);
   Echo.channel('session.' + session.value.id)
     .listen('UserPickedRole', (e) => {
       console.log("UserPickedRole event empfangen")

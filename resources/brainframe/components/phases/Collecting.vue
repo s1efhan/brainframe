@@ -42,9 +42,9 @@
 
                 <button @click="openFileInput">
                     <img class="input__image" v-if="imageFileUrl && showImage" :src="imageFileUrl" alt="uploadedImageIdea"
-                        height="100" @click="openFileInput">
+                        height="100">
                     <l-dot-pulse v-if="!showImage" size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
-                    <DefaultimageIcon class="input__image" @click="openFileInput" v-else />
+                    <DefaultimageIcon class="input__image" v-else />
                 </button>
                 <!--
      <button v-if="!isListening" type="button" @click="isListening = true">

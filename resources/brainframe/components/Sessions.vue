@@ -5,86 +5,95 @@
   </div>
   <main>
     <div class="sessions__table__container">
-    <table class="sessions__table" v-if="userSessions && userSessions.length > 0">
-      <thead>
-        <tr>
-          <th><PinIcon/></th>
-          <th><TargetIcon/></th>
-          <th><ProfileIcon/></th>
-          <th><CalendarIcon/></th>
-          <th>Method</th>
-          <th>Phase</th>
-          <th>
-            <SettingsIcon />
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="session in userSessions" :key="session.session_id">
-          <td>
-            <router-link :to="'/brainframe/'+session.session_id">{{ session.session_id }}</router-link>
-          </td>
-          <td>
-            <template v-if="session.isEditing">
-              <input v-model="session.editedTarget" :placeholder="session.target" />
-            </template>
-            <template v-else>
-              {{ session.target }}
-            </template>
-          </td>
-          <td class="center"> <component :is="getIconComponent(session.role)" /></td>
-          <td>
-            {{
-            new Date(session.updated_at).toLocaleTimeString('de-DE', {
-            hour: '2-digit',
-            minute: '2-digit'
-            }) + ' Uhr' + ' ' +
-            new Date(session.updated_at).toLocaleDateString('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit'
-            })
-            }}
-          </td>
-          <td>
-            <template
-              v-if="session.isEditing && session.phase === 'collecting' && session.collecting_round < 1">
-              <select v-model="session.editedMethodId">
-                <option v-for="method in methods" :key="method.id" :value="method.id">
-                  {{ method.name }}
-                </option>
-              </select>
-            </template>
-            <template v-else>
-              {{ session.method_name }}
-            </template>
-          </td>
-          <td class="center">
-            <SwooshIcon v-if="session.phase === 'closing'"/>
-            <BrainIcon v-if="session.phase === 'collecting'"/>
-            <FunnelIcon v-if="session.phase === 'votingPhase'"/>
-          </td>
-          <td v-if="session.host_id === userId" class="settings">
-            <template v-if="session.isEditing">
-              <button @click="sendAlterSession(session)">Speichern</button>
-            </template>
-            <template v-else>
-              <div v-if="session.phase === 'collecting' && session.collecting_round < 1">
-                <BrushIcon @click="alterSession(session)" />
-              </div>
-              <div v-if="!session.confirmDelete" @click="session.confirmDelete = true" class="x">X</div>
-              <div v-else>
-                <button @click="deleteSession(session)">Bestätigen</button>
-                <button @click="session.confirmDelete = false">Abbrechen</button>
-              </div>
-            </template>
-          </td>
-          <td v-else></td>
-        </tr>
-      </tbody>
-    </table>
-    <p v-else>Keine Sitzungen gefunden.</p>
-  </div>
+      <table class="sessions__table" v-if="userSessions && userSessions.length > 0">
+        <thead>
+          <tr>
+            <th>
+              <PinIcon />
+            </th>
+            <th>
+              <TargetIcon />
+            </th>
+            <th>
+              <ProfileIcon />
+            </th>
+            <th>
+              <CalendarIcon />
+            </th>
+            <th>Method</th>
+            <th>Phase</th>
+            <th>
+              <SettingsIcon />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="session in userSessions" :key="session.session_id">
+            <td>
+              <router-link :to="'/brainframe/'+session.session_id">{{ session.session_id }}</router-link>
+            </td>
+            <td>
+              <template v-if="session.isEditing">
+                <input v-model="session.editedTarget" :placeholder="session.target" />
+              </template>
+              <template v-else>
+                {{ session.target }}
+              </template>
+            </td>
+            <td class="center">
+              <component :is="getIconComponent(session.role)" />
+            </td>
+            <td>
+              {{
+              new Date(session.updated_at).toLocaleTimeString('de-DE', {
+              hour: '2-digit',
+              minute: '2-digit'
+              }) + ' Uhr' + ' ' +
+              new Date(session.updated_at).toLocaleDateString('de-DE', {
+              day: '2-digit',
+              month: '2-digit',
+              year: '2-digit'
+              })
+              }}
+            </td>
+            <td>
+              <template v-if="session.isEditing && session.phase === 'collecting' && session.collecting_round < 1">
+                <select v-model="session.editedMethodId">
+                  <option v-for="method in methods" :key="method.id" :value="method.id">
+                    {{ method.name }}
+                  </option>
+                </select>
+              </template>
+              <template v-else>
+                {{ session.method_name }}
+              </template>
+            </td>
+            <td class="center">
+              <SwooshIcon v-if="session.phase === 'closing'" />
+              <BrainIcon v-if="session.phase === 'collecting'" />
+              <FunnelIcon v-if="session.phase === 'votingPhase'" />
+            </td>
+            <td v-if="session.host_id === userId" class="settings">
+              <template v-if="session.isEditing">
+                <button @click="sendAlterSession(session)">Speichern</button>
+              </template>
+              <template v-else>
+                <div v-if="session.phase === 'collecting' && session.collecting_round < 1">
+                  <BrushIcon @click="alterSession(session)" />
+                </div>
+                <div v-if="!session.confirmDelete" @click="session.confirmDelete = true" class="x">X</div>
+                <div v-else>
+                  <button @click="deleteSession(session)">Bestätigen</button>
+                  <button @click="session.confirmDelete = false">Abbrechen</button>
+                </div>
+              </template>
+            </td>
+            <td v-else></td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else>Keine Sitzungen gefunden.</p>
+    </div>
   </main>
 </template>
 
@@ -132,12 +141,12 @@ const getMethods = () => {
       console.error('Error fetching methods', error);
       responseMsg.value = 'Fehler beim Laden der Methoden';
     });
-}; 
+};
 
 const sendAlterSession = (session) => {
   // Stellen Sie sicher, dass method_id einen Wert hat
   const methodId = session.editedMethodId || session.method_id;
-  
+
   if (!methodId) {
     responseMsg.value = 'Fehler: Keine Methode ausgewählt';
     return;

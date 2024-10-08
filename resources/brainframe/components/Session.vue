@@ -51,7 +51,7 @@
     <Voting v-if=" session.phase === 'voting' && !session.isPaused && !showStats && personalContributor"
       :session="session" @wait="showStats = true" :contributors="contributors"
       :personalContributor="personalContributor" :ideas="ideasWithTags" :votes="votes" />
-    <Closing v-if=" session.phase === 'closing'" :session="session" :contributors="contributors"
+    <Closing v-if=" session.phase === 'closing' && personalContributor" :session="session" :contributors="contributors"
       :personalContributor="personalContributor" :ideas="ideas" :votes="votes" />
     <div v-if="session.phase != 'closing' " class="timer__container">
       <SandclockIcon />
@@ -137,7 +137,7 @@ const errorMsg = ref(null);
 const session = ref(null);
 const userId = ref(props.userId);
 const contributors = ref(null);
-const ideas = ref(null);
+const ideas = ref([]) 
 let pingInterval;
 
 // UI und Zustand
@@ -334,6 +334,17 @@ const startTimer = () => {
     }
   }, 1000);
 };
+const currentRoundIdeas = computed(() => 
+  ideas.value.filter(idea => idea.round == session.value.collecting_round)
+) 
+watch(() => currentRoundIdeas.value, (newValue) => {
+  console.log("currentRoundIdeas", newValue.length, 'session.value.method.idea_limit', session.value.method.idea_limit)
+  if (session.value.method.idea_limit &&
+      session.value.method.idea_limit <= newValue.length) {
+    console.log("showStats.value")
+    showStats.value = true;
+  }
+}, { deep: true });
 
 const stopTimer = () => {
   clearInterval(timer.value);

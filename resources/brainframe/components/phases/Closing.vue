@@ -61,18 +61,20 @@
             </tbody>
         </table>
         <div class="survey__email__input" v-if="!props.personalContributor.survey_activated">
-            <form @submit.prevent="isValidEmail(surveyEmail)">
-                <div v-if="isValidEmail(surveyEmail)" class="validated-email">
-                    {{ surveyEmail }} <span v-if="!showCodeInput" @click="surveyEmail = '', showCodeInput = false"
+            <form @submit.prevent="validateSurveyEmail">
+                <div v-if="surveyEmailIsValid" class="validated-email">
+                    {{ surveyEmail }} <span v-if="!showCodeInput" @click="surveyEmail = '', showCodeInput = false, validateSurveyEmail()"
                         class="remove-email">x</span>
                 </div>
-                <input v-if="!isValidEmail(surveyEmail)" v-model="surveyEmail" type="email"
-                    @input="isValidEmail(surveyEmail)">
+                <input v-if="!surveyEmailIsValid" v-model="surveyEmail" type="email"
+                @blur="validateSurveyEmail" @keyup.enter="validateSurveyEmail">
+                <div class="permission__container">
                 <label for="permission_for_survey">Ich bin einverstanden damit, dass meine E-Mail Adresse für den
                     einmaligen Versand einer wissenschaftlichen Umfrage zum Thema Digitales Ideen-Sammeln verwendet
                     wird.</label>
                 <input id="permission_for_survey" type="checkbox" v-model="isChecked" :disabled="showCodeInput">
-                <button v-if="!showCodeInput && isValidEmail(surveyEmail)" class="primary"
+            </div>
+                <button v-if="!showCodeInput && surveyEmailIsValid" class="primary"
                     @click="storeSurveyEmail">Email verifizieren</button>
                     <input v-if="showCodeInput" v-model="surveyVerificationKey" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="z.B 123456">
                 <button v-if="showCodeInput" class="primary" @click="verifyEmail">Senden</button>
@@ -240,6 +242,18 @@ const props = defineProps({
         required: true
     }
 });
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+const surveyEmailIsValid = ref(false);
+const validateSurveyEmail = () => {
+    console.log("validateSurveyEmail")
+    if(isValidEmail(surveyEmail.value)){
+        surveyEmailIsValid.value = true;
+    }
+    else {
+        surveyEmailIsValid.value = false;
+
+    }
+}
 const isChecked = ref(false);
 const toggleDetails = (id) => {
     if (expandedIds.value.includes(id)) {
@@ -431,7 +445,6 @@ const validateEmail = (index, event) => {
         }
     }
 };
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const getIconComponent = (contributor) => {
     return contributor ? IconComponents[contributor.icon] || null : null;

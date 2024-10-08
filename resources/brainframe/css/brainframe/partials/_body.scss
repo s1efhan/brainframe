@@ -14,17 +14,43 @@ body {
     box-sizing: border-box;
     overflow-x: hidden
 }
-.isLoading{display:flex; align-items:center;justify-content: center;}
+
+.isLoading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 img {
     max-width: 100vw;
 }
-.impressum, .datenschutz {
-    h1{color: var(--accent)}
+
+/* Entfernt die Pfeile für Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus {
+  outline: none;
+  box-shadow: none;
+}
+.impressum,
+.datenschutz {
+
     padding: 1em;
     color: var(--accent);
-    p{padding: 0.5em;}
+    h1 {
+        color: var(--accent)
+    }
+    p {
+        padding: 0.5em;
+    }
 }
+
 h2 {
     text-align: center;
     color: var(--accent);
@@ -39,6 +65,7 @@ h2 {
     right: 0;
     margin: 0.5em 1em;
     border-radius: 15px;
+
     svg {
         fill: var(--accent)
     }
@@ -57,12 +84,14 @@ h2 {
 
 .scroll-to-top.active {
     opacity: 70%;
+
     &:active,
     &:focus,
     &:hover {
         opacity: 100%;
     }
 }
+
 .scroll-to-top.inactive {
     opacity: 10%;
 }
@@ -152,7 +181,11 @@ main {
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
-.center {text-align:center;}
+
+    .center {
+        text-align: center;
+    }
+
     th,
     td {
         padding: 0.5em;
@@ -207,7 +240,7 @@ svg {
         padding: 2em;
         color: var(--accent);
         background-color: var(--text);
-      margin-top:0.5em;
+        margin-top: 0.5em;
 
         li {
             padding: 1em;

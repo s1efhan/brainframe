@@ -17,21 +17,21 @@
     </div>
 </div>
 
-            <div v-else-if="currentQuestion.type === 'qualitative'">
-                <label>{{ currentQuestion.label }}</label>
-                <textarea v-model="surveyData[currentQuestion.key]"></textarea>
+            <div  class="current_question" v-else-if="currentQuestion.type === 'qualitative'">
+                <p>{{ currentQuestion.label }}</p>
+                <textarea rows="12" v-model="surveyData[currentQuestion.key]"></textarea>
             </div>
 
-            <div v-else-if="currentQuestion.type === 'checkbox'">
-                <h3>{{ currentQuestion.label }}</h3>
-                <div v-for="method in currentQuestion.options" :key="method.key">
+            <div class="current_question" v-else-if="currentQuestion.type === 'checkbox'">
+              <p>{{ currentQuestion.label }}</p>
+                <div class="checkbox" v-for="method in currentQuestion.options" :key="method.key">
                     <input type="checkbox" :id="method.key" v-model="surveyData[method.key]">
                     <label :for="method.key">{{ method.label }}</label>
                 </div>
             </div>
 
-            <div v-else-if="currentQuestion.type === 'demographic'">
-                <label>{{ currentQuestion.label }}</label>
+            <div class="current_question" v-else-if="currentQuestion.type === 'demographic'">
+                <p>{{ currentQuestion.label }}</p>
                 <input :type="currentQuestion.inputType" v-model="surveyData[currentQuestion.key]">
             </div>
         </div>
@@ -39,7 +39,7 @@
         <div class="navigation">
             <button class="accent" @click="previousQuestion" :disabled="currentIndex === 0">Zurück</button>
             <button class="primary" @click="nextQuestion" v-if="currentIndex < totalQuestions - 1">Weiter</button>
-            <button class="primary" @click="submitSurvey" v-else>Umfrage abschließen</button>
+            <button class="primary"  @click="router.push('/brainframe')"  v-else>Umfrage abschließen</button>
         </div>
         <p class="submitted_count">{{ answeredQuestions.length }} / {{ questions.length }}</p>
     </div>
