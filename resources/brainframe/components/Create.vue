@@ -1,11 +1,12 @@
 <template>
-    <main>
+    <main class="create">
       <div class="error" v-if="errorMsg"><p>{{ errorMsg }}</p></div>
         <div v-if ="!errorMsg" class="sessionTarget__container">
       <textarea 
         ref="targetTextarea"
         @focus="onFocus"
         @blur="onBlur"
+        :class="{ 'glow-animation': isEmptyAndNotFocused }"
         @keyup.enter="updateSessionTarget"
         @keydown.enter.prevent="updateSessionTarget"
         class="headline__session-target"
@@ -17,18 +18,18 @@
       <button @click="updateSessionTarget" class="safe__target primary">speichern</button>
     </div>
       <SessionSettings 
-        @createSession="createSession" 
+        @createSession="createSession" @switchMethod="clickedTroughSettings = true" :clickedTroughSettings="clickedTroughSettings"
         v-if="userId && sessionId && sessionTarget && !errorMsg"
       />
       <div v-if="sessionTarget && !errorMsg" class="create__session__container">
-        <button @click="startSession" class="primary">Session Erstellen</button>
+        <button @click="startSession"  :class="{ 'glow-animation': !isEmptyAndNotFocused && clickedTroughSettings}" class="primary">Session Erstellen</button>
       </div>
       
     </main>
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
   import { updateSessionId } from '../js/eventBus.js';
@@ -41,8 +42,11 @@
       required: true
     }
   });
-  
+  const clickedTroughSettings = ref(false);
   // Refs
+  const isEmptyAndNotFocused = computed(() => {
+  return tempSessionTarget.value.trim() === '' && !isTextareaFocused.value;
+});
   const router = useRouter();
 const errorMsg = ref(null);
   const sessionTarget = ref('');

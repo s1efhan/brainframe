@@ -173,9 +173,10 @@
             </ul>
         </div>
         <div class="summary__buttons">
-            <button class="secondary" @click="toggleshowSendContainer">Zusammenfassung senden</button>
-            <button class="accent" @click="downloadPDF">PDF herunterladen</button>
-            <button class="secondary" @click="downloadCSV">CSV herunterladen</button>
+            <button class="accent" @click="toggleshowSendContainer">Zusammenfassung senden</button>
+            
+            <section class="download_buttons"><button class="secondary" @click="downloadPDF">PDF herunterladen</button>
+            <button class="accent" @click="downloadCSV">CSV herunterladen</button></section>
         </div>
         <div v-if="showSendContainer" class="send__container">
             <div class="email-list">

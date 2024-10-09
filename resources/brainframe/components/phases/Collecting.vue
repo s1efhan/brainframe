@@ -36,15 +36,17 @@
     <form class="collectForm" @submit.prevent="handleSubmit">
         <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
         <div class="Input__container">
-            <textarea id="textInput" :placeholder="iceBreakerMsg" v-model="textInput" rows="12"></textarea>
+            <textarea @input="inActiveSince = 0" id="textInput" :placeholder="iceBreakerMsg" v-model="textInput" rows="12"></textarea>
 
             <div class="input__container" id="input__container">
 
-                <button @click="openFileInput">
-                    <img class="input__image" v-if="imageFileUrl && showImage" :src="imageFileUrl" alt="uploadedImageIdea"
+                <button class="file_send" @click="openFileInput">
+                   <section>  <img class="input__image" v-if="imageFileUrl && showImage" :src="imageFileUrl" alt="uploadedImageIdea"
                         height="100">
                     <l-dot-pulse v-if="!showImage" size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
                     <DefaultimageIcon class="input__image" v-else />
+                    <p>Foto Idee</p>
+                </section>
                 </button>
                 <!--
      <button v-if="!isListening" type="button" @click="isListening = true">
@@ -53,8 +55,10 @@
      <button v-else type="button" @click="isListening = false">
        <l-waveform size="35" stroke="2.5" speed="0.8" color="white"></l-waveform></button>
       -->
-                <button @click="iceBreaker">
-                    <AiStarsIcon v-if="iceBreakerMsg" />
+                <button class="ice_breaker" @click="iceBreaker">
+                    
+                    <section   :class="{ 'ice-breaker-animation': inActiveSince > 15 }" v-if="iceBreakerMsg"> <AiStarsIcon /><p>Eisbrecher</p></section>
+                    
                     <l-dot-pulse v-else size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
                 </button>
             </div>
@@ -63,18 +67,6 @@
         <!-- <p v-if="isListening" class="recording-status">Aufnahme läuft...</p>-->
         <p class="error" v-if="errorMsg">{{ errorMsg }}</p>
     </form>
-    <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1" class="passed-ideas__container">
-        <h3>Inspirationen deiner Session Nachbarn</h3>
-        <ul v-for="(idea, index) in neighbourIdeas">
-            <li :class="'round-'+ idea.round">
-                <div>{{ idea.title }}</div>
-                <div>
-                    <component
-                        :is="getIconComponent(props.contributors.find(c => c.id === idea.contributor_id).icon)" />
-                </div>
-            </li>
-        </ul>
-    </div>
     <div class="collecting__bottom__container">
         <div v-if="session.method.idea_limit > 0" class="ideasCount">
             {{ personalIdeasCount }} | {{ session.method.idea_limit }}
@@ -87,8 +79,21 @@
             <button class="primary" type="submit" @click="submitIdea"
                 :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit">Idee
                 speichern</button>
-            <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>
+           <!-- <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>-->
         </div>
+    </div>
+
+    <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1 && neighbourIdeas" class="passed-ideas__container">
+        <h3>Inspirationen deiner Session Nachbarn</h3>
+        <ul v-for="(idea, index) in neighbourIdeas">
+            <li :class="'round-'+ idea.round">
+                <div>{{ idea.title }}</div>
+                <div>
+                    <component
+                        :is="getIconComponent(props.contributors.find(c => c.id === idea.contributor_id).icon)" />
+                </div>
+            </li>
+        </ul>
     </div>
 
 </template>
@@ -104,9 +109,13 @@ const getIconComponent = (iconName) => {
     return IconComponents[iconName] || null;
 };
 import { dotPulse } from 'ldrs'
+const inActiveSince = ref(0);
 
 dotPulse.register()
 const showInfo = ref(false);
+
+// soll true werden, wenn der Nutzer seit 30 Sekunden nichts ins input eingibt. 
+// soll false werden wenn Nutzer tippt
 const props = defineProps({
     personalContributor: {
         type: Object,
@@ -301,6 +310,9 @@ const compressImage = async (file, maxSizeInMB = 2) => {
     });
 };
 onMounted(() => {
+    const intervalId = setInterval(() => {
+    inActiveSince.value++;
+  }, 1000);
     if (session.value.collecting_round > 1) {
         showInfo.value = false;
     }

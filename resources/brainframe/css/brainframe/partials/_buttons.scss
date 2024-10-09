@@ -31,6 +31,9 @@ button {
 }
 
 .collecting__buttons {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
     button {
         margin: 0.5em;
     }
@@ -82,10 +85,11 @@ button.accent {
 }
 
 .session-link {
-    margin: 1em 0 1em 0;
+    margin: 1em 0.2em 1em 0.2em;
     border: solid thin var(--secondary);
     display: flex;
     height: 3em;
+    padding: 0 0.5em;
     justify-content: center;
     align-items: center;
 

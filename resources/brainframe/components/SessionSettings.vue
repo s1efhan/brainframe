@@ -4,9 +4,9 @@
       <div class="method-display">
         <h2>{{ currentMethod.name }}</h2>
         <div class="session-settings__method-carousel__buttons">
-          <button @click="changeMethod(-1)"><ArrowLeftIcon/></button>
+          <button @click="changeMethod(-1)"><ArrowLeftIcon  :class="{ 'svg-animation': !props.clickedTroughSettings }"/></button>
           <p v-html="currentMethod.description"></p>
-          <button @click="changeMethod(1)"><ArrowRightIcon/></button>
+          <button @click="changeMethod(1)"><ArrowRightIcon  :class="{ 'svg-animation': !props.clickedTroughSettings }"/></button>
         </div>
       </div>
     </div>
@@ -21,11 +21,18 @@ import ArrowRightIcon from './icons/ArrowRightIcon.vue';
 const emit = defineEmits(['createSession']);
 const methods = ref(null);
 const currentIndex = ref(0);
-
+const props = defineProps({
+    clickedTroughSettings: {
+        type: Boolean,
+        required: true
+    }
+  });
+const defineEmits = ('switchMethod')
 const currentMethod = computed(() => methods.value?.[currentIndex.value]);
 
 const changeMethod = (direction) => {
   if (methods.value) {
+    emit('switchMethod');
     currentIndex.value = (currentIndex.value + direction + methods.value.length) % methods.value.length;
     emit('createSession', currentMethod.value.id);
   }

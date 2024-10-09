@@ -332,3 +332,15 @@ svg {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+h1 { color:var(--accent)}
+
+.sitemap{
+padding: 0.5em;
+a {color: var(--secondary)}
+li{
+    padding: 0.5em 1em;
+}
+}
+.desktop{
+    display:none;
+}

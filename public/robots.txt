@@ -1,2 +1,13 @@
 User-agent: *
-Disallow:
+Allow: /
+
+# Verhindern Sie die Indizierung von Session-spezifischen Seiten
+Disallow: /brainframe/*/survey
+
+# Verhindern Sie die Indizierung von Benutzer-Profilen, Impressum und Datenschutz
+Disallow: /brainframe/profile
+Disallow: /brainframe/impressum
+Disallow: /brainframe/datenschutz
+
+# Sitemap
+Sitemap: https://stefan-theissen.de/sitemap.xml

@@ -7,7 +7,7 @@
     <div class="idea__description__container">
       <div v-html="currentIdea.description"></div>
     </div>
-    <div class="star-rating">
+    <div class="star-rating glow-animation-accent">
       <button class="primary star" @click="rate(1)" @mouseover="hoverStar(1)" @mouseleave="resetStars">★</button>
       <button class="primary star" @click="rate(2)" @mouseover="hoverStar(2)" @mouseleave="resetStars">★</button>
       <button class="primary star" @click="rate(3)" @mouseover="hoverStar(3)" @mouseleave="resetStars">★</button>

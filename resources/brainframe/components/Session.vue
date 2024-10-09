@@ -12,28 +12,22 @@
           {{ contributors.filter(c => c.is_active).length }} | {{ contributors.length }}
         </p>
       </div>
-      <div @click="session.isPaused && personalContributor.isHost ? resumeSession() : pauseSession()">
-        <p v-if="session.isPaused">
+      <div class="session_headline__details__pause" @click="session.isPaused && personalContributor.isHost ? resumeSession() : pauseSession()">
+        <p  :class="{ 'pause-animation':  contributors.filter(c => c.is_active).length > contributors.length}"v-if="!session.isPaused">
           <PauseIcon />
         </p>
-        <p v-if="!session.isPaused && session.phase ==='collecting'">
-          <BrainIcon />
-        </p>
-        <p v-if="!session.isPaused && session.phase ==='voting'">
-          <FunnelIcon />
-        </p>
-        <p v-if="!session.isPaused && session.phase ==='closing'">
-          <SwooshIcon />
+        <p  :class="{ 'pause-animation': session.seconds_left }" v-else>
+         <PlayIcon/>
         </p>
       </div>
       <div>
         <p>{{ session.method.name }} Methode</p>
       </div>
-      <div>
+      <div class="contributor_icon">
         <p v-if="personalContributor.name != 'Default'">
           <component :is="getIconComponent(personalContributor.icon)" />
         </p>
-        <p>{{ personalContributor.name }}</p>
+        <p class="desktop">{{ personalContributor.name }}</p>
       </div>
     </div>
     <div v-if="errorMsg" class="error">
@@ -53,14 +47,14 @@
       :personalContributor="personalContributor" :ideas="ideasWithTags" :votes="votes" />
     <Closing v-if=" session.phase === 'closing' && personalContributor" :session="session" :contributors="contributors"
       :personalContributor="personalContributor" :ideas="ideas" :votes="votes" />
-    <div v-if="session.phase != 'closing' " class="timer__container">
-      <SandclockIcon />
-      <div class="timer"
+      <div v-if="session.phase != 'closing' " class="timer__container">
+      <SandclockIcon v-if="session.seconds_left"/>
+      <div v-if="session.seconds_left" class="timer"
         :style="{ '--progress': `${(1 - session.seconds_left / session.method.time_limit) * 360}deg` }">
         {{ session.seconds_left }}
       </div>
     </div>
-  </main>
+    </main>
   <main class="isLoading" v-if="isLoading">
     <div> <l-dot-pulse size="43" speed="1.3" color="#91b4b2"></l-dot-pulse></div>
   </main>
@@ -76,15 +70,13 @@ import Rollenwahl from './Rollenwahl.vue';
 import { useRoute } from 'vue-router';
 import { useRouter } from 'vue-router';
 const route = useRoute();
-import SwooshIcon from '../components/icons/SwooshIcon.vue';
-import BrainIcon from '../components/icons/BrainIcon.vue';
 import PauseIcon from '../components/icons/PauseIcon.vue';
-import FunnelIcon from '../components/icons/FunnelIcon.vue';
 import ProfileIcon from '../components/icons/ProfileIcon.vue';
 import Voting from '../components/phases/Voting.vue';
 import Collecting from '../components/phases/Collecting.vue';
 import Closing from '../components/phases/Closing.vue';
 import Lobby from '../components/phases/Lobby.vue';
+import PlayIcon from '../components/icons/PlayIcon.vue';
 import IconComponents from '../components/IconComponents.vue';
 const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;

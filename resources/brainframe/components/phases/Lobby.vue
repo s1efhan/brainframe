@@ -26,13 +26,7 @@
   </section>
   <section v-else class="contributors_board__container">
     <div class="contributors_board">
-      <div class="info__container">
-        <button v-if="!session.isPaused" @click="emit('exit')" class="primary">X</button>
-        <div @click="showInfo = !showInfo" class="join__info">
-          <p>i</p>
-        </div>
-      </div>
-      <div v-if="showInfo" class="info__text__container">
+      <div class="info__text__container">
         <div class="info__text">
           <h3>Board</h3>
           <ul>
@@ -47,13 +41,13 @@
       <table v-if="ideas">
         <thead>
           <tr>
-            <th>Session PIN</th>
+            <th><section class="desktop">Session </section> PIN</th>
             <th>Methode</th>
             <th v-for="round in session.method.round_limit" :key="round"
               :class="{ 'active_round': session.collecting_round === round }">
-              Runde {{ round }}
+              <section class="desktop">Runde </section>{{ round }}
             </th>
-            <th>Teilnehmer</th>
+            <th><ProfileIcon class="profile-icon"/></th>
           </tr>
         </thead>
         <tbody>
@@ -82,7 +76,7 @@
           <tr v-for="contributor in contributors" :key="contributor.id">
            <td class="center"> <component :is="getIconComponent(contributor)" /> </td>
             <td>{{ contributor.name }}</td>
-            <td v-if="session.phase !== 'voting'">
+            <td class="center" v-if="session.phase !== 'voting'">
               {{ ideasCount(contributor.id, session.collecting_round) }}
               <span v-if="session.method.idea_limit > 0">
                 / {{ session.method.idea_limit }}
@@ -101,28 +95,25 @@
     </div>
   </section>
   <div class="lobby__start__container">
-    <button class="primary"
+    <button class="primary glow-animation"
       v-if="session.seconds_left == 0 && session.isPaused && personalContributor.isHost && session.phase === 'collecting'"
-      @click="emit('start')">Sammeln
-      starten</button>
+      @click="emit('start')">Sammeln starten</button>
     <button class="secondary"
       v-if="session.seconds_left != 0 &&  session.isPaused && personalContributor.isHost && session.phase ==='collecting'"
-      @click="emit('stop')">Sammeln
-      beenden</button>
+      @click="emit('stop')">Sammeln beenden</button>
     <button class="secondary"
       v-if="session.seconds_left != 0 && session.isPaused && personalContributor.isHost && session.phase ==='voting'"
-      @click="emit('stop')">Voting
-      beenden</button>
+      @click="emit('stop')">Voting beenden</button>
     <button class="primary"
       v-if="session.seconds_left == 0 && session.isPaused && personalContributor.isHost && session.phase ==='voting'"
-      @click="emit('start')">Voting
-      starten</button>
+      @click="emit('start')">Voting starten</button>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
 import SwooshIcon from '../icons/SwooshIcon.vue';
+import ProfileIcon from '../icons/ProfileIcon.vue';
 import IconComponents from '../IconComponents.vue';
 const getIconComponent = (contributor) => {
     return contributor ? IconComponents[contributor.icon] || null : null;
@@ -185,7 +176,7 @@ const validatedEmails = ref([]);
 const contributorEmailAddresses = ref(['']);
 const sessionLink = ref(null);
 const emit = defineEmits(['start', 'exit', 'stop']);
-const showInfo = ref(true);
+const showInfo = ref(false);
 const removeEmail = (email) => {
   validatedEmails.value = validatedEmails.value.filter(e => e !== email);
 };
@@ -239,10 +230,6 @@ const generateQRCode = () => {
 };
 onMounted(() => {
   sessionLink.value = `https://stefan-theissen.de/brainframe/` + props.session.id;
-  if (props.session.collecting_round > 1 || props.session.vote_round > 0) {
-    showInfo.value = false;
-  }
-  else { showInfo.value = true; }
   nextTick(() => { generateQRCode() });
 });
 </script>

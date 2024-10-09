@@ -11,7 +11,7 @@
     <p>Email: theissen-stefan@mail.de</p>
 </section>
     <section class="impressum">
-    <h3>„Verantwortlicher i.S.d. § 18 Abs. 2 MStV:</h3>
+    <h3>Verantwortlicher i.S.d. § 18 Abs. 2 MStV:</h3>
     <p>Stefan Theißen</p>
     <p>c/o Impressumservice Dein-Impressum</p>
     <p>Stettiner Straße 41</p>

@@ -144,8 +144,21 @@ input:focus {
         background-color: var(--text);
         color: var(--accent);
 
+        ul {
+            margin-left: 1em;
+        }
+
+        li {
+            margin-left: 1em;
+            padding: 0.2em;
+        }
+
         .session-settings__method-carousel__buttons {
             padding-bottom: 1em;
+
+            svg {
+                width: 1em;
+            }
         }
 
         .method-display {
@@ -256,10 +269,10 @@ input:focus {
             border-radius: 15px;
             margin: 0;
             color: var(--secondary);
-            padding: 0.5em;
             margin: 0.2em;
             cursor: pointer;
             font-size: 0.5em;
+            padding: 0.3em;
 
             svg {
                 width: 1em;
@@ -760,10 +773,9 @@ input:focus {
     box-sizing: border-box;
     color: var(--secondary);
     overflow: hidden;
-    margin: 2em;
+    margin: 0 2em;
 
     h3 {
-        margin-top: 2em;
         color: var(--accent);
         border: solid var(--accent);
         padding: 0.5em;
@@ -777,12 +789,12 @@ input:focus {
         border-radius: 15px;
         border: solid var(--secondary);
         box-sizing: border-box;
-        width: 70%;
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: left;
         padding: 0.5em;
+        margin: 0.5em 0;
 
         li {
             box-sizing: border-box;
@@ -1017,17 +1029,28 @@ input:focus {
     z-index: 10;
 
     .contributors_board {
-        border: solid var(--secondary);
-        margin: 1em;
         display: flex;
         flex-direction: column;
         width: 100%;
         color: var(--accent);
-        padding: 1em;
+
+        .profile-icon {
+            width: 1em;
+        }
 
         .info__text {
             width: 100%;
             background-color: var(--background);
+        }
+
+        .info__container {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+
+            .join__info {
+                margin: 0.2em 1em;
+            }
         }
 
         table {
@@ -1044,7 +1067,7 @@ input:focus {
             td,
             th {
                 border: solid var(--secondary);
-                padding: 1em;
+                padding: 0.3em;
                 color: var(--secondary);
             }
 
@@ -1225,7 +1248,11 @@ input:focus {
     justify-content: center;
     color: var(--accent);
     background-color: var(--background);
-.validated-email{margin-bottom: 0.5em;}
+
+    .validated-email {
+        margin-bottom: 0.5em;
+    }
+
     form {
         margin: 4em;
         width: 80%;
@@ -1260,5 +1287,28 @@ input:focus {
         input {
             width: 2em;
         }
+    }
+}
+
+.create {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+}
+
+.create__session__container {
+    margin-top: 1em;
+}
+
+.ice_breaker, .file_send {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    p {
+        margin-top: 0.5em;
+        font-size: 0.4em;
+        padding: 0;
     }
 }

@@ -31,7 +31,7 @@
 .headline__brainframe-icon .hamburger {
   fill: var(--accent);
   height: 2.2em;
-  margin:2em;
+  margin: 2em;
 }
 
 .headline {
@@ -75,7 +75,7 @@
   &__brainframe-icon {
     flex-grow: 1;
     display: flex;
-    justify-content: end;
+    justify-content: center;
     align-items: center;
 
     svg {
@@ -104,7 +104,7 @@
   border: solid var(--primary) thick;
   box-sizing: border-box;
   min-height: 3em;
-  min-width: 10em;
+  min-width: 14em;
   padding: 0.5em;
   background-color: var(--secondary);
   color: white;
@@ -214,7 +214,7 @@
   border: none;
 
   svg {
-    font-size: 2em;
+    font-size: 1.5em;
     padding: 0.3em;
     fill: var(--accent);
   }
@@ -225,11 +225,12 @@
   width: 100%;
   align-items: center;
   bottom: 7em;
-  justify-content: space-between;
+  justify-content: space-around;
+  margin-bottom: 1em;
 }
 
 .timer__container {
-  padding: 1em;
+  padding: 0.6em;
   justify-content: center;
   align-items: center;
   display: flex;
@@ -300,7 +301,9 @@
 .session_headline__details {
   display: flex;
   justify-content: space-between;
-
+.contributor_icon{
+  svg {width: 1.8em;}
+}
   .red-hat {
     fill: red;
   }
@@ -339,7 +342,7 @@
   }
 
   div {
-    min-width: 6em;
+    min-width: 4em;
     background-color: var(--text);
     border: solid var(--secondary);
     color: var(--secondary);
@@ -357,6 +360,19 @@
       width: 1.2em;
       height: auto;
       fill: var(--secondary)
+    }
+  }
+  div &__pause{
+    padding: 0.5em;
+    p {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items:center;
+      justify-content: center;
+      svg {
+        width: 0.8em;
+      }
     }
   }
 }
