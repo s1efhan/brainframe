@@ -35,17 +35,22 @@ input::-webkit-inner-spin-button {
 input[type="text"]:focus,
 input[type="number"]:focus,
 input[type="email"]:focus {
-  outline: none;
-  box-shadow: none;
+    outline: none;
+    box-shadow: none;
 }
+
 .impressum,
 .datenschutz {
 
-    padding: 1em;
     color: var(--accent);
+
     h1 {
+        font-size: 1.5em;
+        text-align: center;
+        margin: 1em;
         color: var(--accent)
     }
+
     p {
         padding: 0.5em;
     }
@@ -305,4 +310,25 @@ svg {
             }
         }
     }
+}
+.datenschutz__cookies {
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
+    border:solid;
+    font-size: 0.8em;
+    border-collapse: collapse;
+    border-bottom:none;
+    th {
+        padding: 1em 0 ;
+        border-bottom:none;
+    }
+}
+
+.datenschutz__cookies td {
+    border:solid;
+    padding: 0.3em;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
