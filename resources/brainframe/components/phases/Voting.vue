@@ -1,10 +1,9 @@
 <template>
-    <h2>Voting</h2>
     <component :is="votingMethods[votingMethod]" :personalContributor="personalContributor" :ideas="ideas"
         :votes="votes" :session="session"  @sendVote="sendVote" @wait="emit('wait')"/>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import StarVote from '../voting-methods/StarVote.vue';
 import RankingVote from '../voting-methods/RankingVote.vue';
 import LeftRightVote from '../voting-methods/LeftRightVote.vue';
@@ -38,10 +37,15 @@ const votingMethods = {
     LeftRightVote,
     SwipeVote
 };
+const ideas = computed(() => {
+  return props.ideas.map(idea => ({
+    ...idea,
+    contributorIcon: props.contributors.find(c => c.id === idea.contributor_id)?.icon
+  }));
+});
 const emit = defineEmits (['wait']);
 const session = ref(props.session);
 const votes = ref(props.votes);
-const ideas = ref(props.ideas);
 const votingMethod = ref(null);
 const voteRoundLimit = ref(null);
 const voteCountPrevRound = ref(null);

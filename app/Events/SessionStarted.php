@@ -10,12 +10,14 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use App\Models\Session;
+use App\Models\Idea;
 
 class SessionStarted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $formattedSession;
+    public $ideas;
 
     public function __construct(Session $session)
     { 
@@ -39,6 +41,9 @@ class SessionStarted implements ShouldBroadcast
                 'phase' => $session->phase,
                 'isPaused' => $session->is_paused
             ];
+            $session = Session::findOrFail($session->id);
+            $this -> ideas = Idea::where('session_id', $session->id)
+            ->get();
     }
 
     public function broadcastOn(): Channel

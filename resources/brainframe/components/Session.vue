@@ -381,6 +381,7 @@ const setupEventListeners = () => {
       console.log("Event: SessionStarted", e);
       errorMsg.value = null;
       session.value = e.formattedSession;
+      ideas.value = e.ideas;
       stopTimer();
       startTimer();
       showStats.value = false;

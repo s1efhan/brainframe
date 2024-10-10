@@ -64,6 +64,7 @@
     align-items: center;
     justify-content: center;
     margin-top: 2em;
+    margin-bottom: 1em;
 }
 
 .join__info {
@@ -405,7 +406,8 @@ input:focus {
         }
     }
 
-    .idea-card__bottom,  .idea-card__bottom_leftright {
+    .idea-card__bottom,
+    .idea-card__bottom_leftright {
         margin-top: 0.5em;
         display: flex;
         width: 100%;
@@ -440,17 +442,20 @@ input:focus {
             }
         }
     }
-    .idea-card__bottom_leftright{
-        flex-direction:column;
-        section{
+
+    .idea-card__bottom_leftright {
+        flex-direction: column;
+
+        section {
             margin-top: 0.5em;
             width: 100%;
             font-size: 0.8em;
             display: flex;
-            align-items: center; 
+            align-items: center;
             justify-content: space-between;
         }
     }
+
     h3 {
         text-align: center;
         margin-bottom: 0.3em;
@@ -555,6 +560,10 @@ input:focus {
                 color: var(--accent);
                 background-color: var(--text);
             }
+
+            &:hover {
+                background-color: var(--text);
+            }
         }
     }
 
@@ -578,6 +587,66 @@ input:focus {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+
+    tr {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+
+    }
+
+    td {
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+    }
+
+    td:nth-child(1) {
+        height: 10em;
+        width: 10%;
+    }
+
+    td:nth-child(2) {
+        height: 10em;
+        width: 10%;
+    }
+
+    td:nth-child(3) {
+        height: 10em;
+        width: 55%;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: start;
+        fill: var(--secondary);
+        color: var(--accent);
+
+        .icon_tag {
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            width: 100%;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+    }
+
+    td:nth-child(4) {
+        height: 10em;
+        width: 21%;
+        justify-content: end;
+    }
+    td:nth-child(5) {
+        width: 100%;
+        justify-content: space-evenly;
+    }
+
+    td:nth-child(6) {
+        width: 100%;
+    }
+
+    td:nth-child(7) {
+        width: 100%;
+    }
 
     button {
         color: var(--secondary);
@@ -657,6 +726,10 @@ input:focus {
         margin: 0;
         height: 100%;
         padding: 0;
+        .buttons {
+            svg {
+                fill: var(--accent);
+            }}
     }
 
     .dragAndDrop {
@@ -695,9 +768,7 @@ input:focus {
         padding: 0.5em;
         cursor: pointer;
     }
-
     svg {
-        fill: var(--accent);
         height: 3em;
         width: 2.5em;
     }

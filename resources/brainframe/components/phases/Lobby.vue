@@ -99,7 +99,7 @@
       v-if="session.seconds_left == 0 && session.isPaused && personalContributor.isHost && session.phase === 'collecting'"
       @click="emit('start')">Sammeln starten</button>
     <button class="secondary"
-      v-if="session.seconds_left != 0 &&  session.isPaused && personalContributor.isHost && session.phase ==='collecting'"
+      v-if="session.seconds_left != 0  && personalContributor.isHost && session.phase ==='collecting'"
       @click="emit('stop')">Sammeln beenden</button>
     <button class="secondary"
       v-if="session.seconds_left != 0 && session.isPaused && personalContributor.isHost && session.phase ==='voting'"

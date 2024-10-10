@@ -89,7 +89,6 @@
 
     <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1 && neighbourIdeas"
         class="passed-ideas__container">
-        <h3>Inspirationen deiner Session Nachbarn</h3>
         <ul v-for="(idea, index) in neighbourIdeas">
             <li :class="'round-'+ idea.round">
                 <div>{{ idea.title }}</div>
