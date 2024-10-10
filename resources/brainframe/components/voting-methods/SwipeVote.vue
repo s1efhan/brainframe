@@ -3,11 +3,11 @@
     <h2>Swipe to Vote <SwipeIcon/></h2>
   </div>
   <div v-if="currentIdea" class="idea-card" @touchstart="touchStart" @touchend="touchEnd">
-    <h3>{{ currentIdea.text_input }}</h3>
+    <h3>{{ currentIdea.title }}</h3>
     <div class="idea__description__container">
-      <button class="swipe__arrow__left secondary" @click="swipeLeft"><ArrowLeftIcon/><DislikeIcon/></button>
+      <button class="swipe__arrow__left secondary" @click="swipeLeft"><ArrowLeftIcon/> Dislike</button>
       <div class="idea__description" v-html="currentIdea.description || currentIdea.text_input"></div>
-      <button class="swipe__arrow__right secondary" @click="swipeRight"><ArrowRightIcon/><LikeIcon/></button>
+      <button class="swipe__arrow__right secondary" @click="swipeRight"><ArrowRightIcon/>Like</button>
     </div>
     <div class="idea-card__bottom">
       <button @click="undoLastDecision" class="secondary undo" :disabled="!previousIdea">↺</button>
@@ -22,12 +22,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, toRef } from 'vue';
+import { ref, onMounted, toRef} from 'vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
 import SwipeIcon from '../icons/SwipeIcon.vue';
 import ArrowLeftIcon from '../icons/ArrowLeftIcon.vue';
-import DislikeIcon from '../icons/DislikeIcon.vue';
-import LikeIcon from '../icons/LikeIcon.vue';
 import ArrowRightIcon from '../icons/ArrowRightIcon.vue';
 
 const props = defineProps({
@@ -71,28 +69,33 @@ const initialize = () => {
     return acc;
   }, {});
 
-  // Berechne den durchschnittlichen vote_value für jede Idee
-  const avgVoteValues = ideas.value.map(idea => {
-    const ideaVotes = votesMap[idea.id] || [];
-    const avgVoteValue = ideaVotes.reduce((sum, vote) => sum + vote.vote_value, 0) / (ideaVotes.length || 1);
-    return { id: idea.id, avgVoteValue };
-  });
+  let relevantIdeas = ideas.value;
 
-  // Sortiere Ideen nach durchschnittlichem vote_value und wähle die oberen 50%
-  const sortedIdeas = avgVoteValues.sort((a, b) => b.avgVoteValue - a.avgVoteValue);
-  const topHalfIds = new Set(sortedIdeas.slice(0, Math.ceil(sortedIdeas.length / 2)).map(idea => idea.id));
+  // Nur wenn nicht die erste Abstimmungsrunde ist
+  if (session.value.vote_round !== 1) {
+    // Berechne den durchschnittlichen vote_value für jede Idee
+    const avgVoteValues = ideas.value.map(idea => {
+      const ideaVotes = votesMap[idea.id] || [];
+      const avgVoteValue = ideaVotes.reduce((sum, vote) => sum + vote.vote_value, 0) / (ideaVotes.length || 1);
+      return { id: idea.id, avgVoteValue };
+    });
 
-  ideasToVote.value = ideas.value.filter(idea =>
-    topHalfIds.has(idea.id) &&
-    (!votesMap[idea.id] ||
-      !votesMap[idea.id].some(vote =>
-        vote.contributor_id === personalContributor.value.id &&
-        vote.round === session.value.vote_round
-      ))
+    // Sortiere Ideen nach durchschnittlichem vote_value und wähle die oberen 50%
+    const sortedIdeas = avgVoteValues.sort((a, b) => b.avgVoteValue - a.avgVoteValue);
+    const topHalfIds = new Set(sortedIdeas.slice(0, Math.ceil(sortedIdeas.length / 2)).map(idea => idea.id));
+    relevantIdeas = ideas.value.filter(idea => topHalfIds.has(idea.id));
+  }
+
+  ideasToVote.value = relevantIdeas.filter(idea =>
+    !votesMap[idea.id] ||
+    !votesMap[idea.id].some(vote =>
+      vote.contributor_id === personalContributor.value.id &&
+      vote.round === session.value.vote_round
+    )
   );
 
-  totalIdeasCount.value = ideasToVote.value.length;
-  votedIdeas.value = 0;
+  totalIdeasCount.value = relevantIdeas.length;
+  votedIdeas.value = totalIdeasCount.value - ideasToVote.value.length;
   setNextIdea();
 };
 

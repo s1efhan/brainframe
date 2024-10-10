@@ -36,17 +36,18 @@
     <form class="collectForm" @submit.prevent="handleSubmit">
         <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
         <div class="Input__container">
-            <textarea @input="inActiveSince = 0" id="textInput" :placeholder="iceBreakerMsg" v-model="textInput" rows="12"></textarea>
+            <textarea @input="inActiveSince = 0" id="textInput"
+                :placeholder="iceBreakerMsg ? iceBreakerMsg : placeholderMsg" v-model="textInput" rows="12"></textarea>
 
             <div class="input__container" id="input__container">
 
                 <button class="file_send" @click="openFileInput">
-                   <section>  <img class="input__image" v-if="imageFileUrl && showImage" :src="imageFileUrl" alt="uploadedImageIdea"
-                        height="100">
-                    <l-dot-pulse v-if="!showImage" size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
-                    <DefaultimageIcon class="input__image" v-else />
-                    <p>Foto Idee</p>
-                </section>
+                    <section> <img class="input__image" v-if="imageFileUrl && showImage" :src="imageFileUrl"
+                            alt="uploadedImageIdea" height="100">
+                        <l-dot-pulse v-if="!showImage" size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
+                        <DefaultimageIcon class="input__image" v-else />
+                        <p>Foto Idee</p>
+                    </section>
                 </button>
                 <!--
      <button v-if="!isListening" type="button" @click="isListening = true">
@@ -56,9 +57,12 @@
        <l-waveform size="35" stroke="2.5" speed="0.8" color="white"></l-waveform></button>
       -->
                 <button class="ice_breaker" @click="iceBreaker">
-                    
-                    <section   :class="{ 'ice-breaker-animation': inActiveSince > 15 }" v-if="iceBreakerMsg"> <AiStarsIcon /><p>Eisbrecher</p></section>
-                    
+
+                    <section :class="{ 'ice-breaker-animation': inActiveSince > 15 }" v-if="!iceBreakerLoading">
+                        <AiStarsIcon />
+                        <p>Eisbrecher</p>
+                    </section>
+
                     <l-dot-pulse v-else size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
                 </button>
             </div>
@@ -79,11 +83,12 @@
             <button class="primary" type="submit" @click="submitIdea"
                 :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit">Idee
                 speichern</button>
-           <!-- <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>-->
+            <!-- <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>-->
         </div>
     </div>
 
-    <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1 && neighbourIdeas" class="passed-ideas__container">
+    <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1 && neighbourIdeas"
+        class="passed-ideas__container">
         <h3>Inspirationen deiner Session Nachbarn</h3>
         <ul v-for="(idea, index) in neighbourIdeas">
             <li :class="'round-'+ idea.round">
@@ -134,6 +139,7 @@ const props = defineProps({
         required: true
     }
 });
+const iceBreakerLoading = ref(false);
 const neighbourIdeas = computed(() => {
     const currentRound = parseInt(props.session.collecting_round);
     const currentContributorId = props.personalContributor.id;
@@ -202,10 +208,44 @@ const fileInput = ref(null);
 const imageFile = ref(null);
 const imageFileUrl = ref('');
 const errorMsg = ref('');
-const iceBreakerMsg = ref('Trage hier deine Idee ein.');
+const iceBreakerMsg = ref('');
+const placeholderMsg = computed(() => {
+  if (session.value.method.name === 'Walt Disney') {
+    switch (session.value.collecting_round) {
+      case 1:
+        return "Sei ein Träumer"
+      case 2:
+        return "Sei ein Realist"
+      case 3:
+        return "Sei ein Kritiker"
+      default:
+        return "Bitte gib deine Idee für diese Runde ein"
+    }
+  } else if (session.value.method.name === '6 Thinking Hats') {
+    switch (personalContributor.value.name) {
+      case 'gelber Hut':
+        return "Denke optimistisch: Was sind die Vorteile und positiven Aspekte?"
+      case 'roter Hut':
+        return "Folge deiner Intuition: Was fühlst du bei dieser Idee?"
+      case 'blauer Hut':
+        return "Betrachte den Prozess: Wie können wir die Diskussion strukturieren?"
+      case 'weißer Hut':
+        return "Konzentriere dich auf Fakten: Welche Informationen haben wir?"
+      case 'grüner Hut':
+        return "Sei kreativ: Welche neuen Ideen oder Alternativen gibt es?"
+      case 'schwarzer Hut':
+        return "Sei vorsichtig: Welche Risiken oder Probleme siehst du?"
+      default:
+        return "Bitte gib deine Gedanken entsprechend deiner Hutfarbe ein"
+    }
+  } else {
+    return "Bitte gib hier deine Idee ein."
+  }
+});
 
 const iceBreaker = () => {
     iceBreakerMsg.value = null;
+    iceBreakerLoading.value = true;
     const fileInput = ref(null);
     const textInput = ref('');
     axios.post('/api/session/ice-breaker', {
@@ -221,6 +261,10 @@ const iceBreaker = () => {
             } else {
                 errorMsg.value = 'Ein Fehler ist aufgetreten';
             }
+        })
+        .finally(() => {
+            inActiveSince.value = 0;
+            iceBreakerLoading.value = false;
         });
 }
 const showImage = ref(true);
@@ -229,7 +273,7 @@ const submitIdea = async () => {
         errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
         return;
     }
-    if (imageFile.value){
+    if (imageFile.value) {
         showImage.value = false;
     }
     if (imageFile.value || textInput.value) {
@@ -311,8 +355,8 @@ const compressImage = async (file, maxSizeInMB = 2) => {
 };
 onMounted(() => {
     const intervalId = setInterval(() => {
-    inActiveSince.value++;
-  }, 1000);
+        inActiveSince.value++;
+    }, 1000);
     if (session.value.collecting_round > 1) {
         showInfo.value = false;
     }

@@ -381,6 +381,12 @@
   text-align: center;
   margin-top: 0.5em;
   font-size: 1em;
+  fill: var(--accent);
+h2 {
+  display:inline-flex;
+  align-items:center;
+  justify-content: center;
+}
 }
 
 .sessionTarget__container {
@@ -392,3 +398,4 @@
     margin-left: 1em;
   }
 }
+

@@ -1,6 +1,5 @@
 <template>
     <h2>Voting</h2>
-    <p>{{ session.vote_round }}</p>
     <component :is="votingMethods[votingMethod]" :personalContributor="personalContributor" :ideas="ideas"
         :votes="votes" :session="session"  @sendVote="sendVote" @wait="emit('wait')"/>
 </template>
@@ -48,8 +47,8 @@ const voteRoundLimit = ref(null);
 const voteCountPrevRound = ref(null);
 const personalContributor = ref(props.personalContributor);
 const pickVotingMethod = () => {
-    console.log(ideas.value.length);
-    console.log(session.value.vote_round);
+    console.log("pickvotingMethod - Ideas: ", ideas.value.length);
+    console.log("vote_round: ", session.value.vote_round);
     if (ideas.value.length <= 5) {
         votingMethod.value = 'RankingVote'
         voteRoundLimit.value = 1;
@@ -82,6 +81,7 @@ const pickVotingMethod = () => {
             votingMethod.value = 'SwipeVote'
         }
     }
+    console.log("votingMethod picked: ", votingMethod.value)
 }
 const sendVote = ({ ideaId, voteType, voteValue }) => {
   console.log('Sending vote data:', {

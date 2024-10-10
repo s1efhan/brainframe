@@ -369,7 +369,6 @@ const setupEventListeners = () => {
     .listen('UserPickedRole', (e) => {
       console.log("e.formattedContributor", e.formattedContributor)
       contributors.value.push(e.formattedContributor);
-
       if (e.formattedContributor.user_id === userId.value) { //wenn man selbst rolle gewählt hat
         personalContributor.value = e.formattedContributor;
         personalContributor.value.isMe = true;
@@ -380,24 +379,30 @@ const setupEventListeners = () => {
     })
     .listen('SessionStarted', (e) => {
       console.log("Event: SessionStarted", e);
+      errorMsg.value = null;
       session.value = e.formattedSession;
+      stopTimer();
       startTimer();
       showStats.value = false;
     })
     .listen('SessionPaused', (e) => {
       console.log("Event: SessionPaused", e);
+      errorMsg.value = null;
       session.value = e.formattedSession;
       stopTimer();
       showStats.value = false;
     })
     .listen('SessionResumed', (e) => {
       console.log("Event: SessionResumed", e);
+      errorMsg.value = null;
       session.value = e.formattedSession;
+      stopTimer();
       startTimer();
       showStats.value = false;
     })
     .listen('SessionStopped', (e) => {
       console.log("Event: SessionStopped", e);
+      errorMsg.value = null;
       stopTimer();
       session.value = e.formattedSession;
       showStats.value = false;

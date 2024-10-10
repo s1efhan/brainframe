@@ -385,21 +385,30 @@ input:focus {
         align-items: center;
 
         button {
-            text-shadow: 2px 4px 6px var(--secondary);
-            font-size: 1.5em;
+            font-size: 1.2em;
             border: none;
             padding: 0.1em;
+            color: var(--secondary);
 
             &:hover {
                 background-color: var(--text);
-                text-shadow: 2px 4px 6px var(--accent);
+            }
+        }
+
+        .swipe__arrow__left,
+        .swipe__arrow__right {
+            svg {
+                fill: var(--accent);
+                margin-bottom: 0.5em;
+                width: 1.2em;
             }
         }
     }
 
-    .idea-card__bottom {
+    .idea-card__bottom,  .idea-card__bottom_leftright {
         margin-top: 0.5em;
         display: flex;
+        width: 100%;
         align-items: center;
         justify-content: space-between;
 
@@ -431,7 +440,17 @@ input:focus {
             }
         }
     }
-
+    .idea-card__bottom_leftright{
+        flex-direction:column;
+        section{
+            margin-top: 0.5em;
+            width: 100%;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center; 
+            justify-content: space-between;
+        }
+    }
     h3 {
         text-align: center;
         margin-bottom: 0.3em;
@@ -1301,7 +1320,8 @@ input:focus {
     margin-top: 1em;
 }
 
-.ice_breaker, .file_send {
+.ice_breaker,
+.file_send {
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -104,7 +104,7 @@
     <button class="secondary"
       v-if="session.seconds_left != 0 && session.isPaused && personalContributor.isHost && session.phase ==='voting'"
       @click="emit('stop')">Voting beenden</button>
-    <button class="primary"
+    <button class="primary glow-animation"
       v-if="session.seconds_left == 0 && session.isPaused && personalContributor.isHost && session.phase ==='voting'"
       @click="emit('start')">Voting starten</button>
   </div>

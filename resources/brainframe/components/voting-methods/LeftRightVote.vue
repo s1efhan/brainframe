@@ -4,14 +4,14 @@
   </div>
   <div v-if="currentPair.length === 2" class="left-right__container">
     <div v-for="(idea, index) in currentPair" :key="idea.id" class="idea-card">
-      <h3>{{ idea.text_input }}</h3>
+      <h3>{{ idea.title }}</h3>
       <div class="idea__description__container">
         <div class="idea__description" v-html="idea.description || idea.text_input"></div>
       </div>
-      <div class="idea-card__bottom">
+      <div class="idea-card__bottom_leftright">
         <button class="primary" @click="selectIdea(index)">{{ index === 0 ? 'L' : 'R' }}</button>
-        <div class="tag" v-if="idea.tag">#{{ idea.tag }}</div>
-        <div class="contributor__icon"><ProfileIcon /></div>
+        <section><div class="tag" v-if="idea.tag">#{{ idea.tag }}</div> <div class="contributor__icon"><ProfileIcon /></div></section>
+  
       </div>
     </div>
   </div>
