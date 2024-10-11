@@ -7,12 +7,8 @@
   <table v-if="topIdeas.length" class="rankingVote__table">
     <tbody>
       <template v-for="(idea, index) in topIdeas" :key="idea.id">
-        <tr :data-index="index"
-          :class="{ 'expanded': expandedIds.includes(idea.id) }"
-          draggable="true"
-          @dragstart="onDragStart($event, index)"
-          @dragover.prevent
-          @drop="onDrop($event, index)">
+        <tr :data-index="index" :class="{ 'expanded': expandedIds.includes(idea.id) }" draggable="true"
+          @dragstart="onDragStart($event, index)" @dragover.prevent @drop="onDrop($event, index)">
           <td class="dragAndDrop desktop">
             <svg width="80px" height="80px" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
@@ -25,12 +21,14 @@
           <td @click="toggleDetails(idea.id)" class="title">
             <div>{{ idea.title }}</div>
             <div class="icon_tag">
-           
-            <div class="tag">#{{ idea.tag ? idea.tag : "ideaTag" }}</div>
-             <div class="contributor">
-              <component :is="getIconComponent(idea.contributorIcon)" />
+
+              <div class="tag">#{{ idea.tag ? idea.tag : "ideaTag" }}</div>
+              <div :class="{
+    [idea.contributorIcon]: session.method.name === '6 Thinking Hats'
+  }" class="contributor">
+                <component :is="getIconComponent(idea.contributorIcon)" />
+              </div>
             </div>
-          </div>
           </td>
 
           <td>

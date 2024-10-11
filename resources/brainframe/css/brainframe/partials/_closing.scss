@@ -84,6 +84,12 @@
           justify-content: center;
         }
       }
+      .YellowHatIcon svg {fill: yellow;}
+      .RedHatIcon svg {fill: red;}
+      .BlueHatIcon svg {fill: blue;}
+      .GreenHatIcon svg {fill: green;}
+      .WhiteHatIcon svg {fill: white;}
+      .BlackHatIcon svg {fill: black;}
     }
   }
 }
@@ -160,7 +166,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-
+  .YellowHatIcon svg {fill: yellow;}
+.RedHatIcon svg {fill: red;}
+.BlueHatIcon svg {fill: blue;}
+.GreenHatIcon svg {fill: green;}
+.WhiteHatIcon svg {fill: white;}
+.BlackHatIcon svg {fill: black;}
   svg {
     fill: var(--secondary)
   }
@@ -449,3 +460,10 @@ section{display:flex;}
   }
 }
 .newSession__buttons{flex-direction: row;}
+
+.YellowHatIcon {fill: yellow;}
+.RedHatIcon {fill: red;}
+.BlueHatIcon {fill: blue;}
+.GreenHatIcon {fill: green;}
+.WhiteHatIcon {fill: white;}
+.BlackHatIcon {fill: black;}

@@ -107,7 +107,9 @@
                                 <td class="center">{{ index + 1 }}</td>
                                 <td>{{ idea.title }}</td>
                                 <td v-html="idea.description"></td>
-                                <td class="center">
+                                <td class="center"   :class="{
+    [contributors.find(c => c.id === idea.contributor_id)?.icon]: session.method.name === '6 Thinking Hats'
+  }">
                                     <component
                                         :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
                                 </td>
@@ -144,9 +146,15 @@
                     v-for="(groupedIdeas, round) in groupedIdeasByRound" :key="round" class="tag">
                     <div class="round">{{ round }}</div>
                     <ul>
-                        <li v-for="idea in groupedIdeas" :key="idea.id">
-                            <component :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
-                        </li>
+                        <li 
+  v-for="idea in groupedIdeas" 
+  :key="idea.id"
+  :class="{
+    [contributors.find(c => c.id === idea.contributor_id)?.icon]: session.method.name === '6 Thinking Hats'
+  }"
+>
+  <component :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
+</li>
                     </ul>
                 </div>
             </div>

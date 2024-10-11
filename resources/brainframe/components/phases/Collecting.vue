@@ -33,9 +33,9 @@
             </ul>
         </div>
     </div>
-    <div class="role_challenge__container"v-if="session.method.name == '6 Thinking Hats'">
-        <p> Deine Rolle: {{ personalContributor.name }}</p>
-        <p>Aufgabe: {{ roleChallengeMsg }}</p>
+    <div class="role_challenge__container"v-if="session.method.name == '6 Thinking Hats' || session.method.name == 'Walt Disney' ">
+        <p v-if="session.method.name == '6 Thinking Hats'"> Deine Rolle: {{ personalContributor.name }}</p>
+        <p>Sammle Ideen: {{ roleChallengeMsg }}</p>
     </div>
     <form class="collectForm" @submit.prevent="handleSubmit">
         <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
@@ -393,10 +393,6 @@ onMounted(() => {
     const intervalId = setInterval(() => {
         inActiveSince.value++;
     }, 1000);
-    if (session.value.collecting_round > 1) {
-        showInfo.value = false;
-    }
-    else { showInfo.value = true; }
     console.log("neighbourIdeas", neighbourIdeas.value);
 });
 </script>
