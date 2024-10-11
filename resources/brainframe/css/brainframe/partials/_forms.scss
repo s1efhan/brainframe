@@ -385,6 +385,7 @@ input:focus {
         display: flex;
         align-items: center;
 
+        justify-content: space-evenly;
         button {
             font-size: 1.2em;
             border: none;
@@ -398,7 +399,10 @@ input:focus {
 
         .swipe__arrow__left,
         .swipe__arrow__right {
+            display:flex;
+            align-items: center;
             svg {
+        margin: 0.2em;
                 fill: var(--accent);
                 margin-bottom: 0.5em;
                 width: 1.2em;
@@ -900,6 +904,7 @@ input:focus {
                 border: solid var(--accent);
                 padding: 0.5em;
                 border-radius: 15px;
+                margin-left: 1em;
             }
         }
 

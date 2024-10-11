@@ -1,5 +1,5 @@
 <template>
- <section v-if="session.method.name === '6-3-5' && (session.collecting_round > 0 || session.phase === 'voting')">
+ <section class="already_started" v-if="session.method.name === '6-3-5' && (session.collecting_round > 0 || session.phase === 'voting')">
     <p>Die Session hat schon gestartet. Leider kann man bei der 6-3-5 Methode nicht nachträglich beitreten. Du kannst dir aber am Ende das Ergebnis ansehen</p>
   </section>
   <section v-else>
@@ -36,7 +36,7 @@
   </div>
   <form class="selectRole" v-if="showSelectRole" @submit.prevent="addContributor">
     <div  :class="{ 'glow-animation': !pickedARole }" class="role-select__container">
-      <select @change="showInfo = false" @click = "pickedARole = true" @blur="showInfo = false" id="roleSelect" v-model="selectedRoleId">
+      <select @click = "pickedARole = true" id="roleSelect" v-model="selectedRoleId">
         <option v-for="role in roles" :key="role.id" :value="role.id">
           {{ role.name }}
         </option>

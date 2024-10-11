@@ -1,4 +1,5 @@
 <template>
+    <main class="article">
     <h1>Die 6-3-5 Methode: Strukturierte Kreativität für effektive Ideenfindung</h1>
 
     <p>In der heutigen schnelllebigen Geschäftswelt ist kreative Problemlösung ein entscheidender Faktor für den Erfolg. Die 6-3-5 Methode stellt dabei eine effiziente und strukturierte Herangehensweise zur Ideengenerierung dar. In diesem Artikel werfen wir einen genaueren Blick auf diese Methode, ihre Vorteile und Einsatzmöglichkeiten.</p>
@@ -67,4 +68,5 @@
     <h2>Fazit</h2>
 
     <p>Die 6-3-5 Methode ist ein leistungsfähiges Werkzeug für strukturierte Kreativität. Sie kombiniert die Vorteile des Brainstormings mit einem systematischen Ansatz, der Quantität und Qualität von Ideen fördert. Durch ihren klaren Ablauf und die gleichberechtigte Einbindung aller Teilnehmer eignet sie sich hervorragend für Teams, die effizient innovative Lösungen entwickeln möchten. In einer Welt, in der kreative Problemlösung zunehmend an Bedeutung gewinnt, stellt die 6-3-5 Methode eine wertvolle Ergänzung zum kreativen Toolkit jedes Unternehmens dar.</p>
+</main>
 </template>

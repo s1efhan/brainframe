@@ -40,12 +40,11 @@
           <div>v</div>
         </h2>
         <ul v-if="showDetails.techStack">
-          <li><router-link to="/brainframe/knowledge/backend">Backend: Laravel 11, Reverb, Postgres</router-link></li>
-          <li><router-link to="/brainframe/knowledge/frontend">Frontend: Vue3, SCSS, Vite, Rive</router-link></li>
-          <li><router-link to="/brainframe/knowledge/hosting">Hosting: AWS (E2C), Ubuntu, Laravel Forge</router-link>
+          <li>Backend: Laravel 11, Reverb, Postgres</li>
+          <li>Frontend: Vue3, SCSS, Vite</li>
+          <li>Hosting: AWS (E2C), Ubuntu, Laravel Forge
           </li>
-          <li><router-link to="/brainframe/knowledge/analytics">Analytics: Google Search Console, Sitebehaviour.com,
-              Proofreader.io</router-link></li>
+          <li>Analytics: Google Search Console</li>
         </ul>
       </div>
     </div>

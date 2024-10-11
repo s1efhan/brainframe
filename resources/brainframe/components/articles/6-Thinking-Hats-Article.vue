@@ -1,4 +1,5 @@
 <template>
+    <main class="article">
 <h1>Die 6 Thinking Hats Methode: Strukturiertes Denken für effektive Problemlösung</h1>
 
 <p>In der komplexen Welt der Entscheidungsfindung und Problemlösung ist es oft schwierig, alle Aspekte einer Situation gleichzeitig zu berücksichtigen. Die von Edward de Bono entwickelte 6 Thinking Hats Methode bietet einen strukturierten Ansatz, um Probleme aus verschiedenen Perspektiven zu betrachten und ganzheitliche Lösungen zu finden.</p>
@@ -78,4 +79,5 @@
 <h2>Fazit</h2>
 
 <p>Die 6 Thinking Hats Methode ist ein leistungsstarkes Werkzeug für strukturiertes Denken und effektive Problemlösung. Durch die systematische Betrachtung verschiedener Perspektiven ermöglicht sie es Einzelpersonen und Teams, ganzheitliche und ausgewogene Lösungen zu entwickeln. In einer Welt, die zunehmend komplexe Herausforderungen bietet, stellt diese Methode einen wertvollen Ansatz dar, um kreativ, kritisch und konstruktiv an Probleme heranzugehen und innovative Lösungen zu finden.</p>
+</main>
 </template>

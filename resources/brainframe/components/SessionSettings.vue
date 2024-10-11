@@ -20,7 +20,7 @@ import ArrowLeftIcon from './icons/ArrowLeftIcon.vue';
 import ArrowRightIcon from './icons/ArrowRightIcon.vue';
 const emit = defineEmits(['createSession']);
 const methods = ref(null);
-const currentIndex = ref(0);
+const currentIndex = ref(3);
 const props = defineProps({
     clickedTroughSettings: {
         type: Boolean,
@@ -42,7 +42,7 @@ onMounted(() => {
   axios.get('/api/methods')
     .then(response => {
       methods.value = response.data;
-      emit('createSession', response.data[0].id);
+      emit('createSession', response.data[3].id);
     })
     .catch(error => {
       console.error('Fehler beim Abrufen der Methoden', error);

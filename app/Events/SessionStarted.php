@@ -17,7 +17,6 @@ class SessionStarted implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $formattedSession;
-    public $ideas;
 
     public function __construct(Session $session)
     { 
@@ -42,8 +41,6 @@ class SessionStarted implements ShouldBroadcast
                 'isPaused' => $session->is_paused
             ];
             $session = Session::findOrFail($session->id);
-            $this -> ideas = Idea::where('session_id', $session->id)
-            ->get();
     }
 
     public function broadcastOn(): Channel

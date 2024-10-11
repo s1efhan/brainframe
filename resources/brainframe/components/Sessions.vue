@@ -71,7 +71,7 @@
             <td class="center">
               <SwooshIcon v-if="session.phase === 'closing'" />
               <BrainIcon v-if="session.phase === 'collecting'" />
-              <FunnelIcon v-if="session.phase === 'votingPhase'" />
+              <FunnelIcon v-if="session.phase === 'voting'" />
             </td>
             <td v-if="session.host_id === userId" class="settings">
               <template v-if="session.isEditing">

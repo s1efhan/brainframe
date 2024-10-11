@@ -1,4 +1,5 @@
 <template>
+        <main class="article">
      <h1>Die Crazy 8 Methode: Schnelle Ideengenerierung für innovative Lösungen</h1>
 
 <p>In der Welt des Design Thinking und der agilen Produktentwicklung ist die Fähigkeit, schnell kreative Ideen zu generieren, von unschätzbarem Wert. Die Crazy 8 Methode ist eine dynamische Technik, die genau darauf abzielt. In diesem Artikel werfen wir einen detaillierten Blick auf diese effektive Methode zur Ideenfindung.</p>
@@ -75,4 +76,5 @@
 
 <p>Die Crazy 8 Methode ist ein leistungsfähiges Werkzeug für
      Teams, die schnell kreative Lösungen entwickeln müssen. Durch die Kombination von Zeitdruck, visueller Darstellung und individueller Ideengenerierung fördert sie innovative Denkansätze und hilft Teams dabei, aus gewohnten Denkmustern auszubrechen. In einer Zeit, in der Agilität und schnelle Innovation entscheidend sind, bietet die Crazy 8 Methode einen wertvollen Ansatz zur Steigerung der kreativen Produktivität.</p>
+    </main>
 </template>

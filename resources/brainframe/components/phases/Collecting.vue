@@ -56,9 +56,9 @@
      <button v-else type="button" @click="isListening = false">
        <l-waveform size="35" stroke="2.5" speed="0.8" color="white"></l-waveform></button>
       -->
-                <button class="ice_breaker" @click="iceBreaker">
+                <button :class="{ 'ice-breaker-animation': inActiveSince > 20 && !iceBreakerLoading}"class="ice_breaker" @click="iceBreaker">
 
-                    <section :class="{ 'ice-breaker-animation': inActiveSince > 15 }" v-if="!iceBreakerLoading">
+                    <section v-if="!iceBreakerLoading">
                         <AiStarsIcon />
                         <p>Eisbrecher</p>
                     </section>
@@ -109,7 +109,6 @@ import MicrophoneIcon from '../icons/MicrophoneIcon.vue';
 import IconComponents from '../IconComponents.vue';
 import AiStarsIcon from '../icons/AiStarsIcon.vue';
 const getIconComponent = (iconName) => {
-    console.log("iconName", iconName);
     return IconComponents[iconName] || null;
 };
 import { dotPulse } from 'ldrs'

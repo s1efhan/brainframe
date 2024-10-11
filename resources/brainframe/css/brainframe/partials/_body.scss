@@ -344,3 +344,8 @@ li{
 .desktop{
     display:none;
 }
+.already_started{
+    border:solid var(--primary);
+    padding: 1em;
+    color: var(--accent);
+}

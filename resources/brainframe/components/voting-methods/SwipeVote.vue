@@ -7,7 +7,7 @@
     <div class="idea__description__container">
       <button class="swipe__arrow__left secondary" @click="swipeLeft"><ArrowLeftIcon/> Dislike</button>
       <div class="idea__description" v-html="currentIdea.description || currentIdea.text_input"></div>
-      <button class="swipe__arrow__right secondary" @click="swipeRight"><ArrowRightIcon/>Like</button>
+      <button class="swipe__arrow__right secondary" @click="swipeRight">Like<ArrowRightIcon/></button>
     </div>
     <div class="idea-card__bottom">
       <button @click="undoLastDecision" class="secondary undo" :disabled="!previousIdea">↺</button>

@@ -12,12 +12,14 @@
           {{ contributors.filter(c => c.is_active).length }} | {{ contributors.length }}
         </p>
       </div>
-      <div class="session_headline__details__pause" @click="session.isPaused && personalContributor.isHost ? resumeSession() : pauseSession()">
-        <p  :class="{ 'pause-animation':  contributors.filter(c => c.is_active).length > contributors.length}"v-if="!session.isPaused">
+      <div class="session_headline__details__pause"
+        @click="session.isPaused && personalContributor.isHost ? resumeSession() : pauseSession()">
+        <p :class="{ 'pause-animation':  contributors.filter(c => c.is_active).length > contributors.length && personalContributor.isHost}"
+          v-if="!session.isPaused">
           <PauseIcon />
         </p>
-        <p  :class="{ 'pause-animation': session.seconds_left }" v-else>
-         <PlayIcon/>
+        <p :class="{ 'pause-animation': session.seconds_left && personalContributor.isHost}" v-else>
+          <PlayIcon />
         </p>
       </div>
       <div>
@@ -47,14 +49,14 @@
       :personalContributor="personalContributor" :ideas="ideasWithTags" :votes="votes" />
     <Closing v-if=" session.phase === 'closing' && personalContributor" :session="session" :contributors="contributors"
       :personalContributor="personalContributor" :ideas="ideas" :votes="votes" />
-      <div v-if="session.phase != 'closing' " class="timer__container">
-      <SandclockIcon v-if="session.seconds_left"/>
+    <div v-if="session.phase != 'closing' " class="timer__container">
+      <SandclockIcon v-if="session.seconds_left" />
       <div v-if="session.seconds_left" class="timer"
         :style="{ '--progress': `${(1 - session.seconds_left / session.method.time_limit) * 360}deg` }">
         {{ session.seconds_left }}
       </div>
     </div>
-    </main>
+  </main>
   <main class="isLoading" v-if="isLoading">
     <div> <l-dot-pulse size="43" speed="1.3" color="#91b4b2"></l-dot-pulse></div>
   </main>
@@ -67,8 +69,8 @@ import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { sessionId } from '../js/eventBus.js'
 import axios from 'axios';
 import Rollenwahl from './Rollenwahl.vue';
-import { useRoute } from 'vue-router';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+const router = useRouter();
 const route = useRoute();
 import PauseIcon from '../components/icons/PauseIcon.vue';
 import ProfileIcon from '../components/icons/ProfileIcon.vue';
@@ -129,7 +131,7 @@ const errorMsg = ref(null);
 const session = ref(null);
 const userId = ref(props.userId);
 const contributors = ref(null);
-const ideas = ref([]) 
+const ideas = ref([])
 let pingInterval;
 
 // UI und Zustand
@@ -146,6 +148,7 @@ const getSession = () => {
     })
     .catch(error => {
       console.error('Error fetching session', error);
+      router.push('/brainframe/join');
     })
 };
 
@@ -326,13 +329,14 @@ const startTimer = () => {
     }
   }, 1000);
 };
-const currentRoundIdeas = computed(() => 
+const currentRoundIdeas = computed(() =>
   ideas.value.filter(idea => idea.round == session.value.collecting_round)
-) 
+)
 watch(() => currentRoundIdeas.value, (newValue) => {
   console.log("currentRoundIdeas", newValue.length, 'session.value.method.idea_limit', session.value.method.idea_limit)
+  const currentRoundContributorIdeas = newValue.filter(idea => idea.contributor_id === personalContributor.value.id);
   if (session.value.method.idea_limit &&
-      session.value.method.idea_limit <= newValue.length) {
+    session.value.method.idea_limit <= currentRoundContributorIdeas.length) {
     console.log("showStats.value")
     showStats.value = true;
   }
@@ -381,8 +385,11 @@ const setupEventListeners = () => {
       console.log("Event: SessionStarted", e);
       errorMsg.value = null;
       session.value = e.formattedSession;
-      ideas.value = e.ideas;
       stopTimer();
+      const delay = Math.random() * 3000;
+      setTimeout(() => {
+        getIdeas();
+      }, delay);
       startTimer();
       showStats.value = false;
     })

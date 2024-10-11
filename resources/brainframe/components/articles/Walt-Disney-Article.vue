@@ -1,4 +1,5 @@
 <template>
+    <main class="article">
     <h1>Die Walt Disney Methode: Kreative Problemlösung durch Perspektivenwechsel</h1>
 
 <p>Inspiriert von der Arbeitsweise des visionären Walt Disney, bietet die nach ihm benannte Kreativitätsmethode einen strukturierten Ansatz zur Ideenfindung und Problemlösung. Diese Technik nutzt verschiedene Denkweisen, um innovative Lösungen zu entwickeln und dabei sowohl Kreativität als auch Realismus zu berücksichtigen.</p>
@@ -75,4 +76,5 @@
 <h2>Fazit</h2>
 
 <p>Die Walt Disney Methode ist ein leistungsfähiges Werkzeug zur kreativen Problemlösung, das die Stärken verschiedener Denkweisen kombiniert. Durch die strukturierte Herangehensweise ermöglicht sie es Teams, innovative Ideen zu entwickeln und gleichzeitig deren Umsetzbarkeit kritisch zu prüfen. In einer Welt, die sowohl Kreativität als auch praktische Lösungen erfordert, bietet die Walt Disney Methode einen ausgewogenen Ansatz zur Bewältigung komplexer Herausforderungen.</p> 
+</main>
 </template>

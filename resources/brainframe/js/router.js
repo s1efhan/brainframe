@@ -14,6 +14,8 @@ import WaltDisney from '../components/articles/Walt-Disney-Article.vue';
 import CrazyEight from '../components/articles/Crazy-8-Article.vue';
 import SixThinkingHats from '../components/articles/6-Thinking-Hats-Article.vue';
 import Survey from '../components/Survey.vue';
+import IdeaGenerationProblems from '../components/articles/IdeaGenerationProblems.vue';
+import BrainFramesSolution from '../components/articles/BrainFramesSolution.vue';
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -30,6 +32,8 @@ const router = createRouter({
       { name: 'Wissen', path: '/brainframe/knowledge', component: Wissen },
       { name: '6-3-5', path: '/brainframe/knowledge/6-3-5', component: SechsDreiFünf },
       { name: 'Walt-Disney', path: '/brainframe/knowledge/walt-disney', component: WaltDisney },
+      { name: 'IdeaGenerationProblems', path: '/brainframe/knowledge/problems', component: IdeaGenerationProblems },
+      { name: 'BrainFramesSolution', path: '/brainframe/knowledge/solution-brainframe', component: BrainFramesSolution },
       { name: '6-Thinking-Hats', path: '/brainframe/knowledge/6-thinking-hats', component: SixThinkingHats },
       { name: 'Crazy-8', path: '/brainframe/knowledge/crazy-8', component: CrazyEight },
       { name: 'Survey', path: '/brainframe/:sessionId/survey', component: Survey },

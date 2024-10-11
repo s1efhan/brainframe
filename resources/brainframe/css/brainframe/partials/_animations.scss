@@ -73,16 +73,30 @@
 .ice-breaker-animation svg {
   animation: glow-ice-breaker 3s infinite;
 }
+.ice-breaker-animation {
+  animation: border-glow-ice-breaker 3s infinite;
+}
 
 @keyframes glow-ice-breaker {
   0% {
-      filter: drop-shadow(0 0 5px var(--accent));
   }
   50% {
       filter: drop-shadow(0 0 10px var(--primary));
       fill: var(--primary);
   }
   100% {
-      filter: drop-shadow(0 0 5px var(--accent));
+  }
+}
+@keyframes border-glow-ice-breaker {
+  0% {
+
+    border-color: var(--secondary)
+  }
+  50% {
+    box-shadow: 0 0 10px var(--primary);
+    border-color: var(--primary)
+  }
+  100% {
+    border-color: var(--secondary);
   }
 }
