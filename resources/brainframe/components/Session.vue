@@ -27,7 +27,11 @@
       </div>
       <div class="contributor_icon">
         <p v-if="personalContributor.name != 'Default'">
-          <component :is="getIconComponent(personalContributor.icon)" />
+          <component :is="getIconComponent(personalContributor.icon)" :class="{
+    'animation': session.method.name === '6 Thinking Hats' && 
+                 !session.isPaused && 
+                 session.phase === 'collecting'
+  }" />
         </p>
         <p class="desktop">{{ personalContributor.name }}</p>
       </div>
@@ -399,6 +403,28 @@ const setupEventListeners = () => {
       session.value = e.formattedSession;
       stopTimer();
       showStats.value = false;
+    })
+    .listen('RotateContributorRoles', (e) => {
+      console.log("Event: RotateContributorRoles", e);
+      console.log("Vorher - contributors:", JSON.stringify(contributors.value));
+
+      contributors.value = contributors.value.map(contributor => {
+        const updatedRole = e.contributorRoles.find(role => role.id === contributor.id);
+        if (updatedRole) {
+          console.log(`Aktualisiere Contributor ${contributor.id}:`, updatedRole);
+          return {
+            ...contributor,
+            name: updatedRole.name,
+            icon: updatedRole.icon
+          };
+        }
+        return contributor;
+      });
+
+      console.log("Nachher - contributors:", JSON.stringify(contributors.value));
+
+      personalContributor.value = contributors.value.find(c => c.id === personalContributor.value.id);
+      console.log("Aktualisierter personalContributor:", personalContributor.value);
     })
     .listen('SessionResumed', (e) => {
       console.log("Event: SessionResumed", e);

@@ -8,6 +8,7 @@ use App\Models\ApiLog;
 use App\Models\Idea;
 use App\Models\Vote;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\Contributor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Log;
 use App\Events\SessionResumed;
+use App\Events\RotateContributorRoles;
 use App\Events\SessionStarted;
 use App\Events\SessionPaused;
 use App\Events\IdeasFormatted;
@@ -136,11 +138,45 @@ class SessionController extends Controller
         $session = Session::findOrFail($sessionId);
         $collectingRound = $request->input('collecting_round');
         $voteRound = $request->input('vote_round');
-        Log::info("collectingRound - voteRound: " . $collectingRound . "-" . $voteRound);
-        $session->update(['is_paused' => false, 'seconds_left' => $session->method->time_limit, 'collecting_round' => $collectingRound, 'vote_round' => $voteRound]);
+    
+        $session->update([
+            'is_paused' => false,
+            'seconds_left' => $session->method->time_limit,
+            'collecting_round' => $collectingRound,
+            'vote_round' => $voteRound
+        ]);
+        Log::info('Method: '.$session->method->name);
+        Log::info('collectingRound: '.$collectingRound);
+        if ($session->method->name === "6 Thinking Hats" && $collectingRound > 1) {
+          
+            $this->rotateContributorRoles($session);
+        }
+    
         $this->updateCountdown($sessionId, $session->seconds_left);
         event(new SessionStarted($session));
+    
         return response()->json(['message' => 'Session gestartet']);
+    }
+    
+    private function rotateContributorRoles(Session $session)
+    {
+        Log::info("Rotating roles for session {$session->id}, collecting round {$session->collecting_round}");
+    
+        $contributors = $session->contributors;
+        $roles = Role::whereHas('methods', function ($query) use ($session) {
+            $query->where('bf_methods.id', $session->method_id);
+        })->orderBy('bf_roles.created_at')->get();
+        $rolesCount = $roles->count();
+
+        foreach ($contributors as $index => $contributor) {
+            $oldRoleId = $contributor->role_id;
+            $newRoleIndex = ($index + $session->collecting_round - 1) % $rolesCount;
+            $newRole = $roles[$newRoleIndex];
+            $contributor->update(['role_id' => $newRole->id]);
+    
+            Log::info("Contributor {$contributor->id} role rotated: {$oldRoleId} -> {$newRole->id}");
+        }
+        event(new RotateContributorRoles($session->id));
     }
 
     public function stop(Request $request)

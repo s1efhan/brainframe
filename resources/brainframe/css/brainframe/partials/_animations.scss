@@ -99,4 +99,61 @@
   100% {
     border-color: var(--secondary);
   }
+}@mixin hat-glow($color) {
+  @keyframes hat-glow-#{$color} {
+    0%, 100% {
+      fill: var(--secondary);
+    }
+    50% {
+      filter: drop-shadow(0 0 10px $color);
+      fill: $color;
+    }
+  }
+}
+
+%hat-base {
+  animation-duration: 5s;
+  animation-iteration-count: infinite;
+}
+
+.red-hat.animation {
+  @extend %hat-base;
+  @include hat-glow(red);
+  fill: red;
+  animation-name: hat-glow-red;
+}
+
+.blue-hat.animation {
+  @extend %hat-base;
+  @include hat-glow(rgb(1, 1, 255));
+  fill: rgb(1, 1, 255);
+  animation-name: hat-glow-rgb-1-1-255;
+}
+
+.yellow-hat.animation {
+  @extend %hat-base;
+  @include hat-glow(yellow);
+  fill: yellow;
+  animation-name: hat-glow-yellow;
+}
+
+.white-hat.animation {
+  @extend %hat-base;
+  @include hat-glow(white);
+  fill: white;
+  animation-name: hat-glow-white;
+}
+
+.green-hat.animation {
+  @extend %hat-base;
+  @include hat-glow(lime);
+  fill: lime;
+  animation-name: hat-glow-lime;
+}
+
+.black-hat.animation {
+  @extend %hat-base;
+  @include hat-glow(black);
+  fill: black;
+  animation-name: hat-glow-black;
 }

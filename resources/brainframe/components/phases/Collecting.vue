@@ -33,6 +33,10 @@
             </ul>
         </div>
     </div>
+    <div class="role_challenge__container"v-if="session.method.name == '6 Thinking Hats'">
+        <p> Deine Rolle: {{ personalContributor.name }}</p>
+        <p>Aufgabe: {{ roleChallengeMsg }}</p>
+    </div>
     <form class="collectForm" @submit.prevent="handleSubmit">
         <input type="file" id="image" ref="fileInput" @change="handleFileChange" />
         <div class="Input__container">
@@ -56,7 +60,8 @@
      <button v-else type="button" @click="isListening = false">
        <l-waveform size="35" stroke="2.5" speed="0.8" color="white"></l-waveform></button>
       -->
-                <button :class="{ 'ice-breaker-animation': inActiveSince > 20 && !iceBreakerLoading}"class="ice_breaker" @click="iceBreaker">
+                <button :class="{ 'ice-breaker-animation': inActiveSince > 20 && !iceBreakerLoading}"
+                    class="ice_breaker" @click="iceBreaker">
 
                     <section v-if="!iceBreakerLoading">
                         <AiStarsIcon />
@@ -148,19 +153,19 @@ const neighbourIdeas = computed(() => {
         return [];
     }
 
-    console.log(`Total ideas in props: ${props.ideas.length}`);
-    console.log('Sample of props.ideas:', props.ideas.slice(0, 2));
+    // console.log(`Total ideas in props: ${props.ideas.length}`);
+    // console.log('Sample of props.ideas:', props.ideas.slice(0, 2));
 
     const validIdeas = props.ideas.filter(idea => {
-        console.log(`Checking idea:`, idea);
-        console.log(`Has tag: ${Boolean(idea.tag)}`);
+        //    console.log(`Checking idea:`, idea);
+        //     console.log(`Has tag: ${Boolean(idea.tag)}`);
         return idea.tag;
     });
-    console.log(`Valid ideas: ${validIdeas.length}`);
+    //console.log(`Valid ideas: ${validIdeas.length}`);
 
     if (validIdeas.length === 0) {
-        console.log('No valid ideas found. Check if "tag" is the correct property to filter by.');
-        console.log('Available properties on idea object:', Object.keys(props.ideas[0] || {}));
+        //    console.log('No valid ideas found. Check if "tag" is the correct property to filter by.');
+        //   console.log('Available properties on idea object:', Object.keys(props.ideas[0] || {}));
     }
 
     // Verwenden Sie props.contributors anstelle von sortedContributors
@@ -170,17 +175,17 @@ const neighbourIdeas = computed(() => {
     for (let i = 1; i < currentRound; i++) {
         const targetRound = currentRound - i;
         const neighbourId = findNeighbourId(props.contributors.map(c => c.id), currentContributorId, i);
-        console.log(`Looking for ideas from neighbour ${neighbourId} in round ${targetRound}`);
+        // console.log(`Looking for ideas from neighbour ${neighbourId} in round ${targetRound}`);
 
         const neighbourIdeasInRound = validIdeas.filter(idea =>
             idea.contributor_id === neighbourId &&
             parseInt(idea.round) === targetRound
         );
-        console.log(`Found ${neighbourIdeasInRound.length} ideas for this neighbour and round`);
+        //   console.log(`Found ${neighbourIdeasInRound.length} ideas for this neighbour and round`);
         neighbourIdeas.push(...neighbourIdeasInRound);
     }
 
-    console.log(`Total neighbour ideas found: ${neighbourIdeas.length}`);
+    //    console.log(`Total neighbour ideas found: ${neighbourIdeas.length}`);
     return neighbourIdeas;
 });
 
@@ -188,7 +193,7 @@ function findNeighbourId(contributorIds, currentId, offset) {
     const currentIndex = contributorIds.indexOf(currentId);
     const neighbourIndex = (currentIndex + offset) % contributorIds.length;
     const neighbourId = contributorIds[neighbourIndex];
-    console.log(`Finding neighbour: current index ${currentIndex}, offset ${offset}, neighbour index ${neighbourIndex}, neighbour ID ${neighbourId}`);
+    //  console.log(`Finding neighbour: current index ${currentIndex}, offset ${offset}, neighbour index ${neighbourIndex}, neighbour ID ${neighbourId}`);
     return neighbourId;
 }
 
@@ -208,37 +213,70 @@ const imageFileUrl = ref('');
 const errorMsg = ref('');
 const iceBreakerMsg = ref('');
 const placeholderMsg = computed(() => {
-  if (session.value.method.name === 'Walt Disney') {
-    switch (session.value.collecting_round) {
-      case 1:
-        return "Sei ein Träumer"
-      case 2:
-        return "Sei ein Realist"
-      case 3:
-        return "Sei ein Kritiker"
-      default:
-        return "Bitte gib deine Idee für diese Runde ein"
+    if (session.value.method.name === 'Walt Disney') {
+        switch (session.value.collecting_round) {
+            case 1:
+                return "Sammle deine Ideen ganz frei von Einschränkungen oder möglichen Problemen"
+            case 2:
+                return "Betrachte die Situation möglichst ausgewogen und realistisch"
+            case 3:
+                return "Überlege dir genau welche Probleme auftreten könnten und wähle deine neuen Ideen möglichst kritisch aus"
+            default:
+                return "Bitte gib deine Idee für diese Runde ein"
+        }
+    } else if (session.value.method.name === '6 Thinking Hats') {
+        switch (personalContributor.value.name) {
+            case 'gelber Hut':
+                return "Egal wie unwahrscheinlich. Was wäre das schönste, tollste unvorstellbar beste Ergebnis? "
+            case 'roter Hut':
+                return "Was fühlst du? Lasse dich von deinem Bauchgefühl leiten"
+            case 'blauer Hut':
+                return "Woran muss alles gedacht werden, was vergessen manche vielleicht? Wähle deine Ideen möglichst allumfassend und ganzheitlich"
+            case 'weißer Hut':
+                return "Welche Informationen haben wir? Was für logische Schlüsse kann man daraus ziehen?"
+            case 'grüner Hut':
+                return "Welche neuen Ideen oder Alternativen gibt es? Was gibt es vielleicht noch nicht, wäre aber einen Versuch wert? Stürze dich ins Unbekannte"
+            case 'schwarzer Hut':
+                return "Welche Risiken oder Probleme siehst du? Wie ändern sich deine Ideen basierend auf diesen Befürchtungen?"
+            default:
+                return "Bitte gib deine Gedanken entsprechend deiner Hutfarbe ein"
+        }
+    } else {
+        return "Bitte gib hier deine Idee ein."
     }
-  } else if (session.value.method.name === '6 Thinking Hats') {
-    switch (personalContributor.value.name) {
-      case 'gelber Hut':
-        return "Denke optimistisch: Was sind die Vorteile und positiven Aspekte?"
-      case 'roter Hut':
-        return "Folge deiner Intuition: Was fühlst du bei dieser Idee?"
-      case 'blauer Hut':
-        return "Betrachte den Prozess: Wie können wir die Diskussion strukturieren?"
-      case 'weißer Hut':
-        return "Konzentriere dich auf Fakten: Welche Informationen haben wir?"
-      case 'grüner Hut':
-        return "Sei kreativ: Welche neuen Ideen oder Alternativen gibt es?"
-      case 'schwarzer Hut':
-        return "Sei vorsichtig: Welche Risiken oder Probleme siehst du?"
-      default:
-        return "Bitte gib deine Gedanken entsprechend deiner Hutfarbe ein"
+});
+const roleChallengeMsg = computed(() => {
+    if (session.value.method.name === 'Walt Disney') {
+        switch (session.value.collecting_round) {
+            case 1:
+                return "Sei kreativ, sei ein Träumer"
+            case 2:
+                return "Jetzt bist du Realist."
+            case 3:
+                return "Schlüpfe in die Rolle eines Kritikers"
+            default:
+                return "Bitte gib deine Idee für diese Runde ein"
+        }
+    } else if (session.value.method.name === '6 Thinking Hats') {
+        switch (personalContributor.value.name) {
+            case 'gelber Hut':
+                return "Denke optimistisch"
+            case 'roter Hut':
+                return "Folge deiner Intuition"
+            case 'blauer Hut':
+                return "Betrachte die Gesamtheit und nimm die Vogelperspektive ein"
+            case 'weißer Hut':
+                return "Konzentriere dich auf Fakten"
+            case 'grüner Hut':
+                return "Sei kreativ"
+            case 'schwarzer Hut':
+                return "Halte Ausschau nach Risiken"
+            default:
+                return "Bitte gib deine Gedanken entsprechend deiner Hutfarbe ein"
+        }
+    } else {
+        return "Bitte gib hier deine Idee ein."
     }
-  } else {
-    return "Bitte gib hier deine Idee ein."
-  }
 });
 
 const iceBreaker = () => {
