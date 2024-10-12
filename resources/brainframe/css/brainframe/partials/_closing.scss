@@ -166,12 +166,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  .YellowHatIcon svg {fill: yellow;}
-.RedHatIcon svg {fill: red;}
-.BlueHatIcon svg {fill: blue;}
-.GreenHatIcon svg {fill: green;}
-.WhiteHatIcon svg {fill: white;}
-.BlackHatIcon svg {fill: black;}
+  
   svg {
     fill: var(--secondary)
   }

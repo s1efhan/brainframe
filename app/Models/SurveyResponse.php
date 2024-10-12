@@ -50,6 +50,7 @@ class SurveyResponse extends Model
         'known_method_crazy_8' => 'boolean',
         'known_method_brainstorming' => 'boolean',
         'known_method_6_thinking_hats' => 'boolean',
+        'known_method_none' => 'boolean'
     ];
 
     public function user()
