@@ -4,37 +4,56 @@
       (BrainFrame)</h1>
     <h2>Frage {{ currentIndex + 1 }} von {{ totalQuestions }}</h2>
     <div v-if="currentQuestion">
-     
-      <div class="current_question" v-if="currentQuestion.type === 'quantitative'">
-  <p class="current_question__label">{{ currentQuestion.label }}</p>
-  <div class="options" v-for="option in ratingOptions" :key="option.id">
-    <input type="radio" :id="currentQuestion.key + '_' + option.id" :name="currentQuestion.key"
-      v-model="surveyData[currentQuestion.key]" :value="option.id" @change="autoNext">
-    <label :for="currentQuestion.key + '_' + option.id">{{ option.label }}</label>
-  </div>
-</div>
 
-<div class="current_question" v-else-if="currentQuestion.type === 'qualitative' || currentQuestion.type === 'demographic'">
-  <p>{{ currentQuestion.label }}</p>
-  <textarea v-if="currentQuestion.type === 'qualitative'" rows="12" v-model="surveyData[currentQuestion.key]"></textarea>
-  <input v-else :type="currentQuestion.inputType" v-model="surveyData[currentQuestion.key]">
-</div>
+      <div class="current_question" v-if="currentQuestion.type === 'quantitative'">
+        <p class="current_question__label">{{ currentQuestion.label }}</p>
+        <div class="options" v-for="option in ratingOptions" :key="option.id">
+          <input type="radio" :id="currentQuestion.key + '_' + option.id" :name="currentQuestion.key"
+            v-model="surveyData[currentQuestion.key]" :value="option.id" @change="autoNext">
+          <label :for="currentQuestion.key + '_' + option.id">{{ option.label }}</label>
+        </div>
+      </div>
+
+      <div class="current_question"
+        v-else-if="currentQuestion.type === 'qualitative' || currentQuestion.type === 'demographic'">
+        <p>{{ currentQuestion.label }}</p>
+        <textarea v-if="currentQuestion.type === 'qualitative'" rows="12"
+          v-model="surveyData[currentQuestion.key]"></textarea>
+        <input v-else :type="currentQuestion.inputType" v-model="surveyData[currentQuestion.key]">
+      </div>
 
 
       <div class="current_question" v-else-if="currentQuestion.type === 'checkbox'">
-  <p>{{ currentQuestion.label }}</p>
-  <div class="checkbox" v-for="method in currentQuestion.options" :key="method.key">
-    <input type="checkbox" :id="method.key" v-model="surveyData[method.key]">
-    <label :for="method.key">{{ method.label }}</label>
-  </div>
-</div>
+        <p>{{ currentQuestion.label }}</p>
+        <div class="checkbox" v-for="method in currentQuestion.options" :key="method.key">
+          <input type="checkbox" :id="method.key" v-model="surveyData[method.key]">
+          <label :for="method.key">{{ method.label }}</label>
+        </div>
+      </div>
 
       <div class="current_question" v-else-if="currentQuestion.type === 'demographic'">
         <p>{{ currentQuestion.label }}</p>
         <input :type="currentQuestion.inputType" v-model="surveyData[currentQuestion.key]">
       </div>
     </div>
-
+    <div v-if="session && topIdeas && currentIndex < 2" class="survey__topideas__container">
+      <ul class="session_details">
+        <li>[{{ session.target }}]</li>
+        <li>[{{
+          session.duration < 60 ? Math.round(session.duration) + ' min' : Math.floor(session.duration / 60) + 'h ' +
+            (session.duration % 60 ? Math.round(session.duration % 60) + 'min' : '' ) }}]</li>
+        <li>[{{ session.ideas_count }} Ideen]</li>
+      </ul>
+      <div class="survey__topideas">
+        <div class="survey__topideas">
+          <ul v-for="(idea, index) in topIdeas" :key="idea.id" class="idea">
+            <li class="idea-rank">Platz {{ index + 1 }}</li>
+            <li>{{ idea.title }}</li>
+            <li v-html="idea.description"></li>
+          </ul>
+        </div>
+      </div>
+    </div>
     <div class="navigation">
       <button class="accent" @click="previousQuestion" :disabled="currentIndex === 0">Zurück</button>
       <button class="primary" @click="nextQuestion" v-if="currentIndex < totalQuestions - 1">Weiter</button>
@@ -123,39 +142,54 @@ const findFirstUnansweredQuestion = () => {
     }
   });
 };
+const topIdeas = ref(null);
+const session = ref(null)
+const getTopIdeas = () => {
+  axios.get(`/api/survey/${sessionId}/ideas`)
+    .then(response => {
+      topIdeas.value = response.data.top_ideas;
+      session.value = response.data.session;
+      console.log("response get TopIdeas", response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching TopIdeas', error);
+    })
+}
+const loadSurveyData = () => {
+  getTopIdeas();
 
-const loadSurveyData = async () => {
-  try {
-    const response = await axios.get(`/api/survey/${sessionId}/${props.userId}`);
-    const data = response.data;
+  axios.get(`/api/survey/${sessionId}/${props.userId}`)
+    .then(response => {
+      const data = response.data;
 
-    Object.keys(data).forEach(key => {
-      if (data[key] !== null) {
-        surveyData.value[key] = data[key];
+      Object.keys(data).forEach(key => {
+        if (data[key] !== null) {
+          surveyData.value[key] = data[key];
+        }
+      });
+
+      // Initialisieren Sie Checkbox-Fragen
+      questions.forEach(question => {
+        if (question.type === 'checkbox') {
+          question.options.forEach(option => {
+            if (!(option.key in surveyData.value)) {
+              surveyData.value[option.key] = false;
+            }
+          });
+        }
+      });
+
+      // Setzen Sie den currentIndex auf die erste unbeantwortete Frage
+      const firstUnansweredIndex = findFirstUnansweredQuestion();
+      if (firstUnansweredIndex !== -1) {
+        currentIndex.value = firstUnansweredIndex;
       }
+
+      console.log("loadSurveyData", surveyData.value);
+    })
+    .catch(error => {
+      console.error('Error fetching survey-data', error);
     });
-
-    // Initialisieren Sie Checkbox-Fragen
-    questions.forEach(question => {
-      if (question.type === 'checkbox') {
-        question.options.forEach(option => {
-          if (!(option.key in surveyData.value)) {
-            surveyData.value[option.key] = false;
-          }
-        });
-      }
-    });
-
-    // Setzen Sie den currentIndex auf die erste unbeantwortete Frage
-    const firstUnansweredIndex = findFirstUnansweredQuestion();
-    if (firstUnansweredIndex !== -1) {
-      currentIndex.value = firstUnansweredIndex;
-    }
-
-    console.log("loadSurveyData", surveyData.value);
-  } catch (error) {
-    console.error('Error fetching survey-data', error);
-  }
 };
 
 const answeredQuestions = computed(() => {
@@ -170,7 +204,7 @@ const answeredQuestions = computed(() => {
 });
 const finishSurvey = () => {
   if (currentQuestion.value.type === 'checkbox') {
-    Promise.all(currentQuestion.value.options.map(option => 
+    Promise.all(currentQuestion.value.options.map(option =>
       saveAnswer(option.key, surveyData.value[option.key])
     )).then(() => {
       router.push('/brainframe');
@@ -201,7 +235,7 @@ const saveAnswer = (key, value) => {
 
 const nextQuestion = () => {
   if (currentQuestion.value.type === 'checkbox') {
-    Promise.all(currentQuestion.value.options.map(option => 
+    Promise.all(currentQuestion.value.options.map(option =>
       saveAnswer(option.key, surveyData.value[option.key])
     )).then(() => {
       if (currentIndex.value < totalQuestions.value - 1) {

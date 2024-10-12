@@ -1426,3 +1426,38 @@ input:focus {
     padding: 1em;
     margin: 2em 15%;
 }
+
+.survey__topideas {
+    color: var(--accent);
+}
+
+.survey__topideas__container {
+    display: flex;
+    flex-direction: column;
+    justify-content:  center;
+    align-items: center;
+    margin: 1em;    .session_details{
+        display:inline-flex;
+        width: 50%;
+        background-color: var(--secondary);
+        border: solid var(--primary);
+        justify-content: space-evenly;
+    }
+    ul {
+        border-radius: 5px;
+        padding: 2em;
+        margin: 1em 2em;
+        margin-bottom: 0;
+        border: solid var(--accent);
+        color: var(--accent);
+        list-style-type: none;
+        li ul {
+            border:none;
+            color: var(--secondary);
+            font-size: 0.8em;
+            padding: 0;
+            margin: 1em 0;
+            margin-bottom: 0;
+        }
+    }
+}

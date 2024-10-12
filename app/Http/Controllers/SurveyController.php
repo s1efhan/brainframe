@@ -1,8 +1,11 @@
 <?php
 namespace App\Http\Controllers;
-
+use Carbon\Carbon;
 use App\Models\SurveyResponse;
 use App\Models\User;
+use App\Models\Session;
+use App\Models\Idea;
+use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -16,40 +19,40 @@ class SurveyController extends Controller
         $response = SurveyResponse::where('session_id', $sessionId)
             ->where('user_id', $userId)
             ->first();
-            Log::info("Fetching survey data for session: $sessionId, user: $userId");
-            Log::info("Response: " . json_encode($response));
+        Log::info("Fetching survey data for session: $sessionId, user: $userId");
+        Log::info("Response: " . json_encode($response));
         if ($response) {
             // Alle Attribute des Models zurückgeben, auch wenn sie null sind
             return response()->json($response->toArray());
         }
         return response()->json([]);
     }
-    
+
     public function verifyEmail(Request $request)
     {
         Log::info('Verifying email. Request data:', $request->all());
-    
+
         try {
             $request->validate([
                 'user_id' => 'required|exists:users,id',
                 'survey_verification_key' => 'required|string|size:6'
             ]);
-    
+
             $user = User::findOrFail($request->input('user_id'));
             $cacheKey = 'survey_verification_' . $user->id;
             $cachedKey = Cache::get($cacheKey);
-    
+
             Log::info("User ID: {$user->id}, Cached Key: {$cachedKey}, Submitted Key: {$request->input('survey_verification_key')}");
-    
+
             if ($cachedKey !== $request->input('survey_verification_key')) {
                 Log::warning('Invalid verification key or expired code.');
                 return response()->json(['message' => 'Ungültiger Verifizierungsschlüssel oder Code abgelaufen.'], 400);
             }
-    
+
             $user->survey_activated = true;
             $user->save();
             Cache::forget($cacheKey);
-    
+
             Log::info('Email verified and survey activated for user: ' . $user->id);
             return response()->json(['message' => 'E-Mail verifiziert und Umfrage aktiviert.'], 200);
         } catch (\Exception $e) {
@@ -57,33 +60,33 @@ class SurveyController extends Controller
             return response()->json(['message' => 'Ein Fehler ist bei der Verifizierung aufgetreten.'], 500);
         }
     }
-    
+
     public function storeEmail(Request $request)
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'survey_email' => 'required|email'
         ]);
-    
+
         $user = User::findOrFail($request->input('user_id'));
         $user->survey_email = $request->input('survey_email');
         $user->save();
-    
+
         $verificationCode = sprintf('%06d', mt_rand(0, 999999));
         $cacheKey = 'survey_verification_' . $user->id;
         Cache::put($cacheKey, $verificationCode, now()->addMinutes(10)); // Verlängern Sie die Cache-Dauer auf 10 Minuten
-    
+
         Log::info("Storing verification code for user {$user->id}: {$verificationCode}");
-    
+
         $email = $user->survey_email;
         $emailMessage = "Dein Verifizierungscode lautet: " . $verificationCode;
-    
+
         Mail::send([], [], function ($message) use ($email, $emailMessage) {
             $message->to($email)
                 ->subject("BrainFrame - E-Mail-Verifizierungscode")
                 ->html($emailMessage);
         });
-    
+
         return response()->json([
             'message' => 'Umfrage-E-Mail gespeichert. Bitte überprüfen Sie Ihre E-Mail für den Verifizierungscode.',
         ]);
@@ -107,5 +110,58 @@ class SurveyController extends Controller
         $response->save();
 
         return response()->json(['message' => 'Antwort gespeichert.', 'response' => $response]);
+    }
+
+    public function getTopIdeas($sessionId)
+    {
+        Log::debug($sessionId);
+        $session = Session::findOrFail($sessionId);
+        $maxRound = Vote::where('session_id', $sessionId)->max('round');
+        $topIdeas = Idea::where('session_id', $sessionId)
+            ->whereNotNull('tag')
+            ->with([
+                'votes' => function ($query) use ($maxRound) {
+                    $query->where('round', $maxRound);
+                }
+            ])
+            ->get()
+            ->map(function ($idea) {
+                $avgRating = $idea->votes->avg('value') ?? 0;
+                $idea->avg_rating = $avgRating;
+                return $idea;
+            })
+            ->sortByDesc('avg_rating')
+            ->take(3)
+            ->values();
+
+
+        $firstIdeaTime = Idea::where('session_id', $sessionId)
+            ->min('created_at');
+        $lastVoteTime = Vote::where('session_id', $sessionId)
+            ->max('created_at');
+        // Konvertiere Strings zu DateTime-Objekten, falls nötig
+        $firstIdeaTime = $firstIdeaTime ? Carbon::parse($firstIdeaTime) : null;
+        $lastVoteTime = $lastVoteTime ? Carbon::parse($lastVoteTime) : null;
+      
+        $duration = null;
+        if ($firstIdeaTime && $lastVoteTime) {
+            $duration = $firstIdeaTime->diffInMinutes($lastVoteTime);
+            Log::debug("Calculated Duration: " . $duration);
+        } else {
+            Log::debug("Duration calculation skipped - missing time data");
+        }
+
+        $ideasCount = Idea::where('session_id', $sessionId)
+            ->whereNull('tag')
+            ->count();
+
+        return response()->json([
+            'top_ideas' => $topIdeas,
+            'session' => [
+                'target' => $session->target,
+                'duration' => $duration,
+                'ideas_count' => $ideasCount
+            ]
+        ]);
     }
 }
