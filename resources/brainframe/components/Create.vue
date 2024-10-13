@@ -25,6 +25,17 @@
         <button @click="startSession"  :class="{ 'glow-animation': !isEmptyAndNotFocused && clickedTroughSettings}" class="primary">Session Erstellen</button>
       </div>
       
+      <ul class="article__container" v-if="sessionTarget && !errorMsg">
+        <h2> Weiterführende Informationen </h2>
+          <li><router-link to="/brainframe/knowledge/6-3-5">Die 6-3-5 Methode - Inspiration vom eigenen
+              "Sitznachbarn"</router-link></li>
+          <li><router-link to="/brainframe/knowledge/walt-disney">Walt Disney Methode - Ideenentwicklung nach
+              amerikanischem Vorbild</router-link></li>
+          <li><router-link to="/brainframe/knowledge/crazy-8">Crazy 8 - Schnelle Ideengenerierung in acht
+              Minuten</router-link></li>
+          <li><router-link to="/brainframe/knowledge/6-thinking-hats">6 Thinking Hats - Perspektivenwechsel für
+              umfassende Lösungen</router-link></li>
+        </ul>
     </main>
   </template>
   

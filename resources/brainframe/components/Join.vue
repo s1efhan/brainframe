@@ -31,7 +31,7 @@
         class="join__form__input" v-model="sessionId" type="integer" placeholder="Session-PIN">
       <button :disabled="!sessionId || !/^\d{5}$/.test(sessionId)" @keyup.enter="joinSession" @click="joinSession"
         :class="{
-    'glow-animation': sessionId && /^\d{6}$/.test(sessionId), 
+    'glow-animation': sessionId && /^\d{5}$/.test(sessionId), 
     'primary': !(isInputFocused) && !showInfo, 
     'secondary': isInputFocused || showInfo
   }" class="join__form__submit">

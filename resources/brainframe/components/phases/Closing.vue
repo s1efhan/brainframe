@@ -1,4 +1,4 @@
-<template>
+<template v-if="isDataReady">
     <div class="collecting-pdf ">
         <table class="session-data" id="first-table">
             <thead>
@@ -213,7 +213,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch} from 'vue';
 import axios from 'axios';
 import IconComponents from '../IconComponents.vue';
 import CalendarIcon from '../icons/CalendarIcon.vue';
@@ -251,6 +251,15 @@ const props = defineProps({
         required: true
     }
 });
+
+const isDataReady = computed(() => {
+  return props.ideas && 
+         props.ideas.length > 0 && 
+         props.votes && 
+         props.votes.length > 0 && 
+         props.session &&
+         props.contributors;
+});
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 const surveyEmailIsValid = ref(false);
 const validateSurveyEmail = () => {
@@ -273,10 +282,16 @@ const toggleDetails = (id) => {
 };
 const surveyEmail = ref(props.personalContributor.email);
 const expandedIds = ref([]);
-const ideas = ref(props.ideas);
-const session = ref(props.session);
-const votes = ref(props.votes);
-const contributors = ref(props.contributors);
+const ideas = ref(props.ideas || []);
+const session = ref(props.session || {});
+watch(() => props.session, (newSession) => {
+  if (newSession) {
+    session.value = newSession;
+    console.log("Updated session:", session.value);
+  }
+}, { immediate: true, deep: true });
+const votes = ref(props.votes || []);
+const contributors = ref(props.contributors || []);
 const visibleIdeas = ref(3);
 const showMoreIdeas = () => {
     if (props.personalContributor.survey_activated) {
@@ -325,9 +340,10 @@ const ideasWithoutTags = computed(() => {
     return ideas.value ? ideas.value.filter(idea => !idea.tag) : [];
 });
 const sessionDuration = computed(() => {
-    const firstIdea = ideas.value[0];
-    const lastVote = votes.value[votes.value.length - 1];
-    return (new Date(lastVote.created_at) - new Date(firstIdea.created_at)) / 60000;
+  if (!isDataReady.value) return 0;
+  const firstIdea = ideas.value[0];
+  const lastVote = votes.value[votes.value.length - 1];
+  return (new Date(lastVote.created_at) - new Date(firstIdea.created_at)) / 60000;
 });
 const tagList = ref(null);
 const wordCloud = ref(null);
@@ -411,13 +427,20 @@ const downloadPDF = () => {
 };
 
 const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('de-DE', options);
+  if (!dateString) return 'Kein Datum verfügbar';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    console.error('Ungültiges Datum:', dateString);
+    return 'Fehler beim Datumformat';
+  }
+  const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+  return date.toLocaleDateString('de-DE', options);
 };
 
 onMounted(() => {
-    getClosingDetails();
-    console.log("Votes: ", votes.value)
+  getClosingDetails();
+  console.log("Session created_at:", props.session.created_at);
+  console.log("Formatted date:", formatDate(props.session.created_at));
 });
 
 const newEmail = ref('');

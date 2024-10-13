@@ -32,6 +32,7 @@ class SessionStopped implements ShouldBroadcast
                     'round_limit' => $roundLimit,
                     'idea_limit'=>$session->method->idea_limit
                 ],
+                'created_at'=>$session->created_at,
                 'target' => $session->target,
                 'seconds_left' => $session->seconds_left,
                 'collecting_round' => $session->collecting_round,

@@ -99,7 +99,9 @@
   100% {
     border-color: var(--secondary);
   }
-}@mixin hat-glow($color) {
+}
+
+@mixin hat-glow($color) {
   @keyframes hat-glow-#{$color} {
     0%, 100% {
       fill: var(--secondary);
@@ -125,9 +127,9 @@
 
 .blue-hat.animation {
   @extend %hat-base;
-  @include hat-glow(rgb(1, 1, 255));
-  fill: rgb(1, 1, 255);
-  animation-name: hat-glow-rgb-1-1-255;
+  @include hat-glow(blue);
+  fill: blue;
+  animation-name: hat-glow-blue;
 }
 
 .yellow-hat.animation {

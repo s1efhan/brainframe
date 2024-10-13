@@ -1434,15 +1434,18 @@ input:focus {
 .survey__topideas__container {
     display: flex;
     flex-direction: column;
-    justify-content:  center;
+    justify-content: center;
     align-items: center;
-    margin: 1em;    .session_details{
-        display:inline-flex;
+    margin: 1em;
+
+    .session_details {
+        display: inline-flex;
         width: 50%;
         background-color: var(--secondary);
         border: solid var(--primary);
         justify-content: space-evenly;
     }
+
     ul {
         border-radius: 5px;
         padding: 2em;
@@ -1451,13 +1454,34 @@ input:focus {
         border: solid var(--accent);
         color: var(--accent);
         list-style-type: none;
+
         li ul {
-            border:none;
+            border: none;
             color: var(--secondary);
             font-size: 0.8em;
             padding: 0;
             margin: 1em 0;
             margin-bottom: 0;
+        }
+    }
+}
+
+.create {
+    .article__container {
+        border: solid var(--secondary);
+        list-style-type: none;
+        margin-top: 1em;
+        display: flex;
+        flex-direction: column;
+        border-top: none;
+
+        li {
+            margin-left: 4em;
+            padding: 1em;
+        }
+
+        a {
+            color: var(--accent);
         }
     }
 }

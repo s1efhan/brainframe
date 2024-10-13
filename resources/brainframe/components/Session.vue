@@ -88,7 +88,6 @@ const getIconComponent = (iconName) => {
   return IconComponents[iconName] || null;
 };
 import { dotPulse } from 'ldrs'
-const isLoading = ref(true);
 dotPulse.register();
 const personalContributor = ref(null);
 
@@ -349,8 +348,9 @@ watch(() => currentRoundIdeas.value, (newValue) => {
 const stopTimer = () => {
   clearInterval(timer.value);
 };
-
+const isLoading = ref(true);
 onMounted(async () => {
+  isLoading.value = true;
   try {
     await Promise.all([
       updateSessionId(),
@@ -365,9 +365,9 @@ onMounted(async () => {
     await nextTick();
     await joinSession();
     adjustHeadline();
-    isLoading.value = false;
   } catch (error) {
     console.error("Fehler beim Laden:", error);
+  } finally {
     isLoading.value = false;
   }
 });

@@ -1,10 +1,5 @@
 <template>
-   <!--<div v-if="isLoading" class="isLoading__container">
-    <div class="isLoading">
-      <l-dot-pulse size="70" speed="1" color="#33d2ca"></l-dot-pulse>
-    </div>
-  </div>
-   --> 
+
 <header v-if="sessionId && (route.path === '/brainframe/create' || route.name === 'session')" class="headline"><h1 class="headline__session-pin">
       Session-PIN
       <p @click="copyToClipboard(sessionId)">
@@ -37,7 +32,6 @@
   <Menu v-if="showMenu || route.name != 'session'"  :sessionId="sessionId" @resetSessionId="handleSessionIdUpdate"></Menu>
   <div v-if="showMenu || route.name != 'session'"  class="placeholder"></div>
 </template>
-
 <script setup>
 import { sessionId } from './js/eventBus.js'
 //import {dotPulse} from "ldrs";

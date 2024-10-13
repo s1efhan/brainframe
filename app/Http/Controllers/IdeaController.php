@@ -14,11 +14,12 @@ use App\Events\SwitchPhase;
 use App\Models\ApiLog;
 class IdeaController extends Controller
 {
-    public function get($sessionId){
+    public function get($sessionId)
+    {
         $session = Session::findOrFail($sessionId);
         $ideas = Idea::where('session_id', $sessionId)
-        ->get();
-        Log::info('contributors: '.json_encode($ideas));
+            ->get();
+        Log::info('contributors: ' . json_encode($ideas));
         return response()->json([
             'ideas' => $ideas
         ]);
@@ -28,7 +29,7 @@ class IdeaController extends Controller
         // Validierung der eingehenden Anfrage
         $request->validate([
             'text_input' => 'nullable|string',
-            'image_file' => 'nullable|file|mimes:png,jpeg,pdf|max:5000',
+            'image_file' => 'nullable|file|mimes:pdf|image|max:5000',
             'session_id' => 'required|exists:bf_sessions,id',
             'contributor_id' => 'required|exists:bf_contributors,id',
             'round' => 'required|integer'
@@ -101,7 +102,7 @@ class IdeaController extends Controller
                             [
                                 "role" => "user",
                                 "content" => [
-                                    ["type" => "text", "text" => "Was siehst du. Was könnte das Bild für eine Idee darstellen? Beschreibe das Bild für einen blinden, falls nötig. Fasse in 3 Sätzen die idee zusammen. Es hat vorraussichtlich mit: ".$session->target." zu tun."],
+                                    ["type" => "text", "text" => "Was siehst du. Was könnte das Bild für eine Idee darstellen? Beschreibe das Bild für einen blinden, falls nötig. Fasse in 3 Sätzen die idee zusammen. Es hat vorraussichtlich mit: " . $session->target . " zu tun."],
                                     [
                                         "type" => "image_url",
                                         "image_url" => [
