@@ -42,7 +42,7 @@
 
     <Lobby
       v-if="(session.isPaused  && session.phase != 'closing' || showStats && session.phase != 'closing') && personalContributor"
-      :session="session" :contributors="contributors" :personalContributor="personalContributor" :votes="votes"
+      :session="session" :isStarting="isStarting" :isStopping="isStopping":contributors="contributors" :personalContributor="personalContributor" :votes="votes"
       @exit="showStats = false" @start="startSession" @stop="stopSession" :ideas="ideasWithoutTags" />
     <Collecting @stop="stopSession" :contributors="contributors" :session="session"
       :personalContributor="personalContributor" :ideas="ideas"
@@ -231,11 +231,12 @@ const ping = () => {
       });
   }
 };
-
+const isStopping = ref(false);
+const isStarting = ref(false);
 const startSession = () => {
   console.log("startSession", personalContributor.value.isHost)
-
   if (personalContributor.value.isHost) {
+    isStarting.value  = true;
     if (session.value.phase === "voting") {
       session.value.vote_round++;
     }
@@ -254,12 +255,17 @@ const startSession = () => {
       .catch(error => {
         console.error('Error starting Session', error);
       })
+      .finally(() => {
+        isStarting.value  = false;
+        isLoading.value = false;
+      });
   }
 }
 const stopSession = () => {
   console.log("stopSession", personalContributor.value.isHost)
   isLoading.value = true;
   if (personalContributor.value.isHost) {
+    isStopping.value = true;
     axios.post('/api/session/stop', {
       session_id: sessionId.value,
       vote_round: session.value.vote_round,
@@ -274,6 +280,7 @@ const stopSession = () => {
       })
       .finally(() => {
         isLoading.value = false;
+        isStopping.value = false;
       });
   }
 }
@@ -371,7 +378,6 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
-
 const setupEventListeners = () => {
   Echo.channel('session.' + sessionId.value)
     .listen('UserPickedRole', (e) => {

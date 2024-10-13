@@ -41,20 +41,25 @@
       <table v-if="ideas">
         <thead>
           <tr>
-            <th><section class="desktop">Session </section> PIN</th>
+            <th>
+              <section class="desktop">Session </section> PIN
+            </th>
             <th>Methode</th>
             <th v-for="round in session.method.round_limit" :key="round"
               :class="{ 'active_round': session.collecting_round === round }">
               <section class="desktop">Runde </section>{{ round }}
             </th>
-            <th><ProfileIcon class="profile-icon"/></th>
+            <th>
+              <ProfileIcon class="profile-icon" />
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>{{ session.id }}</td>
             <td>{{ session.method.name }}</td>
-            <td class="center"  :class="{ 'active_round': session.collecting_round === round }" v-for="round in session.method.round_limit" :key="round">
+            <td class="center" :class="{ 'active_round': session.collecting_round === round }"
+              v-for="round in session.method.round_limit" :key="round">
               {{ ideas.filter(idea => Number(idea.round) === round).length }}
             </td>
             <td class="center">{{ contributors.length }}</td>
@@ -74,7 +79,9 @@
         </thead>
         <tbody>
           <tr v-for="contributor in contributors" :key="contributor.id">
-           <td class="center"> <component :is="getIconComponent(contributor)" /> </td>
+            <td class="center">
+              <component :is="getIconComponent(contributor)" />
+            </td>
             <td>{{ contributor.name }}</td>
             <td class="center" v-if="session.phase !== 'voting'">
               {{ ideasCount(contributor.id, session.collecting_round) }}
@@ -97,16 +104,31 @@
   <div class="lobby__start__container">
     <button class="primary glow-animation"
       v-if="session.seconds_left == 0 && session.isPaused && personalContributor.isHost && session.phase === 'collecting'"
-      @click="emit('start')">Sammeln starten</button>
+      @click="!isStopping && !isStarting && emit('start')" :disabled="isStopping || isStarting">
+      <l-dot-pulse v-if="isStopping || isStarting" size="43" speed="1.3" color="#91b4b2" />
+      <template v-else>Sammeln starten</template>
+    </button>
+
     <button class="secondary"
-      v-if="session.seconds_left != 0  && personalContributor.isHost && session.phase ==='collecting'"
-      @click="emit('stop')">Sammeln beenden</button>
+      v-if="session.seconds_left != 0 && personalContributor.isHost && session.phase === 'collecting'"
+      @click="!isStopping && !isStarting && emit('stop')" :disabled="isStopping || isStarting">
+      <l-dot-pulse v-if="isStopping || isStarting" size="43" speed="1.3" color="#91b4b2" />
+      <template v-else>Sammeln beenden</template>
+    </button>
+
     <button class="secondary"
-      v-if="session.seconds_left != 0 && session.isPaused && personalContributor.isHost && session.phase ==='voting'"
-      @click="emit('stop')">Voting beenden</button>
+      v-if="session.seconds_left != 0 && session.isPaused && personalContributor.isHost && session.phase === 'voting'"
+      @click="!isStopping && !isStarting && emit('stop')" :disabled="isStopping || isStarting">
+      <l-dot-pulse v-if="isStopping || isStarting" size="43" speed="1.3" color="#91b4b2" />
+      <template v-else>Voting beenden</template>
+    </button>
+
     <button class="primary glow-animation"
-      v-if="session.seconds_left == 0 && session.isPaused && personalContributor.isHost && session.phase ==='voting'"
-      @click="emit('start')">Voting starten</button>
+      v-if="session.seconds_left == 0 && session.isPaused && personalContributor.isHost && session.phase === 'voting'"
+      @click="!isStopping && !isStarting && emit('start')" :disabled="isStopping || isStarting">
+      <l-dot-pulse v-if="isStopping || isStarting" size="43" speed="1.3" color="#91b4b2" />
+      <template v-else>Voting starten</template>
+    </button>
   </div>
 </template>
 
@@ -116,7 +138,7 @@ import SwooshIcon from '../icons/SwooshIcon.vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
 import IconComponents from '../IconComponents.vue';
 const getIconComponent = (contributor) => {
-    return contributor ? IconComponents[contributor.icon] || null : null;
+  return contributor ? IconComponents[contributor.icon] || null : null;
 };
 import CopyIcon from '../icons/CopyIcon.vue';
 import QRCode from 'qrcode';
@@ -139,6 +161,14 @@ const props = defineProps({
   },
   votes: {
     type: Object,
+    required: true
+  },
+  isStopping: {
+    type: Boolean,
+    required: true
+  },
+  isStarting: {
+    type: Boolean,
     required: true
   }
 });

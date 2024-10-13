@@ -439,6 +439,7 @@ const formatDate = (dateString) => {
 
 onMounted(() => {
   getClosingDetails();
+  validateSurveyEmail();
   console.log("Session created_at:", props.session.created_at);
   console.log("Formatted date:", formatDate(props.session.created_at));
 });

@@ -33,7 +33,8 @@
             </ul>
         </div>
     </div>
-    <div class="role_challenge__container"v-if="session.method.name == '6 Thinking Hats' || session.method.name == 'Walt Disney' ">
+    <div class="role_challenge__container"
+        v-if="session.method.name == '6 Thinking Hats' || session.method.name == 'Walt Disney' ">
         <p v-if="session.method.name == '6 Thinking Hats'"> Deine Rolle: {{ personalContributor.name }}</p>
         <p>Sammle Ideen: {{ roleChallengeMsg }}</p>
     </div>
@@ -85,9 +86,15 @@
             {{ personalIdeasCount }}
         </div>
         <div class="collecting__buttons">
-            <button class="primary" type="submit" @click="submitIdea"
-                :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit">Idee
-                speichern</button>
+            <button class="primary" type="submit" @click="!ideaIsSending && submitIdea()"
+                :disabled="personalIdeasCount >= session.method.idea_limit && session.method.idea_limit > 0">
+                <template v-if="ideaIsSending">
+                    <l-dot-pulse size="43" speed="1.3" color="#91b4b2"></l-dot-pulse>
+                </template>
+                <template v-else>
+                    Idee speichern
+                </template>
+            </button>
             <!-- <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>-->
         </div>
     </div>
@@ -303,159 +310,163 @@ const iceBreaker = () => {
             iceBreakerLoading.value = false;
         });
 }
+const ideaIsSending = ref(false);
 const showImage = ref(true);
 const submitIdea = async () => {
-  console.log("Starting submitIdea function");
-
-  if (personalIdeasCount >= session.value.method.idea_limit && session.value.method.idea_limit > 0) {
-    errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
-    console.log("Max ideas reached, returning");
-    return;
-  }
-
-  if (imageFile.value) {
-    showImage.value = false;
-    console.log("Image file present, hiding image");
-  }
-
-  if (imageFile.value || textInput.value) {
-    console.log("Image file or text input present, proceeding with submission");
-
-    const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
-    console.log("Compressed image:", compressedImage ? `${compressedImage.size} bytes` : "None");
-
-    const formData = new FormData();
-    formData.append('contributor_id', personalContributor.value.id);
-    formData.append('session_id', session.value.id);
-    formData.append('round', session.value.collecting_round);
-
-    if (compressedImage) {
-      formData.append('image_file', compressedImage);
-      console.log("Added compressed image to formData");
-    }
-    formData.append('text_input', textInput.value);
-    console.log("Added text input to formData");
-
-    // Calculate and log total request size
-    let totalSize = 0;
-    for (let [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        totalSize += value.size;
-      } else {
-        totalSize += new Blob([value]).size;
-      }
-    }
-    console.log(`Total request size: ${totalSize} bytes (${(totalSize / (1024 * 1024)).toFixed(2)} MB)`);
-
-    try {
-      console.log("Sending POST request to /api/idea/store");
-      const response = await axios.post('/api/idea/store', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      console.log('Server response:', response.data);
-      
-      textInput.value = '';
-      imageFile.value = null;
-      imageFileUrl.value = '';
-      iceBreakerMsg.value = "Trage hier deine Idee ein.";
-      
-      console.log("Idea submitted successfully, reset form fields");
-    } catch (error) {
-      console.error('Error saving idea', error);
-      if (error.response) {
-        console.log(error.response)
-        console.log(`Response headers:`, error.response.headers);
-      }
+    console.log("Starting submitIdea function");
+    ideaIsSending.value = true;
+    if (personalIdeasCount >= session.value.method.idea_limit && session.value.method.idea_limit > 0) {
+        errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
+        console.log("Max ideas reached, returning");
+        return;
     }
 
-    showImage.value = true;
-    console.log("Showing image again");
-  } else {
-    errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
-    console.log("No image or text input, showing error message");
-  }
+    if (imageFile.value) {
+        showImage.value = false;
+        console.log("Image file present, hiding image");
+    }
+
+    if (imageFile.value || textInput.value) {
+        console.log("Image file or text input present, proceeding with submission");
+
+        const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
+        console.log("Compressed image:", compressedImage ? `${compressedImage.size} bytes` : "None");
+
+        const formData = new FormData();
+        formData.append('contributor_id', personalContributor.value.id);
+        formData.append('session_id', session.value.id);
+        formData.append('round', session.value.collecting_round);
+
+        if (compressedImage) {
+            formData.append('image_file', compressedImage);
+            console.log("Added compressed image to formData");
+        }
+        formData.append('text_input', textInput.value);
+        console.log("Added text input to formData");
+
+        // Calculate and log total request size
+        let totalSize = 0;
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                totalSize += value.size;
+            } else {
+                totalSize += new Blob([value]).size;
+            }
+        }
+        console.log(`Total request size: ${totalSize} bytes (${(totalSize / (1024 * 1024)).toFixed(2)} MB)`);
+
+        try {
+            console.log("Sending POST request to /api/idea/store");
+            const response = await axios.post('/api/idea/store', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            console.log('Server response:', response.data);
+
+            textInput.value = '';
+            imageFile.value = null;
+            imageFileUrl.value = '';
+            iceBreakerMsg.value = "Trage hier deine Idee ein.";
+
+            console.log("Idea submitted successfully, reset form fields");
+            ideaIsSending.value = false;
+        } catch (error) {
+            console.error('Error saving idea', error);
+            ideaIsSending.value = false;
+            if (error.response) {
+                console.log(error.response)
+                console.log(`Response headers:`, error.response.headers);
+            }
+        }
+
+        showImage.value = true;
+        console.log("Showing image again");
+    } else {
+        ideaIsSending.value = false;
+        errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
+        console.log("No image or text input, showing error message");
+    }
 };
 
 const compressImage = async (file, maxSizeInMB = 1) => {  // maxSizeInMB auf 1 geändert
-  console.log(`Original file: name = ${file.name}, type = ${file.type}, size = ${file.size} bytes`);
-  
-  if (file.size <= maxSizeInMB * 1024 * 1024) {
-    console.log("File is already smaller than or equal to 1MB. No compression needed.");
-    return file;
-  }
-  
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        let quality = 0.7;
-        let dataUrl;
-        let iteration = 0;
-        
-        do {
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          const format = file.type.split('/')[1];
-          const mimeType = `image/${format === 'svg+xml' ? 'png' : format}`;
-          
-          dataUrl = canvas.toDataURL(mimeType, quality);
-          
-          console.log(`Compression iteration ${iteration + 1}: width = ${width}, height = ${height}, quality = ${quality}, size = ${dataUrl.length} bytes`);
-          
-          if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
-            width *= 0.9;  // Bild verkleinern
-            height *= 0.9;
-          }
-          quality *= 0.9;  // Qualität schrittweise reduzieren
-          iteration++;
-        } while (dataUrl.length > maxSizeInMB * 1024 * 1024 && quality > 0.1);
-        
-        fetch(dataUrl)
-          .then(res => res.blob())
-          .then(blob => {
-            const compressedFile = new File([blob], file.name, { type: file.type });
-            console.log(`Compressed file: name = ${compressedFile.name}, type = ${compressedFile.type}, size = ${compressedFile.size} bytes`);
-            console.log(`Compression ratio: ${(compressedFile.size / file.size * 100).toFixed(2)}%`);
-            resolve(compressedFile);
-          });
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+    console.log(`Original file: name = ${file.name}, type = ${file.type}, size = ${file.size} bytes`);
+
+    if (file.size <= maxSizeInMB * 1024 * 1024) {
+        console.log("File is already smaller than or equal to 1MB. No compression needed.");
+        return file;
+    }
+
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                let quality = 0.7;
+                let dataUrl;
+                let iteration = 0;
+
+                do {
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const format = file.type.split('/')[1];
+                    const mimeType = `image/${format === 'svg+xml' ? 'png' : format}`;
+
+                    dataUrl = canvas.toDataURL(mimeType, quality);
+
+                    console.log(`Compression iteration ${iteration + 1}: width = ${width}, height = ${height}, quality = ${quality}, size = ${dataUrl.length} bytes`);
+
+                    if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
+                        width *= 0.9;  // Bild verkleinern
+                        height *= 0.9;
+                    }
+                    quality *= 0.9;  // Qualität schrittweise reduzieren
+                    iteration++;
+                } while (dataUrl.length > maxSizeInMB * 1024 * 1024 && quality > 0.1);
+
+                fetch(dataUrl)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const compressedFile = new File([blob], file.name, { type: file.type });
+                        console.log(`Compressed file: name = ${compressedFile.name}, type = ${compressedFile.type}, size = ${compressedFile.size} bytes`);
+                        console.log(`Compression ratio: ${(compressedFile.size / file.size * 100).toFixed(2)}%`);
+                        resolve(compressedFile);
+                    });
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
 };
 
 
 const handleFileChange = (event) => {
-  const file = event.target.files[0];
-  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml', 'image/webp', 'image/tiff', 'image/heic', 'image/heif'];
-  
-  if (file && allowedImageTypes.includes(file.type)) {
-    compressImage(file).then(resultFile => {
-      imageFile.value = resultFile;
-      imageFileUrl.value = URL.createObjectURL(resultFile);
-      console.log('Bild verarbeitet und ausgewählt:', imageFileUrl.value);
-      errorMsg.value = ""; // Lösche eventuelle vorherige Fehlermeldungen
-    });
-  } else {
-    // Zurücksetzen des Datei-Inputs und der zugehörigen Werte
-    event.target.value = null;
-    imageFile.value = null;
-    imageFileUrl.value = '';
-    errorMsg.value = "Nicht unterstütztes Dateiformat. Bitte wählen Sie ein gültiges Bildformat. (PNG, JPEG, GIF, SVG, HEIF, HEIC, BMP, WEBP, TIFF)";
-    console.log('Ungültiges Dateiformat ausgewählt und entfernt');
-  }
+    const file = event.target.files[0];
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml', 'image/webp', 'image/tiff', 'image/heic', 'image/heif'];
+
+    if (file && allowedImageTypes.includes(file.type)) {
+        compressImage(file).then(resultFile => {
+            imageFile.value = resultFile;
+            imageFileUrl.value = URL.createObjectURL(resultFile);
+            console.log('Bild verarbeitet und ausgewählt:', imageFileUrl.value);
+            errorMsg.value = ""; // Lösche eventuelle vorherige Fehlermeldungen
+        });
+    } else {
+        // Zurücksetzen des Datei-Inputs und der zugehörigen Werte
+        event.target.value = null;
+        imageFile.value = null;
+        imageFileUrl.value = '';
+        errorMsg.value = "Nicht unterstütztes Dateiformat. Bitte wählen Sie ein gültiges Bildformat. (PNG, JPEG, GIF, SVG, HEIF, HEIC, BMP, WEBP, TIFF)";
+        console.log('Ungültiges Dateiformat ausgewählt und entfernt');
+    }
 };
 
 const openFileInput = () => {
-  fileInput.value.click();
+    fileInput.value.click();
 };
 
 onMounted(() => {
