@@ -305,45 +305,85 @@ const iceBreaker = () => {
 }
 const showImage = ref(true);
 const submitIdea = async () => {
-    if (personalIdeasCount >= session.value.method.idea_limit && session.value.method.idea_limit > 0) {
-        errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
-        return;
-    }
-    if (imageFile.value) {
-        showImage.value = false;
-    }
-    if (imageFile.value || textInput.value) {
-        const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
+  console.log("Starting submitIdea function");
 
-        const formData = new FormData();
-        formData.append('contributor_id', personalContributor.value.id);
-        formData.append('session_id', session.value.id);
-        formData.append('round', session.value.collecting_round);
+  if (personalIdeasCount >= session.value.method.idea_limit && session.value.method.idea_limit > 0) {
+    errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
+    console.log("Max ideas reached, returning");
+    return;
+  }
 
-        if (compressedImage) {
-            formData.append('image_file', compressedImage);
-        }
-        formData.append('text_input', textInput.value);
-        try {
-            const response = await axios.post('/api/idea/store', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            console.log('Server response:', response.data);
-            textInput.value = '';
-            imageFile.value = null;
-            imageFileUrl.value = '';
-            // personalIdeasCount++; geht nicht, stattdessen Event und ganze ideas updaten
-            iceBreakerMsg.value = "Trage hier deine Idee ein.";
-        } catch (error) {
-            console.error('Error saving idea', error);
-        }
-        showImage.value = true;
-    } else {
-        errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
+  if (imageFile.value) {
+    showImage.value = false;
+    console.log("Image file present, hiding image");
+  }
+
+  if (imageFile.value || textInput.value) {
+    console.log("Image file or text input present, proceeding with submission");
+
+    const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
+    console.log("Compressed image:", compressedImage ? `${compressedImage.size} bytes` : "None");
+
+    const formData = new FormData();
+    formData.append('contributor_id', personalContributor.value.id);
+    formData.append('session_id', session.value.id);
+    formData.append('round', session.value.collecting_round);
+
+    if (compressedImage) {
+      formData.append('image_file', compressedImage);
+      console.log("Added compressed image to formData");
     }
+    formData.append('text_input', textInput.value);
+    console.log("Added text input to formData");
+
+    // Calculate and log total request size
+    let totalSize = 0;
+    for (let [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        totalSize += value.size;
+      } else {
+        totalSize += new Blob([value]).size;
+      }
+    }
+    console.log(`Total request size: ${totalSize} bytes (${(totalSize / (1024 * 1024)).toFixed(2)} MB)`);
+
+    try {
+      console.log("Sending POST request to /api/idea/store");
+      const response = await axios.post('/api/idea/store', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      console.log('Server response:', response.data);
+      
+      textInput.value = '';
+      imageFile.value = null;
+      imageFileUrl.value = '';
+      iceBreakerMsg.value = "Trage hier deine Idee ein.";
+      
+      console.log("Idea submitted successfully, reset form fields");
+    } catch (error) {
+      console.error('Error saving idea', error);
+      if (error.response) {
+        console.log(`Server responded with status: ${error.response.status}`);
+        console.log(`Response headers:`, error.response.headers);
+      }
+    }
+
+    showImage.value = true;
+    console.log("Showing image again");
+  } else {
+    errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
+    console.log("No image or text input, showing error message");
+  }
 };
 
 const compressImage = async (file, maxSizeInMB = 2) => {
+  console.log(`Original file: name = ${file.name}, type = ${file.type}, size = ${file.size} bytes`);
+  
+  if (file.size <= maxSizeInMB * 1024 * 1024) {
+    console.log("File is already smaller than or equal to 2MB. No compression needed.");
+    return file;
+  }
+  
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -354,6 +394,7 @@ const compressImage = async (file, maxSizeInMB = 2) => {
         let height = img.height;
         let quality = 0.7;
         let dataUrl;
+        let iteration = 0;
         
         do {
           canvas.width = width;
@@ -366,16 +407,24 @@ const compressImage = async (file, maxSizeInMB = 2) => {
           
           dataUrl = canvas.toDataURL(mimeType, quality);
           
+          console.log(`Compression iteration ${iteration + 1}: width = ${width}, height = ${height}, quality = ${quality}, size = ${dataUrl.length} bytes`);
+          
           if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
             width *= 0.9;
             height *= 0.9;
           }
           quality *= 0.9;
+          iteration++;
         } while (dataUrl.length > maxSizeInMB * 1024 * 1024 && quality > 0.1);
         
         fetch(dataUrl)
           .then(res => res.blob())
-          .then(blob => resolve(new File([blob], file.name, { type: file.type })));
+          .then(blob => {
+            const compressedFile = new File([blob], file.name, { type: file.type });
+            console.log(`Compressed file: name = ${compressedFile.name}, type = ${compressedFile.type}, size = ${compressedFile.size} bytes`);
+            console.log(`Compression ratio: ${(compressedFile.size / file.size * 100).toFixed(2)}%`);
+            resolve(compressedFile);
+          });
       };
       img.src = e.target.result;
     };
@@ -383,35 +432,30 @@ const compressImage = async (file, maxSizeInMB = 2) => {
   });
 };
 
-const MAX_PDF_SIZE = 5 * 1024 * 1024; // 5MB in Bytes
-
 const handleFileChange = (event) => {
   const file = event.target.files[0];
   const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml', 'image/webp', 'image/tiff', 'image/heic', 'image/heif'];
   
-  if (allowedImageTypes.includes(file.type)) {
-    compressImage(file).then(compressedFile => {
-      imageFile.value = compressedFile;
-      imageFileUrl.value = URL.createObjectURL(compressedFile);
-      console.log('Bild komprimiert und ausgewählt:', imageFileUrl.value);
+  if (file && allowedImageTypes.includes(file.type)) {
+    compressImage(file).then(resultFile => {
+      imageFile.value = resultFile;
+      imageFileUrl.value = URL.createObjectURL(resultFile);
+      console.log('Bild verarbeitet und ausgewählt:', imageFileUrl.value);
+      errorMsg.value = ""; // Lösche eventuelle vorherige Fehlermeldungen
     });
-  } else if (file.type === 'application/pdf') {
-    if (file.size <= MAX_PDF_SIZE) {
-      imageFile.value = file;
-      imageFileUrl.value = URL.createObjectURL(file);
-      console.log('PDF ausgewählt:', imageFileUrl.value);
-    } else {
-      errorMsg.value = "PDF ist zu groß. Maximale Größe ist 5MB.";
-    }
   } else {
-    errorMsg.value = "Nicht unterstütztes Dateiformat. Bitte wählen Sie ein gültiges Bild- oder PDF-Format.";
+    // Zurücksetzen des Datei-Inputs und der zugehörigen Werte
+    event.target.value = null;
+    imageFile.value = null;
+    imageFileUrl.value = '';
+    errorMsg.value = "Nicht unterstütztes Dateiformat. Bitte wählen Sie ein gültiges Bildformat. (PNG, JPEG, GIF, SVG, HEIF, HEIC, BMP, WEBP, TIFF)";
+    console.log('Ungültiges Dateiformat ausgewählt und entfernt');
   }
 };
 
 const openFileInput = () => {
-    fileInput.value.click();
-}
-
+  fileInput.value.click();
+};
 
 onMounted(() => {
     const intervalId = setInterval(() => {

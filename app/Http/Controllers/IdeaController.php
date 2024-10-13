@@ -29,7 +29,7 @@ class IdeaController extends Controller
         // Validierung der eingehenden Anfrage
         $request->validate([
             'text_input' => 'nullable|string',
-            'image_file' => 'nullable|file|mimes:pdf,jpeg,png,jpg,gif,bmp,svg,webp,tiff,heic,heif|max:5000',
+            'image_file' => 'nullable|image|max:5000',
             'session_id' => 'required|exists:bf_sessions,id',
             'contributor_id' => 'required|exists:bf_contributors,id',
             'round' => 'required|integer'
