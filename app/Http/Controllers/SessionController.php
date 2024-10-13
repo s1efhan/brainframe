@@ -227,17 +227,16 @@ class SessionController extends Controller
             ->select('id', 'text_input', 'contributor_id', 'round')
             ->get();
         Log::info(message: '$round, $sessionId' . $round . $sessionId);
-        // Überprüfen, ob Ideen gefunden wurden
         if ($ideas->isEmpty()) {
             Log::info('Keine ideen Fehler');
             return false;
         }
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
-
+    
         $ideasFormatted = $ideas->map(function ($idea) use ($session) {
             return [
-                'id' => $idea->id,  // Fügen Sie die ursprüngliche ID hinzu
+                'id' => $idea->id,
                 'target' => $session->target,
                 'contributor_id' => $idea->contributor_id,
                 'title' => $idea->text_input,
@@ -245,10 +244,9 @@ class SessionController extends Controller
                 'round' => $idea->round ?? null
             ];
         })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
+    
         Log::info(message: $ideasFormatted . " not Empty");
         try {
-
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $apiKey,
@@ -259,23 +257,25 @@ class SessionController extends Controller
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'Du bist verantwortlich für die Verarbeitung und Filterung von Brainstorming-Ergebnissen. Dein Ziel ist die Qualität und Verständlichkeit der eingesandten Ideen sicherzustellen.
+                            'content' => 'Du bist verantwortlich für die Verarbeitung von Brainstorming-Ergebnissen. Dein Ziel ist die Qualität und Verständlichkeit der eingesandten Ideen sicherzustellen. Behalte den Kern der Ideen bei und ergänze wenn nötig kreativ. Versuche Tippfehler zu korrigieren.
                                     Folge diesen Anweisungen strikt:
-                    Die Ideen verfolgen alle das Ziel: "' . $session->target . '".
-                       1) Erstelle einen umfassenden title, der die Konzepte und Basis der Idea widerspiegelt.
+                    Die Ideen verfolgen alle das Ziel: "' . $session->target . '". Achte also darauf, dass die Ideen passend zum Ziel formuliert werden.
+                       1) Erstelle einen umfassenden title, der die Konzepte der Idea wiederspiegelt.
                        2) Fülle description mit mindestens 2 bis zu 3 Stichpunkten, die verschiedene Aspekte der Idea abdeckt, sei kreativ.
                        3) Wähle einen thematischen tag, der die Kernessenz der Idea erfasst und die Ideen zu Gruppen zuordbar macht.
                        4) Formatiere die Ausgabe als JSON-Array mit den Feldern: id, contributor_id, title, description, tag wie im Beispiel.
                     
                   Beispiel:
-{
-  "id": 1,
-  "contributor_id": "1",
-  "title": "Lifestyle-Marken spielen gegeneinander",
-  "description": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
-  "tag": "Gesellschaftskritik",
-  "round": "2"
-}'
+    [
+      {
+        "id": 1,
+        "contributor_id": "1",
+        "title": "Lifestyle-Marken spielen gegeneinander",
+        "description": "<ul><li>Marken wie Nestle, Coca Cola oder McDonalds treten gegeneinander an</li><li>ähnlich zu Hunger Games</li><li>Kritik an Konsumgesellschaft</li></ul>",
+        "tag": "Gesellschaftskritik",
+        "round": "2"
+      }
+    ]'
                         ],
                         [
                             'role' => 'user',
@@ -289,26 +289,26 @@ class SessionController extends Controller
             Log::info("Response Body: " . json_encode($responseBody));
             ApiLog::create([
                 'session_id' => $sessionId,
-                'contributor_id' => Contributor::where('user_id', $session->host_id)->where('session_id', $sessionId)->first()->id, //ich will die contributor_id des host
+                'contributor_id' => Contributor::where('user_id', $session->host_id)->where('session_id', $sessionId)->first()->id,
                 'request_data' => json_decode($ideasFormatted, true),
                 'response_data' => $responseBody,
                 'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
                 'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0
             ]);
-
+    
             if (isset($responseBody['choices'][0]['message']['content'])) {
                 $content = $responseBody['choices'][0]['message']['content'];
                 $content = preg_replace('/```json\s*|\s*```/', '', $content);
                 $newIdeas = json_decode($content, true);
                 Log::info("Decoded new ideas:", $newIdeas);
-
+    
                 $createdIdeas = [];
                 if (is_array($newIdeas)) {
                     foreach ($newIdeas as $idea) {
-                        Log::info("Processing idea:", $idea);
+                        Log::info("Processing idea:", ['idea' => $idea]);
                         $originalIdea = $ideas->firstWhere('id', $idea['id']);
-                        Log::info("Original idea found:", $originalIdea ? $originalIdea->toArray() : 'null');
-
+                        Log::info("Original idea found:", ['originalIdea' => $originalIdea ? $originalIdea->toArray() : 'null']);
+    
                         if ($originalIdea) {
                             $createdIdea = Idea::create([
                                 'title' => $idea['title'] ?? '',
@@ -325,10 +325,28 @@ class SessionController extends Controller
                             Log::warning("Original idea not found for id: " . $idea['id']);
                         }
                     }
-
-                    // Event einmal mit allen erstellten Ideen auslösen
+    
                     event(new IdeasFormatted($createdIdeas, $sessionId));
                     Log::info('New ideas saved and event broadcasted successfully. Created ideas count: ' . count($createdIdeas));
+                } elseif (is_object($newIdeas) || (is_array($newIdeas) && !isset($newIdeas[0]))) {
+                    $newIdeas = [$newIdeas];
+                    foreach ($newIdeas as $idea) {
+                        $originalIdea = $ideas->firstWhere('id', $idea['id']);
+                        if ($originalIdea) {
+                            $createdIdea = Idea::create([
+                                'title' => $idea['title'] ?? '',
+                                'description' => $idea['description'] ?? '',
+                                'tag' => $idea['tag'] ?? '',
+                                'contributor_id' => $idea['contributor_id'] ?? 0,
+                                'session_id' => $sessionId,
+                                'round' => $session->collecting_round,
+                                'original_idea_id' => $originalIdea->id
+                            ]);
+                            $createdIdeas[] = $createdIdea;
+                        }
+                    }
+                    event(new IdeasFormatted($createdIdeas, $sessionId));
+                    Log::info('Single idea processed and event broadcasted. Created idea count: ' . count($createdIdeas));
                 } else {
                     Log::error('Invalid format for new ideas', ['content' => $content]);
                 }
@@ -336,7 +354,7 @@ class SessionController extends Controller
                 Log::error('Unexpected API response format', $responseBody);
             }
             return response()->json($responseBody);
-
+    
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             $response = $e->getResponse();
             $responseBodyAsString = $response->getBody()->getContents();
@@ -380,49 +398,23 @@ class SessionController extends Controller
             'session_id' => 'required|exists:bf_sessions,id',
             'contributor_id' => 'required|exists:bf_contributors,id',
         ]);
-
+    
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
         $sessionId = $request->input('session_id');
         $contributorId = $request->input('contributor_id');
-
-        // Filter Ideen nach session_id und ausschließen der Ideen des aktuellen Contributors
+    
         $ideas = Idea::where('session_id', $sessionId)
-            ->where('contributor_id', '!=', $contributorId)
             ->select('id', 'text_input')
             ->get();
-
-        // Abrufen des Ziels der Sitzung
+    
         $sessionTarget = Session::where('id', $sessionId)->value('target');
-
-        // Standardnachricht
-        $userContent = 'Es gibt noch keine Ideen, aber das Thema des Brainstorming Prozesses ist: ' . $sessionTarget . ". Sei also kreativ und denk um die Ecke.";
-
-        if (!$ideas->isEmpty()) {
-            // Formatieren der Ideen für die API-Anfrage
-            $ideasFormatted = $ideas->map(function ($idea) {
-                return ['id' => $idea->id, 'text' => $idea->text_input];
-            })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-            $userContent = "Sei kreativ und denk um die Ecke. Das sind die bisherigen Ideen der anderen Teilnehmer zum Thema " . $sessionTarget . " ." . $ideasFormatted;
-        }
-
+    
+        $userContent = $ideas->isEmpty() 
+            ? "Es gibt noch keine Ideen zum Thema {$sessionTarget}." 
+            : "Bisherige Ideen zum Thema {$sessionTarget}: " . $ideas->pluck('text_input')->implode(', ');
+    
         try {
-            $requestData = [
-                'model' => "gpt-4",
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'Deine Aufgabe ist es, mir auf Grundlage der dir gezeigten Ideen einen einzigen kurzen Eisbrecher zu geben, damit ich inspiriert werde, weitere Ideen zu entwickeln. Antworte mit maximal 20 Worten, bestehend aus 2 Teilsätzen wobei der zweite Satz mit "z.B" beginnt um eine mögliche Idee zu nennen. Nenne auf keinen Fall eine bereits vorhandene Idee.'
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $userContent,
-                    ],
-                ],
-                'temperature' => 0.3,
-            ];
-            Log::info('OpenAI API Request:', ['request' => $requestData]);
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $apiKey,
@@ -433,40 +425,34 @@ class SessionController extends Controller
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => 'Deine Aufgabe ist es, mir auf Grundlage der dir gezeigten Ideen einen einzigen kurzen Eisbrecher zu geben, damit ich inspiriert werde, weitere Ideen zu entwickeln. Antworte mit maximal 20 Worten, bestehend aus 2 Teilsätzen wobei der zweite Satz mit "z.B" beginnt um eine mögliche Idee zu nennen. Nenne auf keinen Fall eine bereits vorhandene Idee.'
+                            'content' => "Ziel: Antwort auf die Frage/ das Ziel {$sessionTarget} finden. FORMAT: Zwei Teilsätze, max. 20 Wörter. 2. Satz: 'z.B.' + konkretes Beispiel. Keine vorhandenen Ideen wiederholen. Nur spezifische, präzise Antworten"
                         ],
                         [
                             'role' => 'user',
-                            'content' => $userContent,
+                            'content' => $userContent . " Gib eine neue, kreative Antwort auf: ".$sessionTarget." im vorgegebenen Format."
                         ],
                     ],
                     'temperature' => 0.3,
                 ],
             ]);
-
+    
             $responseBody = json_decode($response->getBody(), true);
-            Log::info('OpenAI API Response:', ['response' => $responseBody]);
-
-            // Extrahiere die relevante Nachricht aus der API-Antwort
             $iceBreakerMsg = $responseBody['choices'][0]['message']['content'] ?? 'Keine Antwort erhalten';
+    
             ApiLog::create([
                 'session_id' => $sessionId,
                 'contributor_id' => $contributorId,
-                'request_data' => json_encode($requestData),
+                'request_data' => json_encode($userContent),
                 'response_data' => json_encode($responseBody),
                 'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
                 'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0
             ]);
+    
             return response()->json(['iceBreaker_msg' => $iceBreakerMsg]);
-
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            $response = $e->getResponse();
-            $responseBodyAsString = $response->getBody()->getContents();
-            Log::error('ClientException: ' . $responseBodyAsString);
-            return response()->json(['iceBreaker_msg' => 'Fehler: ' . $responseBodyAsString], 500);
+    
         } catch (\Exception $e) {
-            Log::error('General Exception: ' . $e->getMessage());
-            return response()->json(['iceBreaker_msg' => 'Fehler: ' . $e->getMessage()], 500);
+            Log::error('API Error: ' . $e->getMessage());
+            return response()->json(['iceBreaker_msg' => 'Fehler bei der Ideengenerierung.'], 500);
         }
     }
 
