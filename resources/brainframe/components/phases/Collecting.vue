@@ -363,7 +363,7 @@ const submitIdea = async () => {
     } catch (error) {
       console.error('Error saving idea', error);
       if (error.response) {
-        console.log(`Server responded with status: ${error.response.status}`);
+        console.log(error.response)
         console.log(`Response headers:`, error.response.headers);
       }
     }
@@ -376,11 +376,11 @@ const submitIdea = async () => {
   }
 };
 
-const compressImage = async (file, maxSizeInMB = 2) => {
+const compressImage = async (file, maxSizeInMB = 1) => {  // maxSizeInMB auf 1 geändert
   console.log(`Original file: name = ${file.name}, type = ${file.type}, size = ${file.size} bytes`);
   
   if (file.size <= maxSizeInMB * 1024 * 1024) {
-    console.log("File is already smaller than or equal to 2MB. No compression needed.");
+    console.log("File is already smaller than or equal to 1MB. No compression needed.");
     return file;
   }
   
@@ -410,10 +410,10 @@ const compressImage = async (file, maxSizeInMB = 2) => {
           console.log(`Compression iteration ${iteration + 1}: width = ${width}, height = ${height}, quality = ${quality}, size = ${dataUrl.length} bytes`);
           
           if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
-            width *= 0.9;
+            width *= 0.9;  // Bild verkleinern
             height *= 0.9;
           }
-          quality *= 0.9;
+          quality *= 0.9;  // Qualität schrittweise reduzieren
           iteration++;
         } while (dataUrl.length > maxSizeInMB * 1024 * 1024 && quality > 0.1);
         
@@ -431,6 +431,7 @@ const compressImage = async (file, maxSizeInMB = 2) => {
     reader.readAsDataURL(file);
   });
 };
+
 
 const handleFileChange = (event) => {
   const file = event.target.files[0];
