@@ -343,52 +343,76 @@ const submitIdea = async () => {
     }
 };
 
+const compressImage = async (file, maxSizeInMB = 2) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        let quality = 0.7;
+        let dataUrl;
+        
+        do {
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const format = file.type.split('/')[1];
+          const mimeType = `image/${format === 'svg+xml' ? 'png' : format}`;
+          
+          dataUrl = canvas.toDataURL(mimeType, quality);
+          
+          if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
+            width *= 0.9;
+            height *= 0.9;
+          }
+          quality *= 0.9;
+        } while (dataUrl.length > maxSizeInMB * 1024 * 1024 && quality > 0.1);
+        
+        fetch(dataUrl)
+          .then(res => res.blob())
+          .then(blob => resolve(new File([blob], file.name, { type: file.type })));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+const MAX_PDF_SIZE = 5 * 1024 * 1024; // 5MB in Bytes
+
 const handleFileChange = (event) => {
-    imageFile.value = event.target.files[0];
-    imageFileUrl.value = URL.createObjectURL(imageFile.value)
-    console.log('File selected:', imageFileUrl.value);
+  const file = event.target.files[0];
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml', 'image/webp', 'image/tiff', 'image/heic', 'image/heif'];
+  
+  if (allowedImageTypes.includes(file.type)) {
+    compressImage(file).then(compressedFile => {
+      imageFile.value = compressedFile;
+      imageFileUrl.value = URL.createObjectURL(compressedFile);
+      console.log('Bild komprimiert und ausgewählt:', imageFileUrl.value);
+    });
+  } else if (file.type === 'application/pdf') {
+    if (file.size <= MAX_PDF_SIZE) {
+      imageFile.value = file;
+      imageFileUrl.value = URL.createObjectURL(file);
+      console.log('PDF ausgewählt:', imageFileUrl.value);
+    } else {
+      errorMsg.value = "PDF ist zu groß. Maximale Größe ist 5MB.";
+    }
+  } else {
+    errorMsg.value = "Nicht unterstütztes Dateiformat. Bitte wählen Sie ein gültiges Bild- oder PDF-Format.";
+  }
 };
 
 const openFileInput = () => {
     fileInput.value.click();
 }
 
-const compressImage = async (file, maxSizeInMB = 2) => {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                let quality = 0.7;
-                let dataUrl;
 
-                do {
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    dataUrl = canvas.toDataURL('image/jpeg', quality);
-
-                    if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
-                        width *= 0.9;
-                        height *= 0.9;
-                    }
-
-                    quality *= 0.9;
-                } while (dataUrl.length > maxSizeInMB * 1024 * 1024 && quality > 0.1);
-
-                fetch(dataUrl)
-                    .then(res => res.blob())
-                    .then(blob => resolve(new File([blob], file.name, { type: 'image/jpeg' })));
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-};
 onMounted(() => {
     const intervalId = setInterval(() => {
         inActiveSince.value++;

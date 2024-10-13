@@ -158,26 +158,6 @@ class SessionController extends Controller
         return response()->json(['message' => 'Session gestartet']);
     }
     
-    private function rotateContributorRoles(Session $session)
-    {
-        Log::info("Rotating roles for session {$session->id}, collecting round {$session->collecting_round}");
-    
-        $contributors = $session->contributors;
-        $roles = Role::whereHas('methods', function ($query) use ($session) {
-            $query->where('bf_methods.id', $session->method_id);
-        })->orderBy('bf_roles.created_at')->get();
-        $rolesCount = $roles->count();
-
-        foreach ($contributors as $index => $contributor) {
-            $oldRoleId = $contributor->role_id;
-            $newRoleIndex = ($index + $session->collecting_round - 1) % $rolesCount;
-            $newRole = $roles[$newRoleIndex];
-            $contributor->update(['role_id' => $newRole->id]);
-    
-            Log::info("Contributor {$contributor->id} role rotated: {$oldRoleId} -> {$newRole->id}");
-        }
-        event(new RotateContributorRoles($session->id));
-    }
 
     public function stop(Request $request)
     {
@@ -391,6 +371,27 @@ class SessionController extends Controller
     {
         $timerKey = "timer_{$sessionId}";
         Cache::forget($timerKey);
+    }
+
+    private function rotateContributorRoles(Session $session)
+    {
+        Log::info("Rotating roles for session {$session->id}, collecting round {$session->collecting_round}");
+    
+        $contributors = $session->contributors;
+        $roles = Role::whereHas('methods', function ($query) use ($session) {
+            $query->where('bf_methods.id', $session->method_id);
+        })->orderBy('bf_roles.created_at')->get();
+        $rolesCount = $roles->count();
+
+        foreach ($contributors as $index => $contributor) {
+            $oldRoleId = $contributor->role_id;
+            $newRoleIndex = ($index + $session->collecting_round - 1) % $rolesCount;
+            $newRole = $roles[$newRoleIndex];
+            $contributor->update(['role_id' => $newRole->id]);
+    
+            Log::info("Contributor {$contributor->id} role rotated: {$oldRoleId} -> {$newRole->id}");
+        }
+        event(new RotateContributorRoles($session->id));
     }
     public function iceBreaker(Request $request)
     {
