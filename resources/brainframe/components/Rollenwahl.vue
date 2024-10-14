@@ -4,7 +4,7 @@
   </section>
   <section v-else>
   <div class="selectRole__head">
-    <h2>Wähle dein Pseudonym</h2>
+    <h2>Rollenwahl</h2>
     <div class="info__container">
       <div @click="showInfo = !showInfo" class="join__info">
         <p>i</p>
@@ -13,7 +13,7 @@
   </div>
   <div v-if="showInfo" class="info__text__container">
     <div class="info__text">
-      <h3>Rollenwahl:</h3>
+     
       <ul v-if="session.method.name =='6 Thinking Hats'">
         <li>Die Wahl deiner "Rolle" hat <strong>großen Einfluss</strong> auf den weiteren Verlauf der Ideen-Sammel
           Session. <br>Sie bestimmt deine <strong>Perspektive beim Sammeln und Bewerten </strong>und ermöglicht es
@@ -36,7 +36,7 @@
   </div>
   <form class="selectRole" v-if="showSelectRole" @submit.prevent="addContributor">
     <div  :class="{ 'glow-animation': !pickedARole }" class="role-select__container">
-      <select @click = "pickedARole = true" id="roleSelect" v-model="selectedRoleId">
+     <select @click = "pickedARole = true" id="roleSelect" v-model="selectedRoleId">
         <option v-for="role in roles" :key="role.id" :value="role.id">
           {{ role.name }}
         </option>
@@ -54,7 +54,7 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import IconComponents from '../components/IconComponents.vue';
-
+import SelectIcon from '../components/icons/SelectIcon.vue';
 const props = defineProps({
   userId: {
     type: [String, Number],
