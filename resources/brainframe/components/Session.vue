@@ -156,7 +156,6 @@ const getSession = () => {
 };
 
 const getContributors = () => {
-  console.log("getContributors");
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {
       contributors.value = response.data.contributors;
@@ -386,10 +385,8 @@ const setupEventListeners = () => {
       if (e.formattedContributor.user_id === userId.value) { //wenn man selbst rolle gewählt hat
         personalContributor.value = e.formattedContributor;
         personalContributor.value.isMe = true;
-        console.log("personalContributor Picked", personalContributor.value);
       }
       session.value.method.round_limit = Math.max(contributors.value.length, 2);
-      console.log("UserPickedRole", contributors.value);
     })
     .listen('SessionStarted', (e) => {
       console.log("Event: SessionStarted", e);
@@ -411,13 +408,10 @@ const setupEventListeners = () => {
       showStats.value = false;
     })
     .listen('RotateContributorRoles', (e) => {
-      console.log("Event: RotateContributorRoles", e);
-      console.log("Vorher - contributors:", JSON.stringify(contributors.value));
-
       contributors.value = contributors.value.map(contributor => {
         const updatedRole = e.contributorRoles.find(role => role.id === contributor.id);
         if (updatedRole) {
-          console.log(`Aktualisiere Contributor ${contributor.id}:`, updatedRole);
+  
           return {
             ...contributor,
             name: updatedRole.name,
@@ -426,11 +420,7 @@ const setupEventListeners = () => {
         }
         return contributor;
       });
-
-      console.log("Nachher - contributors:", JSON.stringify(contributors.value));
-
       personalContributor.value = contributors.value.find(c => c.id === personalContributor.value.id);
-      console.log("Aktualisierter personalContributor:", personalContributor.value);
     })
     .listen('SessionResumed', (e) => {
       console.log("Event: SessionResumed", e);

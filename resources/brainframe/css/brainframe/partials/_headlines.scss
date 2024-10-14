@@ -301,9 +301,13 @@
 .session_headline__details {
   display: flex;
   justify-content: space-between;
-.contributor_icon{
-  svg {width: 1.8em;}
-}
+
+  .contributor_icon {
+    svg {
+      width: 1.8em;
+    }
+  }
+
   .red-hat {
     fill: red;
   }
@@ -362,14 +366,17 @@
       fill: var(--secondary)
     }
   }
-  div &__pause{
+
+  div &__pause {
     padding: 0.5em;
+
     p {
       width: 100%;
       height: 100%;
       display: flex;
-      align-items:center;
+      align-items: center;
       justify-content: center;
+
       svg {
         width: 0.8em;
       }
@@ -382,11 +389,12 @@
   margin-top: 0.5em;
   font-size: 1em;
   fill: var(--accent);
-h2 {
-  display:inline-flex;
-  align-items:center;
-  justify-content: center;
-}
+
+  h2 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .sessionTarget__container {
@@ -399,3 +407,17 @@ h2 {
   }
 }
 
+.session-settings__headline {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+
+  p {
+    color: var(--secondary);
+    font-size: 0.6em;
+    margin-top: 1em;
+    width:100%;
+  }
+  margin-bottom: 1em;
+}

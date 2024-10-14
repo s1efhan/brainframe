@@ -54,6 +54,9 @@
         <p>QR-Code scannen</p>
       </button>
     </div>
+    <div class="join__create__session__container">
+      <button class="accent"> <router-link to="/brainframe/create">Session erstellen</router-link></button>
+    </div>
     <div v-if="error" class="error">
       {{ error }}
     </div>

@@ -92,7 +92,7 @@
             <td v-if="session.phase !== 'collecting'">
               {{ getVoteCount(contributor.id) }}
             </td>
-            <td>
+            <td> <!-- Zuletzt Aktiv-->
               {{ formatLastActive(contributor.last_active) }}
             </td>
           </tr>

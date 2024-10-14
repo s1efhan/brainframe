@@ -289,8 +289,6 @@ const roleChallengeMsg = computed(() => {
 const iceBreaker = () => {
     iceBreakerMsg.value = null;
     iceBreakerLoading.value = true;
-    const fileInput = ref(null);
-    const textInput = ref('');
     axios.post('/api/session/ice-breaker', {
         session_id: session.value.id,
         contributor_id: personalContributor.value.id
@@ -307,6 +305,8 @@ const iceBreaker = () => {
         })
         .finally(() => {
             inActiveSince.value = 0;
+            textInput.value = '';
+            fileInput.value = null;
             iceBreakerLoading.value = false;
         });
 }
