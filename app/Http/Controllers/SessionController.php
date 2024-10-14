@@ -47,7 +47,16 @@ class SessionController extends Controller
         $userId = $request->input('user_id');
         $methodId = $request->input('method_id');
         $target = $request->input('target');
+       
+        $todaySessionCount = Session::where('host_id', $userId)
+            ->whereDate('created_at', Carbon::today())
+            ->count();
 
+        if ($todaySessionCount >= 10) {
+            return response()->json([
+                'message' => 'Du hast heute schon dein Limit von 10 Sessions erreicht, bitte versuche es ein andermal wieder.'
+            ], 403);
+        }
         $session = Session::find($sessionId);
 
         if (!$session) {
@@ -138,26 +147,26 @@ class SessionController extends Controller
         $session = Session::findOrFail($sessionId);
         $collectingRound = $request->input('collecting_round');
         $voteRound = $request->input('vote_round');
-    
+
         $session->update([
             'is_paused' => false,
             'seconds_left' => $session->method->time_limit,
             'collecting_round' => $collectingRound,
             'vote_round' => $voteRound
         ]);
-        Log::info('Method: '.$session->method->name);
-        Log::info('collectingRound: '.$collectingRound);
+        Log::info('Method: ' . $session->method->name);
+        Log::info('collectingRound: ' . $collectingRound);
         if ($session->method->name === "6 Thinking Hats" && $collectingRound > 1) {
-          
+
             $this->rotateContributorRoles($session);
         }
-    
+
         $this->updateCountdown($sessionId, $session->seconds_left);
         event(new SessionStarted($session));
-    
+
         return response()->json(['message' => 'Session gestartet']);
     }
-    
+
 
     public function stop(Request $request)
     {
@@ -213,7 +222,7 @@ class SessionController extends Controller
         }
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
-    
+
         $ideasFormatted = $ideas->map(function ($idea) use ($session) {
             return [
                 'id' => $idea->id,
@@ -224,7 +233,7 @@ class SessionController extends Controller
                 'round' => $idea->round ?? null
             ];
         })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    
+
         Log::info(message: $ideasFormatted . " not Empty");
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
@@ -275,20 +284,20 @@ class SessionController extends Controller
                 'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
                 'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0
             ]);
-    
+
             if (isset($responseBody['choices'][0]['message']['content'])) {
                 $content = $responseBody['choices'][0]['message']['content'];
                 $content = preg_replace('/```json\s*|\s*```/', '', $content);
                 $newIdeas = json_decode($content, true);
                 Log::info("Decoded new ideas:", $newIdeas);
-    
+
                 $createdIdeas = [];
                 if (is_array($newIdeas)) {
                     foreach ($newIdeas as $idea) {
                         Log::info("Processing idea:", ['idea' => $idea]);
                         $originalIdea = $ideas->firstWhere('id', $idea['id']);
                         Log::info("Original idea found:", ['originalIdea' => $originalIdea ? $originalIdea->toArray() : 'null']);
-    
+
                         if ($originalIdea) {
                             $createdIdea = Idea::create([
                                 'title' => $idea['title'] ?? '',
@@ -305,7 +314,7 @@ class SessionController extends Controller
                             Log::warning("Original idea not found for id: " . $idea['id']);
                         }
                     }
-    
+
                     event(new IdeasFormatted($createdIdeas, $sessionId));
                     Log::info('New ideas saved and event broadcasted successfully. Created ideas count: ' . count($createdIdeas));
                 } elseif (is_object($newIdeas) || (is_array($newIdeas) && !isset($newIdeas[0]))) {
@@ -334,7 +343,7 @@ class SessionController extends Controller
                 Log::error('Unexpected API response format', $responseBody);
             }
             return response()->json($responseBody);
-    
+
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             $response = $e->getResponse();
             $responseBodyAsString = $response->getBody()->getContents();
@@ -376,7 +385,7 @@ class SessionController extends Controller
     private function rotateContributorRoles(Session $session)
     {
         Log::info("Rotating roles for session {$session->id}, collecting round {$session->collecting_round}");
-    
+
         $contributors = $session->contributors;
         $roles = Role::whereHas('methods', function ($query) use ($session) {
             $query->where('bf_methods.id', $session->method_id);
@@ -388,7 +397,7 @@ class SessionController extends Controller
             $newRoleIndex = ($index + $session->collecting_round - 1) % $rolesCount;
             $newRole = $roles[$newRoleIndex];
             $contributor->update(['role_id' => $newRole->id]);
-    
+
             Log::info("Contributor {$contributor->id} role rotated: {$oldRoleId} -> {$newRole->id}");
         }
         event(new RotateContributorRoles($session->id));
@@ -399,22 +408,30 @@ class SessionController extends Controller
             'session_id' => 'required|exists:bf_sessions,id',
             'contributor_id' => 'required|exists:bf_contributors,id',
         ]);
-    
+
         $apiKey = env('OPENAI_API_KEY');
         $client = new Client();
         $sessionId = $request->input('session_id');
         $contributorId = $request->input('contributor_id');
+        $iceBreakerCount = ApiLog::where('session_id', $sessionId)
+        ->where('contributor_id', $contributorId)
+        ->count();
     
+    if ($iceBreakerCount >= 10) {
+        return response()->json([
+            'message' => 'Du hast das Limit von 10 IceBreakern für diese Session erreicht.'
+        ], 403);
+    }
         $ideas = Idea::where('session_id', $sessionId)
             ->select('id', 'text_input')
             ->get();
-    
+
         $sessionTarget = Session::where('id', $sessionId)->value('target');
-    
-        $userContent = $ideas->isEmpty() 
-            ? "Es gibt noch keine Ideen zum Thema {$sessionTarget}." 
+
+        $userContent = $ideas->isEmpty()
+            ? "Es gibt noch keine Ideen zum Thema {$sessionTarget}."
             : "Bisherige Ideen zum Thema {$sessionTarget}: " . $ideas->pluck('text_input')->implode(', ');
-    
+
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
@@ -430,16 +447,16 @@ class SessionController extends Controller
                         ],
                         [
                             'role' => 'user',
-                            'content' => $userContent . " Gib eine neue, kreative Antwort auf: ".$sessionTarget." im vorgegebenen Format."
+                            'content' => $userContent . " Gib eine neue, kreative Antwort auf: " . $sessionTarget . " im vorgegebenen Format."
                         ],
                     ],
                     'temperature' => 0.3,
                 ],
             ]);
-    
+
             $responseBody = json_decode($response->getBody(), true);
             $iceBreakerMsg = $responseBody['choices'][0]['message']['content'] ?? 'Keine Antwort erhalten';
-    
+
             ApiLog::create([
                 'session_id' => $sessionId,
                 'contributor_id' => $contributorId,
@@ -448,9 +465,9 @@ class SessionController extends Controller
                 'prompt_tokens' => $responseBody['usage']['prompt_tokens'] ?? 0,
                 'completion_tokens' => $responseBody['usage']['completion_tokens'] ?? 0
             ]);
-    
+
             return response()->json(['iceBreaker_msg' => $iceBreakerMsg]);
-    
+
         } catch (\Exception $e) {
             Log::error('API Error: ' . $e->getMessage());
             return response()->json(['iceBreaker_msg' => 'Fehler bei der Ideengenerierung.'], 500);
@@ -590,14 +607,14 @@ class SessionController extends Controller
         $ideas = Idea::where('session_id', $sessionId)->with('contributor.role')->get();
         $votes = Vote::where('session_id', $sessionId)->get();
         $contributors = $session->contributors;
-    
+
         $hostContributor = $contributors->firstWhere('user_id', $session->host_id);
         $hostEmail = $session->host->email ?? 'N/A';
         $hostRole = $hostContributor ? $hostContributor->role->name : 'N/A';
-    
+
         $endTime = $votes->max('created_at');
         $maxRound = $ideas->max('round');
-    
+
         $csvData = [
             ['Session Information'],
             ['Target', $session->target],
@@ -610,20 +627,20 @@ class SessionController extends Controller
             ['Ideas'],
             ['Round', 'Idea ID', 'Title', 'Description', 'Tag', 'Contributor', 'Highest Round', 'Avg Rating', 'Votes Count', 'Created At']
         ];
-    
+
         $groupedIdeas = $ideas->groupBy(function ($idea) {
             return $idea->original_idea_id ?? $idea->id;
         });
-    
+
         foreach ($groupedIdeas as $originalIdeaId => $relatedIdeas) {
             $originalIdea = $relatedIdeas->firstWhere('original_idea_id', null) ?? $relatedIdeas->first();
             $taggedIdea = $relatedIdeas->firstWhere('tag', '!=', null);
-    
+
             $highestRound = $relatedIdeas->max('round');
             $ideaVotes = $votes->whereIn('idea_id', $relatedIdeas->pluck('id'))
-                               ->where('round', $highestRound);
+                ->where('round', $highestRound);
             $avgRating = $ideaVotes->avg('value');
-    
+
             $csvData[] = [
                 $originalIdea->round,
                 $originalIdea->id,
@@ -637,11 +654,11 @@ class SessionController extends Controller
                 $originalIdea->created_at
             ];
         }
-    
+
         $csvData[] = [''];
         $csvData[] = ['Votes'];
         $csvData[] = ['Round', 'Idea ID', 'Idea Title', 'Contributor', 'Value', 'Vote Type'];
-    
+
         foreach ($votes as $vote) {
             $idea = $ideas->find($vote->idea_id);
             $contributor = $contributors->find($vote->contributor_id);
@@ -654,14 +671,14 @@ class SessionController extends Controller
                 $vote->vote_type
             ];
         }
-    
+
         $csvData[] = [''];
         $csvData[] = ['Session Summary'];
         $csvData[] = ['Total Ideas', $ideas->whereNull('tag')->count()];
         $csvData[] = ['Total Votes', $votes->count()];
-    
+
         $phases = [
-            'Collecting'  => [
+            'Collecting' => [
                 'start' => $ideas->min('created_at'),
                 'end' => $ideas->max('created_at')
             ],
@@ -670,22 +687,22 @@ class SessionController extends Controller
                 'end' => $votes->max('created_at')
             ]
         ];
-    
+
         foreach ($phases as $phaseName => $phase) {
             $duration = ceil($phase['start']->diffInMinutes($phase['end']));
             $csvData[] = [$phaseName . ' Phase Duration (minutes)', $duration];
         }
-    
+
         $totalDuration = ceil($phases['Collecting']['start']->diffInMinutes($phases['Voting']['end']));
         $csvData[] = ['Total Session Duration (minutes)', $totalDuration];
-    
+
         $tokenCounts = ApiLog::where('session_id', $sessionId)
             ->selectRaw('SUM(prompt_tokens) as prompt_tokens, SUM(completion_tokens) as completion_tokens')
             ->first();
         $csvData[] = ['Prompt Tokens', $tokenCounts->prompt_tokens ?? 0];
         $csvData[] = ['Completion Tokens', $tokenCounts->completion_tokens ?? 0];
         $csvData[] = ['Estimated OpenAI API Cost (cents)', number_format(($tokenCounts->prompt_tokens * 0.00003 + $tokenCounts->completion_tokens * 0.00006), 2, '.', '')];
-    
+
         $output = fopen('php://temp', 'w');
         foreach ($csvData as $row) {
             fputcsv($output, $row);
@@ -693,7 +710,7 @@ class SessionController extends Controller
         rewind($output);
         $csv = stream_get_contents($output);
         fclose($output);
-    
+
         return response($csv)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="' . $session->target . '_summary.csv"');

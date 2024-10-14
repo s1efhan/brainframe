@@ -45,8 +45,6 @@
   import axios from 'axios';
   import { updateSessionId } from '../js/eventBus.js';
   import SessionSettings from '../components/SessionSettings.vue';
-  
-  // Props
   const props = defineProps({
     userId: {
       type: [String, Number],
@@ -54,7 +52,6 @@
     }
   });
   const clickedTroughSettings = ref(false);
-  // Refs
   const isEmptyAndNotFocused = computed(() => {
   return tempSessionTarget.value.trim() === '' && !isTextareaFocused.value;
 });
@@ -73,7 +70,6 @@ const errorMsg = ref(null);
     router.push(`/brainframe/${sessionId.value}`);
   }
 };
-  // Methoden
   const onFocus = () => { 
     isTextareaFocused.value = true; 
   };
@@ -121,7 +117,6 @@ const createSession = (selectedMethod) => {
     target: sessionTarget.value,
   }).then(response => {
     console.log('Session created/updated successfully');
-    // Hier könnten Sie weitere Aktionen nach erfolgreicher Erstellung/Aktualisierung durchführen
   }).catch(error => {
     errorMsg.value = error.response.data.message;
     console.error('Error saving session data', error);

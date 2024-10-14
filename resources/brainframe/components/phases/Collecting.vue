@@ -300,7 +300,7 @@ const iceBreaker = () => {
         })
         .catch(error => {
             if (error.response && error.response.status === 403) {
-                errorMsg.value = 'Maximale Anzahl an Anfragen erreicht (3 pro Session)';
+                errorMsg.value = error.response.data.message;
             } else {
                 errorMsg.value = 'Ein Fehler ist aufgetreten';
             }
