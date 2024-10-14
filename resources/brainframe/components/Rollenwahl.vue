@@ -54,7 +54,6 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import IconComponents from '../components/IconComponents.vue';
-import SelectIcon from '../components/icons/SelectIcon.vue';
 const props = defineProps({
   userId: {
     type: [String, Number],
