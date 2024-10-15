@@ -95,8 +95,8 @@
                     Idee speichern
                 </template>
             </button>
-            <!-- <button class="secondary" v-if="personalContributor.isHost" @click="emit('stop')">Beende Runde</button>-->
         </div>
+        <button class="secondary stop" v-if="personalContributor.isHost" @click="confirmStop"> Runde beenden</button>
     </div>
 
     <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1 && neighbourIdeas"
@@ -125,12 +125,11 @@ const getIconComponent = (iconName) => {
 };
 import { dotPulse } from 'ldrs'
 const inActiveSince = ref(0);
-
+// soll true werden, wenn der Nutzer seit 30 Sekunden nichts ins input eingibt. 
+// soll false werden wenn Nutzer tippt
 dotPulse.register()
 const showInfo = ref(false);
 
-// soll true werden, wenn der Nutzer seit 30 Sekunden nichts ins input eingibt. 
-// soll false werden wenn Nutzer tippt
 const props = defineProps({
     personalContributor: {
         type: Object,
@@ -149,6 +148,19 @@ const props = defineProps({
         required: true
     }
 });
+const currentRoundIdeas = computed(() =>
+    props.ideas.filter(idea => idea.round == session.value.collecting_round)
+);
+const confirmStop = () => {
+    console.log(currentRoundIdeas.value,  props.ideas, session.value)
+    if (currentRoundIdeas.value.length > 0) {
+        if (confirm('Aktuelle Runde vorzeitig beenden?')) {
+            emit('stop');
+        }
+    } else {
+        alert("Bitte geben Sie oder ein anderer Teilnehmer mindestens eine Idee ein");
+    }
+};
 const iceBreakerLoading = ref(false);
 const neighbourIdeas = computed(() => {
     const currentRound = parseInt(props.session.collecting_round);

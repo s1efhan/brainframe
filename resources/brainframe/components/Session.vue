@@ -46,7 +46,7 @@
       @exit="showStats = false" @start="startSession" @stop="stopSession" :ideas="ideasWithoutTags" />
     <Collecting @stop="stopSession" :contributors="contributors" :session="session"
       :personalContributor="personalContributor" :ideas="ideas"
-      v-if="session.phase === 'collecting' && !session.isPaused &&  !showStats && personalContributor"
+      v-if="session.phase === 'collecting' && !session.isPaused && !showStats && personalContributor"
       @wait="showStats = true" />
     <Voting v-if=" session.phase === 'voting' && !session.isPaused && !showStats && personalContributor"
       :session="session" @wait="showStats = true" :contributors="contributors"

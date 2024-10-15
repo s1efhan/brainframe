@@ -3,12 +3,13 @@
     <div class="error" v-if="errorMsg">
       <p>{{ errorMsg }}</p>
     </div>
+    <h2 v-if="!sessionTarget">Wozu möchtest du Ideen sammeln?</h2>
     <div v-if="!errorMsg" class="sessionTarget__container">
       <textarea ref="targetTextarea" @focus="onFocus" @blur="onBlur" :class="{ 'glow-animation': isEmptyAndNotFocused }"
         @keyup.enter="updateSessionTarget" @keydown.enter.prevent="updateSessionTarget" class="headline__session-target"
-        :value="tempSessionTarget" @input="updateTempTarget" placeholder="< Zielfrage der Session >"
+        :value="tempSessionTarget" @input="updateTempTarget" placeholder="Thema/Ziel deiner Brainstorming Session"
         :rows="rows"></textarea>
-      <button @click="updateSessionTarget" class="safe__target primary">speichern</button>
+      <button @click="updateSessionTarget" v-if="!sessionTarget" class="safe__target primary">speichern</button>
     </div>
     <SessionSettings @createSession="createSession" @switchMethod="clickedTroughSettings = true"
       :clickedTroughSettings="clickedTroughSettings" v-if="userId && sessionId && sessionTarget && !errorMsg" />
