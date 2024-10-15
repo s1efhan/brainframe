@@ -96,7 +96,7 @@
                 </template>
             </button>
         </div>
-        <button class="secondary stop" v-if="personalContributor.isHost" @click="confirmStop"> Runde beenden</button>
+        <button class="accent stop" v-if="personalContributor.isHost" @click="confirmStop"> Runde beenden</button>
     </div>
 
     <div v-if="session.method.name === '6-3-5' && session.collecting_round > 1 && neighbourIdeas"

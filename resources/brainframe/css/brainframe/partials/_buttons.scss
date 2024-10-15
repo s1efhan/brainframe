@@ -34,6 +34,7 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-evenly;
+
     button {
         margin: 0.5em;
     }
@@ -215,6 +216,7 @@ button svg {
     display: flex;
     align-items: center;
     justify-content: center;
+
     .isLoading {
         width: 50vw;
         height: 50vw;
@@ -222,4 +224,9 @@ button svg {
         align-items: center;
         justify-content: center;
     }
+}
+
+.accent.stop {
+    font-size: 0.9em;
+    border-radius: 15px;
 }
