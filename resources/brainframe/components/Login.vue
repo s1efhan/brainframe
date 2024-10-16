@@ -11,7 +11,7 @@
       <div class="login-form__password">
         <label for ="password">Passwort:</label>
         <input placeholder="****************" id="password" :type="passwordType" v-model="password" required minlength="8">
-        <input type="checkbox" id="showPassword" @change="togglePasswordVisibility">
+        <button class="showPassword" @click="togglePasswordVisibility"><EyeIcon/></button>
       </div>
       <div class="login-form__buttons">
         <button class="primary" @click="login">Anmelden</button>
@@ -27,7 +27,7 @@
 import axios from 'axios';
 import { ref} from 'vue';
 import { useRouter } from 'vue-router';
-
+import EyeIcon from './icons/EyeIcon.vue';
 const props = defineProps({
   userId: {
     type: Number,

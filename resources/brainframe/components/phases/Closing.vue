@@ -50,8 +50,8 @@
                         </a>
                     </td>
                     <td class="token">
-                        {{ session.prompt_tokens }} (prompt) <br>{{ session.completion_tokens }} (completion) <br> =>
-                        {{ calculateCost }} ct
+                        {{ session.prompt_tokens + session.completion_tokens }} GPT-API Token
+                        ({{ calculateCost }} ct)
                     </td>
                     <td class="center">
                         {{ Math.floor(sessionDuration / 60) }}h
