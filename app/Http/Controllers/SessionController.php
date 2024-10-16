@@ -443,7 +443,7 @@ class SessionController extends Controller
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => "Ziel: Antwort auf die Frage/ das Ziel {$sessionTarget} finden. FORMAT: Zwei Teilsätze, max. 20 Wörter. 2. Satz: 'z.B.' + konkretes Beispiel. Keine vorhandenen Ideen wiederholen. Nur spezifische, präzise Antworten"
+                            'content' => "Ziel: Antwort auf die Frage/ das Ziel {$sessionTarget} finden. FORMAT: Zwei Teilsätze, max. 20 Wörter. 2. Satz: 'z.B.' + konkretes Beispiel. Wichtig: Keine vorhandenen Ideen wiederholen, gib nur neue Ideen als Antwort. Nur spezifische, präzise Antworten"
                         ],
                         [
                             'role' => 'user',

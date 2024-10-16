@@ -60,6 +60,23 @@
     <div v-if="error" class="error">
       {{ error }}
     </div>
+    <div class="faq__container">
+        <div class="faq">
+          <h3>Häufige Fragen</h3>
+        <details>
+            <summary>Was ist BrainFrame?</summary>
+            <p>BrainFrame unterstützt Gruppen beim <strong>Sammeln und Auswerten </strong> von Ideen. </p>
+        </details>
+        <details>
+            <summary>Was ist eine Session?</summary>
+            <p>Eine Session besteht aus mehreren <strong>Teilnehmern</strong>, die zu einem bestimmten <strong>Thema oder einer Fragestellung </strong> Ideen Sammeln</p>
+        </details>
+        <details>
+            <summary>Was ist ein Host?</summary>
+            <p>Ein Host ist der <strong>Ersteller </strong> einer Session. Er legt das Thema der Session und die Kreativ-Methode fest und kann weitere <strong>Teilnehmer einladen</strong></p>
+        </details>
+      </div>
+    </div>
   </main>
 </template>
 <script setup>

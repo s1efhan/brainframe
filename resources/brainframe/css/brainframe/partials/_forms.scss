@@ -1503,3 +1503,46 @@ input:focus {
         }
     }
 }
+
+.faq__container {
+    margin-top: 2em;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    h3 {
+        padding: 1em;
+        color: var(--accent);
+    }
+
+    .faq {
+        box-sizing: border-box;
+        border: solid thin var(--accent);
+        display: flex;
+        width: 80vw;
+        align-items: center;
+        flex-direction: column;
+
+        strong {
+            filter: brightness(1.4) saturate(1.2);
+            font-weight: 400;
+        }
+
+        details {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 1em;
+            color: var(--accent);
+            border-bottom: solid thin;
+            &:hover {
+                cursor: pointer
+            }
+
+            p {
+                padding-top: 1em;
+            }
+        }
+    }
+}

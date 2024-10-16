@@ -121,7 +121,7 @@
                                         :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
                                 </td>
                                 <td class="center">{{ idea.avgRating.toFixed(1) }}/{{ idea.maxVoteValue.toFixed(1) }}
-                                    ({{ idea.maxRound }})</td>
+                                    </td>
                             </tr>
                             <tr v-if="index === 0 || props.personalContributor.survey_activated" class="chevron"
                                 @click="toggleDetails(idea.id)">
