@@ -63,20 +63,27 @@
         <div class="survey__email__input" v-if="!props.personalContributor.survey_activated">
             <form @submit.prevent="validateSurveyEmail">
                 <div v-if="surveyEmailIsValid" class="validated-email">
-                    {{ surveyEmail }} <span v-if="!showCodeInput" @click="surveyEmail = '', showCodeInput = false, validateSurveyEmail()"
+                    {{ surveyEmail }} <span v-if="!showCodeInput"
+                        @click="surveyEmail = '', showCodeInput = false, validateSurveyEmail()"
                         class="remove-email">x</span>
                 </div>
-                <input v-if="!surveyEmailIsValid" v-model="surveyEmail" type="email"
-                @blur="validateSurveyEmail" @keyup.enter="validateSurveyEmail">
+                <input v-if="!surveyEmailIsValid" v-model="surveyEmail" type="email" @blur="validateSurveyEmail"
+                    @keyup.enter="validateSurveyEmail">
                 <div class="permission__container">
-                <label for="permission_for_survey">Ich bin einverstanden damit, dass meine E-Mail Adresse für den
-                    einmaligen Versand einer wissenschaftlichen Umfrage zum Thema Digitales Ideen-Sammeln verwendet
-                    wird.</label>
-                <input id="permission_for_survey" type="checkbox" v-model="isChecked" :disabled="showCodeInput">
-            </div>
-                <button v-if="!showCodeInput && surveyEmailIsValid" class="primary"
-                    @click="storeSurveyEmail">Email verifizieren</button>
-                    <input v-if="showCodeInput" v-model="surveyVerificationKey" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="z.B 123456">
+                    <label v-if="!showCodeInput" for="permission_for_survey">Ich bin einverstanden damit, dass meine
+                        E-Mail Adresse für den
+                        einmaligen Versand einer wissenschaftlichen Umfrage zum Thema Digitales Ideen-Sammeln verwendet
+                        wird.</label>
+                    <input v-if="!showCodeInput" id="permission_for_survey" type="checkbox" v-model="isChecked"
+                        :disabled="showCodeInput">
+                </div>
+                <label v-if="showCodeInput">
+                    Bitte gib den Verifizierungscode ein, den wir dir per E-Mail zugesandt haben.
+                </label>
+                <button v-if="!showCodeInput && surveyEmailIsValid" class="primary" @click="storeSurveyEmail">Email
+                    verifizieren</button>
+                <input v-if="showCodeInput" v-model="surveyVerificationKey" type="text" inputmode="numeric"
+                    pattern="[0-9]*" maxlength="6" placeholder="z.B 123456">
                 <button v-if="showCodeInput" class="primary" @click="verifyEmail">Senden</button>
             </form>
         </div>
@@ -107,7 +114,7 @@
                                 <td class="center">{{ index + 1 }}</td>
                                 <td>{{ idea.title }}</td>
                                 <td v-html="idea.description"></td>
-                                <td class="center"   :class="{
+                                <td class="center" :class="{
     [contributors.find(c => c.id === idea.contributor_id)?.icon]: session.method.name === '6 Thinking Hats'
   }">
                                     <component
@@ -146,15 +153,11 @@
                     v-for="(groupedIdeas, round) in groupedIdeasByRound" :key="round" class="tag">
                     <div class="round">{{ round }}</div>
                     <ul>
-                        <li 
-  v-for="idea in groupedIdeas" 
-  :key="idea.id"
-  :class="{
+                        <li v-for="idea in groupedIdeas" :key="idea.id" :class="{
     [contributors.find(c => c.id === idea.contributor_id)?.icon]: session.method.name === '6 Thinking Hats'
-  }"
->
-  <component :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
-</li>
+  }">
+                            <component :is="getIconComponent(contributors.find(c => c.id === idea.contributor_id))" />
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -182,9 +185,10 @@
         </div>
         <div class="summary__buttons">
             <button class="accent" @click="toggleshowSendContainer">Zusammenfassung senden</button>
-            
+
             <section class="download_buttons"><button class="secondary" @click="downloadPDF">PDF herunterladen</button>
-            <button class="accent" @click="downloadCSV">CSV herunterladen</button></section>
+                <button class="accent" @click="downloadCSV">CSV herunterladen</button>
+            </section>
         </div>
         <div v-if="showSendContainer" class="send__container">
             <div class="email-list">
@@ -213,7 +217,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch} from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import IconComponents from '../IconComponents.vue';
 import CalendarIcon from '../icons/CalendarIcon.vue';
@@ -253,18 +257,18 @@ const props = defineProps({
 });
 
 const isDataReady = computed(() => {
-  return props.ideas && 
-         props.ideas.length > 0 && 
-         props.votes && 
-         props.votes.length > 0 && 
-         props.session &&
-         props.contributors;
+    return props.ideas &&
+        props.ideas.length > 0 &&
+        props.votes &&
+        props.votes.length > 0 &&
+        props.session &&
+        props.contributors;
 });
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 const surveyEmailIsValid = ref(false);
 const validateSurveyEmail = () => {
     console.log("validateSurveyEmail")
-    if(isValidEmail(surveyEmail.value)){
+    if (isValidEmail(surveyEmail.value)) {
         surveyEmailIsValid.value = true;
     }
     else {
@@ -285,10 +289,10 @@ const expandedIds = ref([]);
 const ideas = ref(props.ideas || []);
 const session = ref(props.session || {});
 watch(() => props.session, (newSession) => {
-  if (newSession) {
-    session.value = newSession;
-    console.log("Updated session:", session.value);
-  }
+    if (newSession) {
+        session.value = newSession;
+        console.log("Updated session:", session.value);
+    }
 }, { immediate: true, deep: true });
 const votes = ref(props.votes || []);
 const contributors = ref(props.contributors || []);
@@ -340,10 +344,10 @@ const ideasWithoutTags = computed(() => {
     return ideas.value ? ideas.value.filter(idea => !idea.tag) : [];
 });
 const sessionDuration = computed(() => {
-  if (!isDataReady.value) return 0;
-  const firstIdea = ideas.value[0];
-  const lastVote = votes.value[votes.value.length - 1];
-  return (new Date(lastVote.created_at) - new Date(firstIdea.created_at)) / 60000;
+    if (!isDataReady.value) return 0;
+    const firstIdea = ideas.value[0];
+    const lastVote = votes.value[votes.value.length - 1];
+    return (new Date(lastVote.created_at) - new Date(firstIdea.created_at)) / 60000;
 });
 const tagList = ref(null);
 const wordCloud = ref(null);
@@ -427,21 +431,21 @@ const downloadPDF = () => {
 };
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'Kein Datum verfügbar';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    console.error('Ungültiges Datum:', dateString);
-    return 'Fehler beim Datumformat';
-  }
-  const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
-  return date.toLocaleDateString('de-DE', options);
+    if (!dateString) return 'Kein Datum verfügbar';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        console.error('Ungültiges Datum:', dateString);
+        return 'Fehler beim Datumformat';
+    }
+    const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+    return date.toLocaleDateString('de-DE', options);
 };
 
 onMounted(() => {
-  getClosingDetails();
-  validateSurveyEmail();
-  console.log("Session created_at:", props.session.created_at);
-  console.log("Formatted date:", formatDate(props.session.created_at));
+    getClosingDetails();
+    validateSurveyEmail();
+    console.log("Session created_at:", props.session.created_at);
+    console.log("Formatted date:", formatDate(props.session.created_at));
 });
 
 const newEmail = ref('');
@@ -492,30 +496,30 @@ const verifyEmail = () => {
         survey_verification_key: surveyVerificationKey.value,
         user_id: Number(localStorage.getItem('user_id'))
     })
-    .then(response => {
-        showSendContainer.value = !showSendContainer.value;
-        props.personalContributor.survey_activated = true;
-    })
-    .catch(error => {
-        console.error('Error in verification process', error);
-    });
-}
-const storeSurveyEmail = () => {
-    if(isChecked.value){
-        showCodeInput.value = true; 
-        console.log("storeSurveyEmail")
-        axios.post(`/api/survey/email/store`, {
-        survey_email: surveyEmail.value,
-        session_id: props.session.id,
-        is_checked: isChecked.value,
-        user_id:  Number(localStorage.getItem('user_id'))
-    })
         .then(response => {
             showSendContainer.value = !showSendContainer.value;
-        }).catch(error => {
-            console.error('Error storing the email', error);
+            props.personalContributor.survey_activated = true;
+        })
+        .catch(error => {
+            console.error('Error in verification process', error);
         });
 }
+const storeSurveyEmail = () => {
+    if (isChecked.value) {
+        showCodeInput.value = true;
+        console.log("storeSurveyEmail")
+        axios.post(`/api/survey/email/store`, {
+            survey_email: surveyEmail.value,
+            session_id: props.session.id,
+            is_checked: isChecked.value,
+            user_id: Number(localStorage.getItem('user_id'))
+        })
+            .then(response => {
+                showSendContainer.value = !showSendContainer.value;
+            }).catch(error => {
+                console.error('Error storing the email', error);
+            });
+    }
     else {
         alert("Du musst der Verwendung deiner Email Adresse zustimmen, um an der Umfrage teilzunehmen.")
     }
