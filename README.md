@@ -221,54 +221,62 @@ export let options = {
 ## 6. Benutzerhandbuch
 1. Session Erstellen
 - Zielfrage festlegen
+![IMG_0822](https://github.com/user-attachments/assets/cd5decce-c7e5-420e-84e5-af87faab10b1)
 - Kreativ-Methode auswählen
+![IMG_0823](https://github.com/user-attachments/assets/288c9d0d-aa11-4396-ade2-039422aeb7e1)
 - Teilnehmer einladen
-- Session Starten
-
+![IMG_0826](https://github.com/user-attachments/assets/3546d403-829d-4a32-94d9-efac4d8e5cc8)
 3. Session beitreten
-
+![IMG_0824](https://github.com/user-attachments/assets/303ebc74-66f6-4c3b-afca-819f6c8f1f4c)
 4. Ideen Sammeln
-- Texteingabe
-- Bildeingabe
-- KI Eisbrecher
+- Texteingabe, Bildeingabe, KI Eisbrecher
 - Zeitlimit & Ideenlimit
 - Session pausieren
-- Session Stats
-  
+![IMG_0828](https://github.com/user-attachments/assets/3e34a932-9f08-4f57-8276-562e24f975c5)
+  - Session Stats
+ ![IMG_0829](https://github.com/user-attachments/assets/641f25e4-c1f3-40e7-bb4e-a59761164022)
 5. Ideen Bewerten
 - Links oder Rechts Voting
+![IMG_0830](https://github.com/user-attachments/assets/361dae5d-136d-478a-a42d-cbae60a4a224)
 - Swipe Voting
+![IMG_0832](https://github.com/user-attachments/assets/8173108b-54eb-4454-913a-2c6813ddae83)
 - Stern Voting
+![IMG_0833](https://github.com/user-attachments/assets/e2896a24-849b-4869-a4e2-9666362ec44c)
 - Rangliste Voting
+![IMG_0834](https://github.com/user-attachments/assets/703e5138-b3d8-4885-a261-67e51ff17eeb)
 
 7. Session Auswerten
-- PDF verschicken
-- PDF Download
-- CSV Download
-- Wortcluster Erklärung
-- Prozess-Darstellung Erklärung
+![IMG_0837](https://github.com/user-attachments/assets/7245177f-c698-4e4f-9be0-b7be9a4281df)
+- PDF verschicken, PDF Download, CSV Download
+![IMG_0841](https://github.com/user-attachments/assets/9a014654-deaf-4e6e-b5e2-8e0eb2c234e8)
+- Wortcluster
+![IMG_0839](https://github.com/user-attachments/assets/e145677e-e782-4022-9dc8-aeddaf9d168b)
+![IMG_0838](https://github.com/user-attachments/assets/146e2fd7-f557-419e-9b08-0cf0b574d562)
+- Prozess-Darstellung
+![IMG_0845](https://github.com/user-attachments/assets/1f298363-8999-4c22-9306-64fec8e52b02)
 
 9. Session Löschen/Bearbeiten
-- Löschen
-- Bearbeiten
+![IMG_0844](https://github.com/user-attachments/assets/e137822d-2c44-401b-8bb0-0ce8239c71ad)
 
 11. Registrieren/Anmelden
-- Registrieren
-- Anmelden
+![IMG_0843](https://github.com/user-attachments/assets/7fc9a9a8-6cbd-443a-a455-b04cdd6e27c5), ![IMG_0842](https://github.com/user-attachments/assets/e634bd7c-5007-452b-a9e9-6d2c31c693c1)
 
 12. Umfrage Teilnahme
 - Datenweitergabe Zustimmung
+![IMG_0835](https://github.com/user-attachments/assets/c7e81632-3166-4dd1-ac97-058482e5cd36)
 - Email-Verifizierung
+![IMG_0836](https://github.com/user-attachments/assets/98cd8e14-3f56-41ba-9bbe-3b8eda07e30f)
 - Umfrage durchführen
+![IMG_0847](https://github.com/user-attachments/assets/29a7d5ef-d4ef-4b4e-88ec-6a893ad38ea2)
 
 ## 7. Projektverlauf
 Zeitplan und Meilensteine
-- 01.09.24 1: Das Projekt ist vorbereitet und geplant 
-- 15.09.24 2: Ein erster Prototyp (MVP) wurde implementiert
-- 27.09.24 3: Testbare/Nutzbare Software ist bereitgestellt
-- 12.10.24 4: Feinschliff ist erledigt
-- 25.10.24 5: Quantitative und Qualitative Daten wurden gesammelt
-- 30.10.24 6: Projektarbeit wurde präsentiert
+- M1 - 01.09.24: Das Projekt ist vorbereitet und geplant 
+- M2 - 15.09.24: Ein erster Prototyp (MVP) wurde implementiert
+- M3 - 27.09.24: Testbare/Nutzbare Software ist bereitgestellt
+- M4 - 12.10.24: Feinschliff ist erledigt
+- M5 - 25.10.24: Quantitative und Qualitative Daten wurden gesammelt
+- M6 - 30.10.24: Projektarbeit wurde präsentiert
 
 Herausforderungen und Lösungsansätze
 
@@ -278,7 +286,9 @@ Lessons Learned
 - Mögliche zukünftige Erweiterungen
 
 ## 9. Literaturverzeichnis
-- Laravel Doku
-- Vue3 Doku
-- Laravel Forge Doku
-- Laravel Reverb Doku
+- [Vue3 Doku](https://vuejs.org/guide/introduction.html)
+- [Laravel Forge Doku](https://forge.laravel.com/docs/introduction.html)
+- [Laravel Reverb Doku](https://laravel.com/docs/11.x/reverb)
+- [LDRS Animations](https://uiball.com/ldrs/)
+- [Icons](https://uxwing.com)
+- [DOM Pdf](https://github.com/barryvdh/laravel-dompdf)
