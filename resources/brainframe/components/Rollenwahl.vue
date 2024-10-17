@@ -35,17 +35,17 @@
     </div>
   </div>
   <form class="selectRole" v-if="showSelectRole" @submit.prevent="addContributor">
-    <div  :class="{ 'glow-animation': !pickedARole }" class="role-select__container">
-     <select @click = "pickedARole = true" id="roleSelect" v-model="selectedRoleId">
+    <div :class="{ 'glow-animation': !pickedARole }" class="role-select__container">
+     <select @focus="pickedARole = true" id="roleSelect" v-model="selectedRoleId">
         <option v-for="role in roles" :key="role.id" :value="role.id">
           {{ role.name }}
         </option>
       </select>
       <div v-if="selectedRole.icon" class="role-icon">
-        <component :is="getIconComponent(selectedRole.icon)" /> {{ selectedRole.name }}
+        <component v-if="pickedARole" :is="getIconComponent(selectedRole.icon)" /> {{ pickedARole ? selectedRole.name  : 'Rolle wählen' }}
       </div>
     </div>
-    <button class="primary" type="submit" :class="{ 'glow-animation': pickedARole }">Rolle Wählen</button>
+    <button v-if="pickedARole" class="primary" type="submit" :class="{ 'glow-animation': pickedARole }">Rolle Wählen</button>
   </form>
 </section>
 </template>

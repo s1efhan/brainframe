@@ -172,39 +172,20 @@ const neighbourIdeas = computed(() => {
         return [];
     }
 
-    // console.log(`Total ideas in props: ${props.ideas.length}`);
-    // console.log('Sample of props.ideas:', props.ideas.slice(0, 2));
-
     const validIdeas = props.ideas.filter(idea => {
-        //    console.log(`Checking idea:`, idea);
-        //     console.log(`Has tag: ${Boolean(idea.tag)}`);
         return idea.tag;
     });
-    //console.log(`Valid ideas: ${validIdeas.length}`);
-
-    if (validIdeas.length === 0) {
-        //    console.log('No valid ideas found. Check if "tag" is the correct property to filter by.');
-        //   console.log('Available properties on idea object:', Object.keys(props.ideas[0] || {}));
-    }
-
-    // Verwenden Sie props.contributors anstelle von sortedContributors
-    console.log(`Contributors: ${props.contributors.map(c => c.id).join(', ')}`);
 
     const neighbourIdeas = [];
     for (let i = 1; i < currentRound; i++) {
         const targetRound = currentRound - i;
         const neighbourId = findNeighbourId(props.contributors.map(c => c.id), currentContributorId, i);
-        // console.log(`Looking for ideas from neighbour ${neighbourId} in round ${targetRound}`);
-
         const neighbourIdeasInRound = validIdeas.filter(idea =>
             idea.contributor_id === neighbourId &&
             parseInt(idea.round) === targetRound
         );
-        //   console.log(`Found ${neighbourIdeasInRound.length} ideas for this neighbour and round`);
         neighbourIdeas.push(...neighbourIdeasInRound);
     }
-
-    //    console.log(`Total neighbour ideas found: ${neighbourIdeas.length}`);
     return neighbourIdeas;
 });
 
