@@ -36,12 +36,11 @@ const props = defineProps({
     required: true
   }
 });
-//const defineEmits = ('switchMethod')
+
 const currentMethod = computed(() => methods.value?.[currentIndex.value]);
 
 const changeMethod = (direction) => {
   if (methods.value) {
-    //  emit('switchMethod');
     currentIndex.value = (currentIndex.value + direction + methods.value.length) % methods.value.length;
     emit('createSession', currentMethod.value.id);
   }

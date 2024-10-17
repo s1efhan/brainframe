@@ -102,16 +102,12 @@ const error = ref(null);
 const activeButton = ref('Pin');
 
 const onDecode = (result) => {
-  console.log('QR Code decoded:', result);
   sessionId.value = result;
   joinSession();
 };
 
 const onInit = (promise) => {
   promise
-    .then(() => {
-      console.log('QR Code scanner initialized successfully');
-    })
     .catch(error => {
       console.error('Failed to initialize QR Code scanner:', error);
       if (error.name === 'NotAllowedError') {
@@ -136,17 +132,12 @@ const onInit = (promise) => {
 const onDetect = (detections) => {
   if (detections && detections.length > 0) {
     const detection = detections[0];
-    console.log('QR Code detected:', detection);
 
     if (detection.rawValue) {
       const detectedUrl = detection.rawValue;
 
-      // Überprüfen, ob die URL mit Ihrer Domain beginnt
       if (detectedUrl.startsWith('https://stefan-theissen.de/brainframe/')) {
-        // Extrahieren Sie die Session-ID aus der URL
         const sessionId = detectedUrl.split('/').pop();
-
-        // Verwenden Sie Vue Router für die Navigation
         router.push(`/brainframe/${sessionId}`);
       } else {
         console.error('Ungültige URL erkannt:', detectedUrl);
@@ -157,7 +148,7 @@ const onDetect = (detections) => {
 };
 
 const switchPinQrCode = (button_type) => {
-  activeButton.value = button_type;  // setzt den aktiven Button
+  activeButton.value = button_type;
 }
 const joinSession = () => {
   const sessionIdPattern = /^\d{5}$/;

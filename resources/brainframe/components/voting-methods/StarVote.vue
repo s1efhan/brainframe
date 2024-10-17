@@ -125,7 +125,6 @@ const setNextIdea = () => {
   if (ideasToVote.value.length > 0) {
     previousIdea.value = currentIdea.value;
     currentIdea.value = ideasToVote.value.shift();
-    console.log("idea: Star: ", currentIdea.value);
   } else {
     emit('wait');
     currentIdea.value = null;
@@ -142,7 +141,6 @@ const undoLastDecision = () => {
 };
 
 const rate = (stars) => {
-  console.log("rate", currentIdea.value.id, stars);
   emit('sendVote', { ideaId: currentIdea.value.id, voteType: 'star', voteValue: stars });
   votedIdeas.value++;
   setNextIdea();

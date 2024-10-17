@@ -31,6 +31,14 @@ const props = defineProps({
     }
 });
 
+const emit = defineEmits (['wait']);
+const session = ref(props.session);
+const votes = ref(props.votes);
+const votingMethod = ref(null);
+const voteRoundLimit = ref(null);
+const voteCountPrevRound = ref(null);
+const personalContributor = ref(props.personalContributor);
+
 const votingMethods = {
     StarVote,
     RankingVote,
@@ -43,16 +51,8 @@ const ideas = computed(() => {
     contributorIcon: props.contributors.find(c => c.id === idea.contributor_id)?.icon
   }));
 });
-const emit = defineEmits (['wait']);
-const session = ref(props.session);
-const votes = ref(props.votes);
-const votingMethod = ref(null);
-const voteRoundLimit = ref(null);
-const voteCountPrevRound = ref(null);
-const personalContributor = ref(props.personalContributor);
+
 const pickVotingMethod = () => {
-    console.log("pickvotingMethod - Ideas: ", ideas.value.length);
-    console.log("vote_round: ", session.value.vote_round);
     if (ideas.value.length <= 5) {
         votingMethod.value = 'RankingVote'
         voteRoundLimit.value = 1;
@@ -60,7 +60,6 @@ const pickVotingMethod = () => {
     else if (ideas.value.length > 5 && ideas.value.length <= 15) {
         votingMethod.value = 'StarVote'
         voteRoundLimit.value = 2;
-        console.log("star")
     }
     else if (ideas.value.length > 15 && ideas.value.length <= 30) {
         votingMethod.value = 'SwipeVote'
@@ -70,12 +69,11 @@ const pickVotingMethod = () => {
         votingMethod.value = 'LeftRightVote'
         voteRoundLimit.value = 4;
     }
-    else { console.log("error") }
+    else { console.log("error while picking voteMethod") }
 
     if (session.value.vote_round > 1) {
        
         voteCountPrevRound.value = new Set(votes.value.filter(vote => vote.round === session.value.vote_round - 1).map(vote => vote.idea_id)).size;
-        console.log("voteCountPrevRound", voteCountPrevRound.value)
         if (voteCountPrevRound.value <= 15) {
             votingMethod.value = 'RankingVote'
         } else if (voteCountPrevRound.value <= 30) {
@@ -85,17 +83,8 @@ const pickVotingMethod = () => {
             votingMethod.value = 'SwipeVote'
         }
     }
-    console.log("votingMethod picked: ", votingMethod.value)
 }
 const sendVote = ({ ideaId, voteType, voteValue }) => {
-  console.log('Sending vote data:', {
-    session_id: session.value.id,
-    idea_id: ideaId,
-    contributor_id: personalContributor.value.id,
-    vote_type: voteType,
-    vote_value: voteValue,
-    vote_round: session.value.vote_round
-  });
   axios.post('/api/vote/store', {
         session_id: session.value.id,
         idea_id: ideaId,
@@ -105,7 +94,6 @@ const sendVote = ({ ideaId, voteType, voteValue }) => {
         vote_round: session.value.vote_round
       })
     .then(response => {
-      console.log('Server response:', response.data);
     })
     .catch(error => {
       console.error('Fehler beim Speichern deines Votes', error);
@@ -114,6 +102,5 @@ const sendVote = ({ ideaId, voteType, voteValue }) => {
 
 onMounted(() => {
     pickVotingMethod();
-    console.log('votingMethod.value', votingMethod.value)
 });
 </script>

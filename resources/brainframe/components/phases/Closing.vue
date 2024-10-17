@@ -256,6 +256,25 @@ const props = defineProps({
     }
 });
 
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+const surveyEmailIsValid = ref(false);
+const isChecked = ref(false);
+const surveyEmail = ref(props.personalContributor.email);
+const expandedIds = ref([]);
+const ideas = ref(props.ideas || []);
+const session = ref(props.session || {});
+const tagList = ref(null);
+const wordCloud = ref(null);
+const nextSteps = ref(null);
+const surveyVerificationKey = ref(null);
+const votes = ref(props.votes || []);
+const contributors = ref(props.contributors || []);
+const visibleIdeas = ref(3);
+const errorMsg = ref(null);
+const newEmail = ref('');
+const validatedEmails = ref([]);
+const contributorEmailAddresses = ref(['']);
+
 const isDataReady = computed(() => {
     return props.ideas &&
         props.ideas.length > 0 &&
@@ -264,19 +283,17 @@ const isDataReady = computed(() => {
         props.session &&
         props.contributors;
 });
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-const surveyEmailIsValid = ref(false);
+
 const validateSurveyEmail = () => {
-    console.log("validateSurveyEmail")
-    if (isValidEmail(surveyEmail.value)) {
+
+   if (isValidEmail(surveyEmail.value)) {
         surveyEmailIsValid.value = true;
     }
     else {
         surveyEmailIsValid.value = false;
-
     }
 }
-const isChecked = ref(false);
+
 const toggleDetails = (id) => {
     if (expandedIds.value.includes(id)) {
         expandedIds.value = expandedIds.value.filter(expandedId => expandedId !== id);
@@ -284,19 +301,13 @@ const toggleDetails = (id) => {
         expandedIds.value.push(id);
     }
 };
-const surveyEmail = ref(props.personalContributor.email);
-const expandedIds = ref([]);
-const ideas = ref(props.ideas || []);
-const session = ref(props.session || {});
+
 watch(() => props.session, (newSession) => {
     if (newSession) {
         session.value = newSession;
-        console.log("Updated session:", session.value);
     }
 }, { immediate: true, deep: true });
-const votes = ref(props.votes || []);
-const contributors = ref(props.contributors || []);
-const visibleIdeas = ref(3);
+
 const showMoreIdeas = () => {
     if (props.personalContributor.survey_activated) {
         visibleIdeas.value += 5;
@@ -349,11 +360,8 @@ const sessionDuration = computed(() => {
     const lastVote = votes.value[votes.value.length - 1];
     return (new Date(lastVote.created_at) - new Date(firstIdea.created_at)) / 60000;
 });
-const tagList = ref(null);
-const wordCloud = ref(null);
-const nextSteps = ref(null);
+
 const getClosingDetails = () => {
-    console.log("getClosingDetails");
     axios.get(`/api/session/${props.session.id}/closing`)
         .then(response => {
             wordCloud.value = response.data.wordCloud;
@@ -361,14 +369,12 @@ const getClosingDetails = () => {
             session.value.prompt_tokens = response.data.prompt_tokens;
             session.value.completion_tokens = response.data.completion_tokens;
             nextSteps.value = response.data.nextSteps
-            console.log("response getClosing", response.data);
         })
         .catch(error => {
             console.error('Error fetching closingDetails', error);
         })
 }
 
-const errorMsg = ref(null);
 const downloadCSV = () => {
     if (props.personalContributor.survey_activated) {
         const url = `/api/session/${props.session.id}/summary/download-csv`;
@@ -411,7 +417,6 @@ const calculateCost = computed(() => {
 const downloadPDF = () => {
     if (props.personalContributor.survey_activated) {
         const url = `/api/session/${props.session.id}/summary/download`;
-        // Behalten Sie die bestehende PDF-Download-Logik bei
         axios.get(url, { responseType: 'blob' })
             .then(response => {
                 const blob = new Blob([response.data]);
@@ -441,16 +446,6 @@ const formatDate = (dateString) => {
     return date.toLocaleDateString('de-DE', options);
 };
 
-onMounted(() => {
-    getClosingDetails();
-    validateSurveyEmail();
-    console.log("Session created_at:", props.session.created_at);
-    console.log("Formatted date:", formatDate(props.session.created_at));
-});
-
-const newEmail = ref('');
-const validatedEmails = ref([]);
-const contributorEmailAddresses = ref(['']);
 const addEmail = () => {
     const email = newEmail.value.trim();
     if (isValidEmail(email) && !validatedEmails.value.includes(email)) {
@@ -486,10 +481,8 @@ const validateEmail = (index, event) => {
 const getIconComponent = (contributor) => {
     return contributor ? IconComponents[contributor.icon] || null : null;
 };
-const surveyVerificationKey = ref(null);
 
 const verifyEmail = () => {
-    console.log("verifyEmail");
     axios.post(`/api/survey/email/verify`, {
         survey_email: surveyEmail.value,
         session_id: props.session.id,
@@ -507,7 +500,6 @@ const verifyEmail = () => {
 const storeSurveyEmail = () => {
     if (isChecked.value) {
         showCodeInput.value = true;
-        console.log("storeSurveyEmail")
         axios.post(`/api/survey/email/store`, {
             survey_email: surveyEmail.value,
             session_id: props.session.id,
@@ -547,6 +539,10 @@ const removeEmail = (email) => {
     validatedEmails.value = validatedEmails.value.filter(e => e !== email);
 };
 
+onMounted(() => {
+    getClosingDetails();
+    validateSurveyEmail();
+});
 </script>
 <style scoped>
 .chevron {

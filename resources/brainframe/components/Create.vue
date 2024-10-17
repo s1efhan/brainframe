@@ -88,24 +88,17 @@ const generateLink = () => {
 };
 
 const createSession = (selectedMethod) => {
-  console.log("session_id: ", sessionId.value,
-    "new_method: ", selectedMethod,
-    "host_id: ", userId.value,
-    "new_target: ", sessionTarget.value);
   axios.post('/api/session/create', {
     session_id: sessionId.value,
     method_id: selectedMethod,
     user_id: userId.value,
     target: sessionTarget.value,
-  }).then(response => {
-    console.log('Session created/updated successfully');
   }).catch(error => {
     errorMsg.value = error.response.data.message;
     console.error('Error saving session data', error);
   });
 };
 
-// Lifecycle Hooks
 onMounted(() => {
   generateLink();
   targetTextarea.value.focus();

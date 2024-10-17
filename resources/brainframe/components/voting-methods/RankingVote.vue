@@ -81,9 +81,6 @@ const emit = defineEmits(['sendVote', 'wait']);
 
 const expandedIds = ref([]);
 const currentOrder = ref([]);
-onMounted(() => {
-  console.log(props.ideas);
-});
 
 const topIdeas = computed(() => {
   const currentRound = props.session.vote_round;

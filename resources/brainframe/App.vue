@@ -34,7 +34,6 @@
 </template>
 <script setup>
 import { sessionId } from './js/eventBus.js'
-//import {dotPulse} from "ldrs";
 import { onMounted, ref, onUnmounted } from 'vue';
 import Menu from './components/Menu.vue';
 import Footer from './components/Footer.vue';
@@ -44,81 +43,86 @@ import BrainFrameIcon from './components/icons/BrainFrameIcon.vue'
 import HamburgerIcon from './components/icons/HamburgerIcon.vue'
 import { useRoute } from 'vue-router';
 import CloseHamburgerIcon from './components/icons/CloseHamburgerIcon.vue';
+
 const arrowStatus = ref('inactive');
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-};
-let scrollTimer = null;
-const startTimer = () => {
-  // Löschen des vorherigen Timers, falls vorhanden
-  if (scrollTimer !== null) {
-    clearTimeout(scrollTimer);
-  }
-  
-  // Starten eines neuen Timers
-  scrollTimer = setTimeout(() => {
-    arrowStatus.value = 'inactive';
-  }, 2000);
-};
-
-const handleScroll = () => {
-    arrowStatus.value = 'active';
-      startTimer();
-};
-
-const route = useRoute();
 const userId = ref(0);
 const authToken = ref(null);
 const showMenu = ref(false);
-const initializeUserId = () => {
-    const array = new Uint32Array(1);
-    window.crypto.getRandomValues(array);
-    userId.value = Number(array[0]);
-    localStorage.setItem('user_id', userId.value.toString());
-    axios.post('/api/user', { user_id: Number(userId.value) })
-    .then(response => {
+const route = useRoute();
 
-    })
-    .catch(error => {
-      console.error('Error sending user ID to server:', error);
-    });
+// Scroll to Top Funktion
+const scrollToTop = () => {
+ window.scrollTo({
+ top: 0,
+ behavior: 'smooth'
+ });
+};
+
+let scrollTimer = null;
+const startTimer = () => {
+if (scrollTimer !== null) {
+ clearTimeout(scrollTimer);
+ }
+ scrollTimer = setTimeout(() => {
+ arrowStatus.value = 'inactive';
+ }, 2000);
+};
+
+const handleScroll = () => {
+ arrowStatus.value = 'active';
+ startTimer();
+};
+
+// User
+const initializeUserId = () => {
+const array = new Uint32Array(1);
+ window.crypto.getRandomValues(array);
+ userId.value = Number(array[0]);
+ localStorage.setItem('user_id', userId.value.toString());
+ axios.post('/api/user', { user_id: Number(userId.value) })
+ .then(response => {
+ })
+ .catch(error => {
+ console.error('Error sending user ID to server:', error);
+ });
 }
 
 const getUserData = () => {
-    userId.value = Number(localStorage.getItem('user_id'));
-    authToken.value = localStorage.getItem('authToken');
+ userId.value = Number(localStorage.getItem('user_id'));
+ authToken.value = localStorage.getItem('authToken');
 }
+
 const handleLogout = () => {
-  getUserData() 
-  if(!userId.value){
-    initializeUserId();
-  }
+ getUserData()
+if(!userId.value){
+ initializeUserId();
+ }
 }
+
 const handleLogin = () => {
-  getUserData();
+ getUserData();
 }
+
 const handleSessionIdUpdate = (newSessionId) => {
-  sessionId.value = newSessionId;
+ sessionId.value = newSessionId;
 }
+
 const copyToClipboard = (copyText) => {
-  navigator.clipboard.writeText(copyText);
+ navigator.clipboard.writeText(copyText);
 };
 
-
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
-  if (Number.isInteger(parseInt(route.params.id))) {
-    sessionId.value = route.params.id;
-  }
-  getUserData() 
-  if(!userId.value){
-    initializeUserId();
-  }
+ window.addEventListener('scroll', handleScroll);
+if (Number.isInteger(parseInt(route.params.id))) {
+ sessionId.value = route.params.id;
+ }
+ getUserData()
+if(!userId.value){
+ initializeUserId();
+ }
 });
+
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
+ window.removeEventListener('scroll', handleScroll);
 });
 </script>

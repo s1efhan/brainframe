@@ -51,7 +51,6 @@ const login = () => {
   })
   .then(response => {
      authToken.value = response.data.authToken;
-     console.log('response.data.authToken', response.data.authToken)
      userId.value = response.data.userId;
     localStorage.setItem('authToken', authToken.value);
     localStorage.setItem('user_id', userId.value);
@@ -65,7 +64,6 @@ const login = () => {
 };
 
 const register = () => {
-  console.log(userId.value);
   axios.post('/api/register', {
     user_id: userId.value,
     email: email.value,

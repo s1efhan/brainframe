@@ -19,10 +19,7 @@ class SurveyController extends Controller
         $response = SurveyResponse::where('session_id', $sessionId)
             ->where('user_id', $userId)
             ->first();
-        Log::info("Fetching survey data for session: $sessionId, user: $userId");
-        Log::info("Response: " . json_encode($response));
         if ($response) {
-            // Alle Attribute des Models zurückgeben, auch wenn sie null sind
             return response()->json($response->toArray());
         }
         return response()->json([]);
@@ -30,8 +27,6 @@ class SurveyController extends Controller
 
     public function verifyEmail(Request $request)
     {
-        Log::info('Verifying email. Request data:', $request->all());
-
         try {
             $request->validate([
                 'user_id' => 'required|exists:users,id',
@@ -42,8 +37,6 @@ class SurveyController extends Controller
             $cacheKey = 'survey_verification_' . $user->id;
             $cachedKey = Cache::get($cacheKey);
 
-            Log::info("User ID: {$user->id}, Cached Key: {$cachedKey}, Submitted Key: {$request->input('survey_verification_key')}");
-
             if ($cachedKey !== $request->input('survey_verification_key')) {
                 Log::warning('Invalid verification key or expired code.');
                 return response()->json(['message' => 'Ungültiger Verifizierungsschlüssel oder Code abgelaufen.'], 400);
@@ -52,8 +45,6 @@ class SurveyController extends Controller
             $user->survey_activated = true;
             $user->save();
             Cache::forget($cacheKey);
-
-            Log::info('Email verified and survey activated for user: ' . $user->id);
             return response()->json(['message' => 'E-Mail verifiziert und Umfrage aktiviert.'], 200);
         } catch (\Exception $e) {
             Log::error('Error in email verification: ' . $e->getMessage());
@@ -74,9 +65,7 @@ class SurveyController extends Controller
 
         $verificationCode = sprintf('%06d', mt_rand(0, 999999));
         $cacheKey = 'survey_verification_' . $user->id;
-        Cache::put($cacheKey, $verificationCode, now()->addMinutes(10)); // Verlängern Sie die Cache-Dauer auf 10 Minuten
-
-        Log::info("Storing verification code for user {$user->id}: {$verificationCode}");
+        Cache::put($cacheKey, $verificationCode, now()->addMinutes(10));
 
         $email = $user->survey_email;
         $emailMessage = "Dein Verifizierungscode lautet: " . $verificationCode;
@@ -114,7 +103,6 @@ class SurveyController extends Controller
 
     public function getTopIdeas($sessionId)
     {
-        Log::debug($sessionId);
         $session = Session::findOrFail($sessionId);
         $maxRound = Vote::where('session_id', $sessionId)->max('round');
         $topIdeas = Idea::where('session_id', $sessionId)
@@ -139,7 +127,7 @@ class SurveyController extends Controller
             ->min('created_at');
         $lastVoteTime = Vote::where('session_id', $sessionId)
             ->max('created_at');
-        // Konvertiere Strings zu DateTime-Objekten, falls nötig
+
         $firstIdeaTime = $firstIdeaTime ? Carbon::parse($firstIdeaTime) : null;
         $lastVoteTime = $lastVoteTime ? Carbon::parse($lastVoteTime) : null;
       

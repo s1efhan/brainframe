@@ -84,12 +84,7 @@ import Closing from '../components/phases/Closing.vue';
 import Lobby from '../components/phases/Lobby.vue';
 import PlayIcon from '../components/icons/PlayIcon.vue';
 import IconComponents from '../components/IconComponents.vue';
-const getIconComponent = (iconName) => {
-  return IconComponents[iconName] || null;
-};
 import { dotPulse } from 'ldrs'
-dotPulse.register();
-const personalContributor = ref(null);
 
 const props = defineProps({
   userId: {
@@ -97,6 +92,32 @@ const props = defineProps({
     required: true
   }
 });
+
+const personalContributor = ref(null);
+const errorMsg = ref(null);
+const session = ref(null);
+const userId = ref(props.userId);
+const contributors = ref(null);
+const ideas = ref([])
+let pingInterval;
+
+const headlineHeight = ref('auto');
+const baseHeight = 1.5;
+const showStats = ref(false);
+
+const votes = ref(null);
+const isStopping = ref(false);
+const isStarting = ref(false);
+const timer = ref(null);
+const isLoading = ref(true);
+
+
+const getIconComponent = (iconName) => {
+  return IconComponents[iconName] || null;
+};
+
+dotPulse.register();
+
 const emit = defineEmits(['updateSessionId']);
 
 const updateSessionId = () => {
@@ -104,6 +125,7 @@ const updateSessionId = () => {
   emit('updateSessionId', sessionId.value);
 }
 
+// Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
 const adjustHeadline = () => {
   nextTick(() => {
     const headline = document.querySelector('.headline__session-target');
@@ -123,31 +145,20 @@ const adjustHeadline = () => {
     }
   });
 };
+//
+
 const ideasWithTags = computed(() => {
   return ideas.value ? ideas.value.filter(idea => idea.tag) : [];
 });
+
 const ideasWithoutTags = computed(() => {
   return ideas.value ? ideas.value.filter(idea => !idea.tag) : [];
 });
-//session
-const errorMsg = ref(null);
-const session = ref(null);
-const userId = ref(props.userId);
-const contributors = ref(null);
-const ideas = ref([])
-let pingInterval;
-
-// UI und Zustand
-const headlineHeight = ref('auto');
-const baseHeight = 1.5;
-const showStats = ref(false);
 
 const getSession = () => {
-  console.log("getSession");
   axios.get(`/api/session/${sessionId.value}`)
     .then(response => {
       session.value = response.data.session;
-      console.log("session.value", session.value);
     })
     .catch(error => {
       console.error('Error fetching session', error);
@@ -159,32 +170,27 @@ const getContributors = () => {
   axios.get(`/api/contributors/${sessionId.value}/${userId.value}`)
     .then(response => {
       contributors.value = response.data.contributors;
-      console.log("contributors.value", contributors.value);
       personalContributor.value = contributors.value.find(c => c.isMe);
-      console.log("personalContributor.value", personalContributor.value);
     })
     .catch(error => {
       console.error('Error fetching contributors', error);
     })
 };
+
 const getIdeas = () => {
-  console.log("getIdeas");
   axios.get(`/api/ideas/${sessionId.value}`)
     .then(response => {
       ideas.value = response.data.ideas;
-      console.log("ideas got", ideas.value)
     })
     .catch(error => {
       console.error('Error fetching ideas', error);
     })
 }
-const votes = ref(null);
+
 const getVotes = () => {
-  console.log("getVotes");
   axios.get(`/api/votes/${sessionId.value}`)
     .then(response => {
       votes.value = response.data.votes;
-      console.log("votes got", votes.value)
     })
     .catch(error => {
       console.error('Error fetching votes', error);
@@ -192,7 +198,6 @@ const getVotes = () => {
 }
 
 const joinSession = () => {
-  console.log('join', sessionId.value, userId.value)
   if (sessionId.value && userId) {
     axios.post('/api/contributor/join', {
       session_id: sessionId.value,
@@ -204,8 +209,8 @@ const joinSession = () => {
       .catch(error => { console.error('Error joining session:', error) });
   }
 };
+
 const leaveSession = () => {
-  console.log('leave', sessionId.value, userId.value)
   if (sessionId.value && userId) {
     axios.post('/api/contributor/leave', {
       session_id: sessionId.value,
@@ -217,6 +222,7 @@ const leaveSession = () => {
       .catch(error => { console.error('Error leaving session:', error) });
   }
 };
+
 const ping = () => {
   if (sessionId.value && userId.value) {
     axios.post('/api/contributor/ping', {
@@ -230,10 +236,8 @@ const ping = () => {
       });
   }
 };
-const isStopping = ref(false);
-const isStarting = ref(false);
+
 const startSession = () => {
-  console.log("startSession", personalContributor.value.isHost)
   if (personalContributor.value.isHost) {
     isStarting.value  = true;
     if (session.value.phase === "voting") {
@@ -242,15 +246,11 @@ const startSession = () => {
     else if (session.value.phase === "collecting") {
       session.value.collecting_round++;
     }
-    console.log(session.value.vote_round, "session.value.vote_round", session.value.collecting_round, "session.value.collecting_round")
     axios.post('/api/session/start', {
       session_id: sessionId.value,
       vote_round: session.value.vote_round,
       collecting_round: session.value.collecting_round
     })
-      .then(response => {
-        console.log('Success starting Session', response);
-      })
       .catch(error => {
         console.error('Error starting Session', error);
       })
@@ -260,8 +260,8 @@ const startSession = () => {
       });
   }
 }
+
 const stopSession = () => {
-  console.log("stopSession", personalContributor.value.isHost)
   isLoading.value = true;
   if (personalContributor.value.isHost) {
     isStopping.value = true;
@@ -270,9 +270,6 @@ const stopSession = () => {
       vote_round: session.value.vote_round,
       collecting_round: session.value.collecting_round
     })
-      .then(response => {
-        console.log('Success stopping Session', response);
-      })
       .catch(error => {
         errorMsg.value = error.response?.data?.error || 'Ein unerwarteter Fehler ist aufgetreten';
         console.error('Error stopping Session', error);
@@ -285,15 +282,10 @@ const stopSession = () => {
 }
 
 const resumeSession = () => {
-  console.log("resumeSession", personalContributor.value.isHost)
-
   if (personalContributor.value.isHost && session.value.seconds_left > 0) {
     axios.post('/api/session/resume', {
       session_id: sessionId.value,
     })
-      .then(response => {
-        console.log('Success resuming Session', response);
-      })
       .catch(error => {
         console.error('Error resuming Session', error);
       })
@@ -301,14 +293,10 @@ const resumeSession = () => {
 }
 
 const pauseSession = () => {
-  console.log("pauseSession")
   if (personalContributor.value.isHost) {
     axios.post('/api/session/pause', {
       session_id: sessionId.value,
     })
-      .then(response => {
-        console.log('Success pausing Session', response);
-      })
       .catch(error => {
         console.error('Error pausing Session', error);
       })
@@ -324,7 +312,6 @@ const handleVisibilityChange = () => {
     }
 };
 
-const timer = ref(null);
 const startTimer = () => {
   clearInterval(timer.value);
   timer.value = setInterval(() => {
@@ -338,15 +325,15 @@ const startTimer = () => {
     }
   }, 1000);
 };
+
 const currentRoundIdeas = computed(() =>
   ideas.value.filter(idea => idea.round == session.value.collecting_round)
-)
+);
+
 watch(() => currentRoundIdeas.value, (newValue) => {
-  console.log("currentRoundIdeas", newValue.length, 'session.value.method.idea_limit', session.value.method.idea_limit)
   const currentRoundContributorIdeas = newValue.filter(idea => idea.contributor_id === personalContributor.value.id);
   if (session.value.method.idea_limit &&
     session.value.method.idea_limit <= currentRoundContributorIdeas.length) {
-    console.log("showStats.value")
     showStats.value = true;
   }
 }, { deep: true });
@@ -354,7 +341,7 @@ watch(() => currentRoundIdeas.value, (newValue) => {
 const stopTimer = () => {
   clearInterval(timer.value);
 };
-const isLoading = ref(true);
+
 onMounted(async () => {
   isLoading.value = true;
   try {
@@ -380,7 +367,6 @@ onMounted(async () => {
 const setupEventListeners = () => {
   Echo.channel('session.' + sessionId.value)
     .listen('UserPickedRole', (e) => {
-      console.log("e.formattedContributor", e.formattedContributor)
       contributors.value.push(e.formattedContributor);
       if (e.formattedContributor.user_id === userId.value) { //wenn man selbst rolle gewählt hat
         personalContributor.value = e.formattedContributor;
@@ -389,7 +375,6 @@ const setupEventListeners = () => {
       session.value.method.round_limit = Math.max(contributors.value.length, 2);
     })
     .listen('SessionStarted', (e) => {
-      console.log("Event: SessionStarted", e);
       errorMsg.value = null;
       session.value = e.formattedSession;
       stopTimer();
@@ -401,7 +386,6 @@ const setupEventListeners = () => {
       showStats.value = false;
     })
     .listen('SessionPaused', (e) => {
-      console.log("Event: SessionPaused", e);
       errorMsg.value = null;
       session.value = e.formattedSession;
       stopTimer();
@@ -423,7 +407,6 @@ const setupEventListeners = () => {
       personalContributor.value = contributors.value.find(c => c.id === personalContributor.value.id);
     })
     .listen('SessionResumed', (e) => {
-      console.log("Event: SessionResumed", e);
       errorMsg.value = null;
       session.value = e.formattedSession;
       stopTimer();
@@ -431,30 +414,24 @@ const setupEventListeners = () => {
       showStats.value = false;
     })
     .listen('SessionStopped', (e) => {
-      console.log("Event: SessionStopped", e);
       errorMsg.value = null;
       stopTimer();
       session.value = e.formattedSession;
       showStats.value = false;
     })
     .listen('UserJoinedSession', (e) => {
-      console.log("User Joined", e.contributorId);
       contributors.value.find(c => c.id === e.contributorId).is_active = true;
     })
     .listen('UserLeftSession', (e) => {
-      console.log("User Left", e.contributorId);
       contributors.value.find(c => c.id === e.contributorId).is_active = false;
     })
     .listen('UserSentVote', (e) => {
-      console.log("sent vote:", e);
       votes.value.push({ ...e.vote });
     })
     .listen('UserSentIdea', (e) => {
-      console.log("sent idea:", e);
       ideas.value.push({ ...e.idea });
     })
     .listen('IdeasFormatted', (e) => {
-      console.log("IdeasFormatted", e);
       e.ideas.forEach(idea => {
         ideas.value.push(idea);
       });

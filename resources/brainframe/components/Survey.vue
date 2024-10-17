@@ -69,7 +69,7 @@ import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 
 const route = useRoute();
-const sessionId = parseInt(route.params.sessionId, 10);  // Konvertiere zu Integer
+const sessionId = parseInt(route.params.sessionId, 10);
 const router = useRouter();
 const props = defineProps({
   userId: {
@@ -135,7 +135,7 @@ const totalQuestions = computed(() => questions.length);
 const findFirstUnansweredQuestion = () => {
   return questions.findIndex(question => {
     if (question.type === 'checkbox') {
-      // Prüfe, ob mindestens eine Option ausgewählt wurde
+  
       return !question.options.some(option => surveyData.value[option.key] === true);
     } else {
       return !surveyData.value[question.key];
@@ -149,15 +149,14 @@ const getTopIdeas = () => {
     .then(response => {
       topIdeas.value = response.data.top_ideas;
       session.value = response.data.session;
-      console.log("response get TopIdeas", response.data);
     })
     .catch(error => {
       console.error('Error fetching TopIdeas', error);
     })
 }
+
 const loadSurveyData = () => {
   getTopIdeas();
-
   axios.get(`/api/survey/${sessionId}/${props.userId}`)
     .then(response => {
       const data = response.data;
@@ -168,7 +167,6 @@ const loadSurveyData = () => {
         }
       });
 
-      // Initialisieren Sie Checkbox-Fragen
       questions.forEach(question => {
         if (question.type === 'checkbox') {
           question.options.forEach(option => {
@@ -179,13 +177,10 @@ const loadSurveyData = () => {
         }
       });
 
-      // Setzen Sie den currentIndex auf die erste unbeantwortete Frage
       const firstUnansweredIndex = findFirstUnansweredQuestion();
       if (firstUnansweredIndex !== -1) {
         currentIndex.value = firstUnansweredIndex;
       }
-
-      console.log("loadSurveyData", surveyData.value);
     })
     .catch(error => {
       console.error('Error fetching survey-data', error);
@@ -195,13 +190,13 @@ const loadSurveyData = () => {
 const answeredQuestions = computed(() => {
   return questions.filter(question => {
     if (question.type === 'checkbox') {
-      // Prüfe, ob mindestens eine Option ausgewählt wurde
       return question.options.some(option => surveyData.value[option.key] === true);
     } else {
       return surveyData.value[question.key] !== undefined && surveyData.value[question.key] !== null;
     }
   });
 });
+
 const finishSurvey = () => {
   if (currentQuestion.value.type === 'checkbox') {
     Promise.all(currentQuestion.value.options.map(option =>
@@ -218,7 +213,6 @@ const finishSurvey = () => {
 };
 
 const saveAnswer = (key, value) => {
-  console.log("Save Answer:", sessionId, props.userId, key, value);
   return axios.post('/api/survey/store', {
     session_id: sessionId,
     user_id: props.userId,
@@ -226,7 +220,7 @@ const saveAnswer = (key, value) => {
     answer_value: value
   })
     .then(response => {
-      console.log('Antwort erfolgreich gespeichert:', response.data);
+      
     })
     .catch(error => {
       console.error('Fehler beim Speichern der Antwort:', error);

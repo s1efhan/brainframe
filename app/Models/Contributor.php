@@ -13,12 +13,6 @@ class Contributor extends Model
     protected $fillable = [
         'session_id', 'role_id', 'user_id', 'is_active', 'last_ping'
     ];
-    protected $casts = [
-        'is_active' => 'boolean',
-        'last_ping' => 'datetime',
-    ];
-
-    // Bestehende Beziehungen
 
     public function roles()
     {
@@ -35,8 +29,6 @@ class Contributor extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Neue Beziehungen
-
     public function ideas()
     {
         return $this->hasMany(Idea::class);
@@ -47,8 +39,13 @@ class Contributor extends Model
         return $this->hasMany(Vote::class);
     }
 
-    // Scopes
+    // Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
 
+    protected $casts = [
+        'is_active' => 'boolean',
+        'last_ping' => 'datetime',
+    ];
+    
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

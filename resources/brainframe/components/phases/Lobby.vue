@@ -134,7 +134,6 @@
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
-import SwooshIcon from '../icons/SwooshIcon.vue';
 import ProfileIcon from '../icons/ProfileIcon.vue';
 import IconComponents from '../IconComponents.vue';
 const getIconComponent = (contributor) => {
@@ -172,6 +171,15 @@ const props = defineProps({
     required: true
   }
 });
+
+const showQRCode = ref(false);
+const validatedEmails = ref([]);
+const contributorEmailAddresses = ref(['']);
+const sessionLink = ref(null);
+const emit = defineEmits(['start', 'exit', 'stop']);
+const showInfo = ref(false);
+const qrcodeCanvas = ref(null);
+
 const ideasCount = computed(() => {
   return (contributorId, round) => {
     return props.ideas.filter(idea =>
@@ -201,12 +209,7 @@ const timeSinceLastActive = (lastActive) => {
     isMoreThanOneMin: diff > 1
   };
 };
-const showQRCode = ref(false);
-const validatedEmails = ref([]);
-const contributorEmailAddresses = ref(['']);
-const sessionLink = ref(null);
-const emit = defineEmits(['start', 'exit', 'stop']);
-const showInfo = ref(false);
+
 const removeEmail = (email) => {
   validatedEmails.value = validatedEmails.value.filter(e => e !== email);
 };
@@ -222,8 +225,7 @@ const validateEmail = (index, event) => {
     } else {
       console.log('Diese E-Mail-Adresse wurde bereits hinzugefügt.');
     }
-    // Leeren Sie das Eingabefeld in jedem Fall
-    contributorEmailAddresses.value[index] = '';
+    contributorEmailAddresses.value[index] = '';   // Leeren Sie das Eingabefeld in jedem Fall
   }
 };
 
@@ -240,16 +242,13 @@ const sessionInvite = () => {
       host_id: props.personalContributor.id,
       contributor_email_addresses: oldValidatedEmails
     })
-      .then(response => {
-        console.log('Einladungen erfolgreich gesendet');
-      })
       .catch(error => {
         console.error('Error inviting to the session', error);
         validatedEmails.value = oldValidatedEmails;
       });
   }
 };
-const qrcodeCanvas = ref(null);
+
 const generateQRCode = () => {
   if (sessionLink.value && qrcodeCanvas.value && !showQRCode.value) {
     showQRCode.value = true;

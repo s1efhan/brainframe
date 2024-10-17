@@ -99,11 +99,6 @@ const initialize = () => {
   setNextIdea();
 };
 
-
-onMounted(() => {
-  initialize();
-});
-
 const setNextIdea = () => {
   if (ideasToVote.value.length > 0) {
     previousIdea.value = currentIdea.value;
@@ -157,4 +152,8 @@ const handleSwipe = () => {
     swipeRight();
   }
 };
+
+onMounted(() => {
+  initialize();
+});
 </script>

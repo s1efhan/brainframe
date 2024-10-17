@@ -17,7 +17,6 @@ class RoleController extends Controller
         $contributorCount = $contributors->count();
         
         if ($methodId === 4 && $contributorCount >= 6) { // Six Thinking Hats
-            Log::info($contributorCount);
             $assignedRoles = $contributors->groupBy('role_id')
                 ->map(function ($group) {
                     return $group->count();
@@ -25,7 +24,6 @@ class RoleController extends Controller
                 ->toArray();
     
             $maxAssignments = $contributorCount >= 12 ? 3 : 2;
-            Log::info($maxAssignments);
             $roles = Role::with('methods')
                 ->whereHas('methods', function ($query) use ($methodId) {
                     $query->where('bf_methods.id', $methodId);
@@ -36,7 +34,7 @@ class RoleController extends Controller
                 })
                 ->values()
                 ->toArray();
-        } else {
+        } else { // andere Methoden
             $assignedRoleIds = $contributors->pluck('role_id')->toArray();
     
             $roles = Role::with('methods')

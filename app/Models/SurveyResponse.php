@@ -43,6 +43,13 @@ class SurveyResponse extends Model
         'industry',
     ];
 
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    // Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
     protected $casts = [
         'session_id' => 'integer',
         'known_method_635' => 'boolean',
@@ -52,9 +59,4 @@ class SurveyResponse extends Model
         'known_method_6_thinking_hats' => 'boolean',
         'known_method_none' => 'boolean'
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 }

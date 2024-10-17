@@ -144,9 +144,7 @@ const getMethods = () => {
 };
 
 const sendAlterSession = (session) => {
-  // Stellen Sie sicher, dass method_id einen Wert hat
   const methodId = session.editedMethodId || session.method_id;
-
   if (!methodId) {
     responseMsg.value = 'Fehler: Keine Methode ausgewählt';
     return;
@@ -159,7 +157,6 @@ const sendAlterSession = (session) => {
     target: session.editedTarget
   })
     .then(response => {
-      console.log('Server response:', response.data);
       responseMsg.value = response.data.message;
       session.target = session.editedTarget;
       session.method_id = methodId;
@@ -178,7 +175,6 @@ const deleteSession = (session) => {
     user_id: userId.value
   })
     .then(response => {
-      console.log('Server response:', response.data);
       responseMsg.value = response.data.message;
       userSessions.value = userSessions.value.filter(s => s.session_id !== session.session_id);
     })
@@ -192,7 +188,6 @@ const getUserSessions = () => {
   axios.get(`/api/user/${userId.value}/sessions`)
     .then(response => {
       userSessions.value = response.data;
-      console.log('userSessions: ', userSessions.value);
     })
     .catch(error => {
       console.error('Error fetching sessions', error);

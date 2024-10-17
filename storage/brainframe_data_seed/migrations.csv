@@ -1,4 +1,0 @@
-id,migration,batch
-4,0001_01_01_000000_create_users_table,1
-5,0001_01_01_000001_create_cache_table,1
-6,0001_01_01_000002_create_jobs_table,1

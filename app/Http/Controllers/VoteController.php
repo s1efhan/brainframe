@@ -8,22 +8,18 @@ use App\Models\Contributor;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Events\UserSentVote;
-use App\Events\SessionStopped;
 class VoteController extends Controller
 {
     public function get($sessionId){
         $session = Session::findOrFail($sessionId);
         $votes = Vote::where('session_id', $sessionId)
         ->get();
-        Log::info('contributors: '.json_encode($votes));
         return response()->json([
             'votes' => $votes
         ]);
     }
     public function vote(Request $request)
     {
-        Log::info('Vote request received', $request->all());
-        
         $validated = $request->validate([
             'session_id' => 'required|exists:bf_sessions,id',
             'idea_id' => 'required|exists:bf_ideas,id',
@@ -32,8 +28,6 @@ class VoteController extends Controller
             'vote_type' => 'required|in:star,ranking,left_right,swipe',
             'vote_value' => 'required|integer|min:0|max:5',
         ]);
-        
-        Log::info('Validation passed', $validated);
     
         $vote = Vote::updateOrCreate(
             [
@@ -47,13 +41,9 @@ class VoteController extends Controller
                 'value' => $validated['vote_value'],
             ]
         );
-        
-        Log::info('Vote created/updated', $vote->toArray());
-    
         event(new UserSentVote($vote, $validated['session_id']));
-        Log::info('UserSentVote event dispatched');
-    
-        // Prüfung auf vollständige Abstimmung
+        
+        // Prüfung auf vollständige Abstimmung, um Phasenwechsel einzuleiten
         $session = Session::find($validated['session_id']);
         $contributorCount = Contributor::where('session_id', $validated['session_id'])->count();
         $votedIdeasCount = Vote::where('session_id', $validated['session_id'])
@@ -63,35 +53,20 @@ class VoteController extends Controller
     
         $maxVotes = $this->getMaxVotes($validated['vote_round'], $validated['vote_type'], $session);
     
-        Log::info('Vote count check', [
-            'contributorCount' => $contributorCount,
-            'votedIdeasCount' => $votedIdeasCount,
-            'maxVotes' => $maxVotes
-        ]);
-    
         if ($votedIdeasCount >= $maxVotes) {
             $allVotesCount = Vote::where('session_id', $validated['session_id'])
                 ->where('round', $validated['vote_round'])
                 ->count();
     
-            Log::info('All votes count check', [
-                'allVotesCount' => $allVotesCount,
-                'requiredVotes' => $contributorCount * $maxVotes
-            ]);
-    
             if ($allVotesCount >= $contributorCount * $maxVotes) {
                 $stopRequest = new Request([
                     'session_id' => $session->id,
                     'vote_round' => $validated['vote_round'],
-                    'collecting_round' => $session->collecting_round // Annahme: collecting_round ist in der Session gespeichert
+                    'collecting_round' => $session->collecting_round
                 ]);
-                
                 app(SessionController::class)->stop($stopRequest);
-                Log::info('Session stop method called', ['session_id' => $session->id]);
             }
         }
-    
-        Log::info('Vote function completed successfully');
         return response()->json(['message' => 'Vote processed successfully'], 200);
     }
     
@@ -114,7 +89,6 @@ class VoteController extends Controller
                     break;
             }
         }
-        Log::info('Max votes calculated', ['round' => $round, 'voteType' => $voteType, 'maxVotes' => $maxVotes]);
         return $maxVotes;
     }
 }

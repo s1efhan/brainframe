@@ -23,7 +23,7 @@ class ContributorController extends Controller
             ['role_id' => $validated['role_id'], 'last_ping' => now(), 'is_active' => true]
         );
 
-        $contributor->load('role');  // Eager load the role relationship
+        $contributor->load('role');
 
         event(new UserPickedRole($validated['session_id'], $contributor));
 
@@ -36,13 +36,11 @@ class ContributorController extends Controller
 
     public function get($sessionId, $userId)
     {
-        Log::info("sessionid".$sessionId." userId: ".$userId);
         $session = Session::findOrFail($sessionId);
         $contributors = Contributor::where('session_id', $sessionId)
-            ->with(['user', 'role', 'ideas', 'votes'])  // Korrigiert zu 'ideas' und 'votes'
+            ->with(['user', 'role', 'ideas', 'votes'])
             ->get();
     
-        Log::info('contributors: '.json_encode($contributors));
         
         $formattedContributors = $contributors->map(function ($contributor) use ($session, $userId) {
             if (!$contributor->user || !$contributor->role) {
@@ -79,8 +77,6 @@ class ContributorController extends Controller
                 'email' => $contributor->user->email ?? null,
             ];
         })->filter();
-    
-        Log::info('formatted: '.json_encode($formattedContributors));
         return response()->json([
             'success' => true,
             'contributors' => $formattedContributors

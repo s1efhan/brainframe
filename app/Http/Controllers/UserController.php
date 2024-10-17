@@ -16,14 +16,12 @@ class UserController extends Controller
 {
     public function getStats(Request $request)
     {
-        // 1. Benutzer finden
         $user = User::where('id', $request->userId)->first();
 
         if (!$user) {
             return response()->json(['message' => 'Benutzer nicht gefunden'], 404);
         }
 
-        // 2. Anzahl der Contributors mit dieser user_id
         $contributorCount = Contributor::where('user_id', $user->id)->count();
 
         $ideaCount = Idea::whereIn('contributor_id', function ($query) use ($user) {
@@ -39,7 +37,6 @@ class UserController extends Controller
         $lastActivity = max($lastIdea->created_at ?? null, $lastContribution->created_at ?? null);
         $formattedLastActivity = $lastActivity ? $lastActivity->format('H:i') . ' Uhr (' . $lastActivity->format('d.m.Y') . ')' : null;
 
-        // 5. Benutzername aus der E-Mail extrahieren
         $emailParts = explode('@', $user->email);
         $nameParts = explode('.', $emailParts[0]);
         $userName = ucfirst($nameParts[0]) . ' ' . ucfirst($nameParts[1] ?? '');
@@ -72,7 +69,6 @@ class UserController extends Controller
             ];
         })->sortByDesc('updated_at')->values();
 
-        Log::info('User Sessions:', $sessions->toArray());
         return response()->json($sessions, 200);
     }
 
@@ -103,8 +99,8 @@ class UserController extends Controller
     {
         $request->validate([
             'user_id' => 'required|integer',
-            'email' => 'required|email|unique:users,email', // E-Mail muss echt sein und noch keinem User zugewiesen
-            'password' => 'required|string|min:8', // Sicheres Passwort mit mindestens 8 Zeichen
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
         ]);
 
         $userId = $request->input('user_id');
@@ -115,10 +111,8 @@ class UserController extends Controller
 
         if ($user) {
             if ($user->email) {
-                // Der Benutzer hat bereits eine E-Mail-Adresse -> Login-Prozess starten
                 return $this->login($request);
             } else {
-                // E-Mail und Passwort speichern, Passwort sicher hashen
                 $user->email = $email;
                 $user->password = Hash::make($password);
                 $user->save();
@@ -126,11 +120,10 @@ class UserController extends Controller
                 return response()->json(['message' => 'User registered successfully.'], 200);
             }
         } else {
-            // Der Benutzer existiert nicht, einen neuen Benutzer erstellen
             $newUser = User::create([
                 'id' => $userId,
                 'email' => $email,
-                'password' => Hash::make($password), // Passwort sicher hashen
+                'password' => Hash::make($password),
             ]);
 
             return response()->json(['message' => 'User created successfully.'], 201);

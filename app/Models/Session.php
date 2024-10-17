@@ -10,7 +10,6 @@ class Session extends Model
     protected $table = 'bf_sessions';
     protected $orderBy = ['created_at' => 'desc'];
     protected $fillable = ['id', 'host_id', 'method_id', 'target', 'phase','seconds_left', 'collecting_round','vote_round', 'is_paused'];
-      // Definiert die Beziehung zu User (host_id)
       public function host()
       {
           return $this->belongsTo(User::class, 'host_id');
@@ -19,7 +18,6 @@ class Session extends Model
       {
           return $this->hasMany(Contributor::class, 'session_id');
       }
-      // Definiert die Beziehung zu Method (method_id)
       public function method()
       {
           return $this->belongsTo(Method::class, 'method_id');

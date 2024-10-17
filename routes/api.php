@@ -54,9 +54,11 @@ Route::post('/idea/store', [IdeaController::class, 'store']);
 Route::get('/ideas/{sessionId}', [IdeaController::class, 'get']);
 Route::post('/ideas/process', [IdeaController::class, 'process']);
 
+//VoteController
 Route::post('/vote/store', [VoteController::class, 'vote']);
 Route::get('/votes/{sessionId}', [VoteController::class, 'get']);
 
+// SurveyController
 Route::get('/survey/{sessionId}/ideas', [SurveyController::class, 'getTopIdeas']);
 Route::get('/survey/{sessionId}/{userId}', [SurveyController::class, 'get']);
 Route::post('/survey/store', [SurveyController::class, 'store']);

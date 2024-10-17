@@ -19,21 +19,16 @@ class Vote extends Model
         'round',
         'vote_type'
     ];
-
-    // Definiert die Beziehung zu BfSession (session_id)
     public function session()
     {
         return $this->belongsTo(Session::class, 'session_id');
     }
 
-    // Definiert die Beziehung zu BfIdea (idea_id)
     public function idea()
     {
         return $this->belongsTo(Idea::class, 'idea_id', 'id');
     }
     
-
-    // Definiert die Beziehung zu BfContributor (contributor_id)
     public function contributor()
     {
         return $this->belongsTo(Contributor::class, 'contributor_id');

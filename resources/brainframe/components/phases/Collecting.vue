@@ -120,16 +120,8 @@ import DefaultimageIcon from '../icons/DefaultimageIcon.vue';
 import MicrophoneIcon from '../icons/MicrophoneIcon.vue';
 import IconComponents from '../IconComponents.vue';
 import AiStarsIcon from '../icons/AiStarsIcon.vue';
-const getIconComponent = (iconName) => {
-    return IconComponents[iconName] || null;
-};
 import { dotPulse } from 'ldrs'
-const inActiveSince = ref(0);
-// soll true werden, wenn der Nutzer seit 30 Sekunden nichts ins input eingibt. 
-// soll false werden wenn Nutzer tippt
-dotPulse.register()
-const showInfo = ref(false);
-
+dotPulse.register();
 const props = defineProps({
     personalContributor: {
         type: Object,
@@ -148,11 +140,30 @@ const props = defineProps({
         required: true
     }
 });
+
+const showInfo = ref(false);
+const iceBreakerLoading = ref(false);
+const inActiveSince = ref(0); // soll true werden, wenn der Nutzer seit 30 Sekunden nichts ins input eingibt und false werden wenn Nutzer tippt
+const personalContributor = ref(props.personalContributor)
+const emit = defineEmits(['stop', 'wait']);
+const session = ref(props.session);
+const textInput = ref('');
+const fileInput = ref(null);
+const imageFile = ref(null);
+const imageFileUrl = ref('');
+const errorMsg = ref('');
+const iceBreakerMsg = ref('');
+const ideaIsSending = ref(false);
+const showImage = ref(true);
+
 const currentRoundIdeas = computed(() =>
     props.ideas.filter(idea => idea.round == session.value.collecting_round)
 );
+
+const getIconComponent = (iconName) => {
+    return IconComponents[iconName] || null;
+};
 const confirmStop = () => {
-    console.log(currentRoundIdeas.value,  props.ideas, session.value)
     if (currentRoundIdeas.value.length > 0) {
         if (confirm('Aktuelle Runde vorzeitig beenden?')) {
             emit('stop');
@@ -161,17 +172,14 @@ const confirmStop = () => {
         alert("Bitte geben Sie oder ein anderer Teilnehmer mindestens eine Idee ein");
     }
 };
-const iceBreakerLoading = ref(false);
+
+// Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
 const neighbourIdeas = computed(() => {
     const currentRound = parseInt(props.session.collecting_round);
     const currentContributorId = props.personalContributor.id;
-    console.log(`Current round: ${currentRound}, Current contributor ID: ${currentContributorId}`);
-
     if (currentRound <= 1) {
-        console.log('Round 1 or less, returning empty array');
         return [];
     }
-
     const validIdeas = props.ideas.filter(idea => {
         return idea.tag;
     });
@@ -193,9 +201,9 @@ function findNeighbourId(contributorIds, currentId, offset) {
     const currentIndex = contributorIds.indexOf(currentId);
     const neighbourIndex = (currentIndex + offset) % contributorIds.length;
     const neighbourId = contributorIds[neighbourIndex];
-    //  console.log(`Finding neighbour: current index ${currentIndex}, offset ${offset}, neighbour index ${neighbourIndex}, neighbour ID ${neighbourId}`);
     return neighbourId;
 }
+//
 
 const personalIdeasCount = computed(() => {
     return props.ideas.filter(idea =>
@@ -203,15 +211,7 @@ const personalIdeasCount = computed(() => {
         idea.contributor_id == props.personalContributor.id
     ).length;
 });
-const personalContributor = ref(props.personalContributor)
-const emit = defineEmits(['stop', 'wait']);
-const session = ref(props.session);
-const textInput = ref('');
-const fileInput = ref(null);
-const imageFile = ref(null);
-const imageFileUrl = ref('');
-const errorMsg = ref('');
-const iceBreakerMsg = ref('');
+
 const placeholderMsg = computed(() => {
     if (session.value.method.name === 'Walt Disney') {
         switch (session.value.collecting_round) {
@@ -303,27 +303,21 @@ const iceBreaker = () => {
             iceBreakerLoading.value = false;
         });
 }
-const ideaIsSending = ref(false);
-const showImage = ref(true);
+
 const submitIdea = async () => {
-    console.log("Starting submitIdea function");
     ideaIsSending.value = true;
     if (personalIdeasCount >= session.value.method.idea_limit && session.value.method.idea_limit > 0) {
         errorMsg.value = "Maximale Anzahl an Ideen für diese Runde erreicht.";
-        console.log("Max ideas reached, returning");
         return;
     }
 
     if (imageFile.value) {
         showImage.value = false;
-        console.log("Image file present, hiding image");
     }
 
     if (imageFile.value || textInput.value) {
-        console.log("Image file or text input present, proceeding with submission");
 
         const compressedImage = imageFile.value ? await compressImage(imageFile.value) : null;
-        console.log("Compressed image:", compressedImage ? `${compressedImage.size} bytes` : "None");
 
         const formData = new FormData();
         formData.append('contributor_id', personalContributor.value.id);
@@ -332,12 +326,9 @@ const submitIdea = async () => {
 
         if (compressedImage) {
             formData.append('image_file', compressedImage);
-            console.log("Added compressed image to formData");
         }
         formData.append('text_input', textInput.value);
-        console.log("Added text input to formData");
 
-        // Calculate and log total request size
         let totalSize = 0;
         for (let [key, value] of formData.entries()) {
             if (value instanceof File) {
@@ -346,33 +337,24 @@ const submitIdea = async () => {
                 totalSize += new Blob([value]).size;
             }
         }
-        console.log(`Total request size: ${totalSize} bytes (${(totalSize / (1024 * 1024)).toFixed(2)} MB)`);
 
         try {
-            console.log("Sending POST request to /api/idea/store");
             const response = await axios.post('/api/idea/store', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            console.log('Server response:', response.data);
-
             textInput.value = '';
             imageFile.value = null;
             imageFileUrl.value = '';
             iceBreakerMsg.value = "Trage hier deine Idee ein.";
-
-            console.log("Idea submitted successfully, reset form fields");
             ideaIsSending.value = false;
         } catch (error) {
             console.error('Error saving idea', error);
             ideaIsSending.value = false;
             if (error.response) {
                 console.log(error.response)
-                console.log(`Response headers:`, error.response.headers);
             }
         }
-
         showImage.value = true;
-        console.log("Showing image again");
     } else {
         ideaIsSending.value = false;
         errorMsg.value = "Du musst entweder eine Text-Idee oder eine Bild-Idee einfügen, bevor du die Idee speicherst";
@@ -380,14 +362,13 @@ const submitIdea = async () => {
     }
 };
 
+// Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
 const compressImage = async (file, maxSizeInMB = 1) => {  // maxSizeInMB auf 1 geändert
-    console.log(`Original file: name = ${file.name}, type = ${file.type}, size = ${file.size} bytes`);
 
     if (file.size <= maxSizeInMB * 1024 * 1024) {
-        console.log("File is already smaller than or equal to 1MB. No compression needed.");
+        
         return file;
     }
-
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -411,8 +392,6 @@ const compressImage = async (file, maxSizeInMB = 1) => {  // maxSizeInMB auf 1 g
 
                     dataUrl = canvas.toDataURL(mimeType, quality);
 
-                    console.log(`Compression iteration ${iteration + 1}: width = ${width}, height = ${height}, quality = ${quality}, size = ${dataUrl.length} bytes`);
-
                     if (dataUrl.length > maxSizeInMB * 1024 * 1024) {
                         width *= 0.9;  // Bild verkleinern
                         height *= 0.9;
@@ -425,8 +404,6 @@ const compressImage = async (file, maxSizeInMB = 1) => {  // maxSizeInMB auf 1 g
                     .then(res => res.blob())
                     .then(blob => {
                         const compressedFile = new File([blob], file.name, { type: file.type });
-                        console.log(`Compressed file: name = ${compressedFile.name}, type = ${compressedFile.type}, size = ${compressedFile.size} bytes`);
-                        console.log(`Compression ratio: ${(compressedFile.size / file.size * 100).toFixed(2)}%`);
                         resolve(compressedFile);
                     });
             };
@@ -436,7 +413,7 @@ const compressImage = async (file, maxSizeInMB = 1) => {  // maxSizeInMB auf 1 g
     });
 };
 
-
+// Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
 const handleFileChange = (event) => {
     const file = event.target.files[0];
     const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/svg+xml', 'image/webp', 'image/tiff', 'image/heic', 'image/heif'];
@@ -445,8 +422,7 @@ const handleFileChange = (event) => {
         compressImage(file).then(resultFile => {
             imageFile.value = resultFile;
             imageFileUrl.value = URL.createObjectURL(resultFile);
-            console.log('Bild verarbeitet und ausgewählt:', imageFileUrl.value);
-            errorMsg.value = ""; // Lösche eventuelle vorherige Fehlermeldungen
+            errorMsg.value = "";
         });
     } else {
         // Zurücksetzen des Datei-Inputs und der zugehörigen Werte
@@ -454,7 +430,6 @@ const handleFileChange = (event) => {
         imageFile.value = null;
         imageFileUrl.value = '';
         errorMsg.value = "Nicht unterstütztes Dateiformat. Bitte wählen Sie ein gültiges Bildformat. (PNG, JPEG, GIF, SVG, HEIF, HEIC, BMP, WEBP, TIFF)";
-        console.log('Ungültiges Dateiformat ausgewählt und entfernt');
     }
 };
 
@@ -466,6 +441,5 @@ onMounted(() => {
     const intervalId = setInterval(() => {
         inActiveSince.value++;
     }, 1000);
-    console.log("neighbourIdeas", neighbourIdeas.value);
 });
 </script>

@@ -19,14 +19,12 @@ class IdeaController extends Controller
         $session = Session::findOrFail($sessionId);
         $ideas = Idea::where('session_id', $sessionId)
             ->get();
-        Log::info('contributors: ' . json_encode($ideas));
         return response()->json([
             'ideas' => $ideas
         ]);
     }
     public function store(Request $request)
     {
-        // Validierung der eingehenden Anfrage
         $request->validate([
             'text_input' => 'nullable|string',
             'image_file' => 'nullable|image|max:5000',
@@ -40,10 +38,10 @@ class IdeaController extends Controller
         $imageFileUrl = null;
         $aiResponse = null;
 
-        // Hole die Session und das Target
         $session = Session::find($sessionId);
         $target = $session->target;
 
+        // Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
         if ($request->hasFile('image_file')) {
             $imageFile = $request->file('image_file');
 
@@ -76,19 +74,12 @@ class IdeaController extends Controller
 
             // Überprüfen der komprimierten Bildgröße
             $compressedSize = strlen($imageData);
-            \Log::info('Compressed image size: ' . $compressedSize . ' bytes');
 
             // Base64-Kodierung des komprimierten Bildes
             $imageData = base64_encode($imageData);
 
             $apiKey = env('OPENAI_API_KEY');
             $client = new Client();
-
-            // Überprüfen der gesendeten Daten
-            Log::info('Sending request to OpenAI', [
-                'imageDataLength' => strlen($imageData),
-                'prompt' => "Bild zu: " . $target . ". Idee in 3 Sätzen?"
-            ]);
 
             try {
                 $response = $client->post('https://api.openai.com/v1/chat/completions', [
@@ -142,7 +133,7 @@ class IdeaController extends Controller
                 return response()->json(['message' => 'Fehler: ' . $e->getMessage()], 500);
             }
         }
-        // Erstelle einen neuen Datensatz
+
         $idea = Idea::create([
             'text_input' => $aiResponse ?? $request->input('text_input'),
             'image_file_url' => $imageFileUrl,
@@ -151,7 +142,6 @@ class IdeaController extends Controller
             'round' => $request->input('round')
         ]);
         event(new UserSentIdea($idea, $sessionId));
-        // Rückgabe einer erfolgreichen Antwort
         return response()->json(['message' => 'Idea stored successfully', 'idea' => $idea], 201);
     }
 }

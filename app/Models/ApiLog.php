@@ -9,11 +9,6 @@ class ApiLog extends Model
 {
     use HasFactory;
 
-    /**
-     * Die Attribute, die massenweise zugewiesen werden können.
-     *
-     * @var array
-     */
     protected $orderBy = ['created_at' => 'desc'];
     protected $fillable = [
         'session_id',
@@ -26,11 +21,17 @@ class ApiLog extends Model
         'total_tokens',
     ];
 
-    /**
-     * Die Attribute, die als native Typen behandelt werden sollen.
-     *
-     * @var array
-     */
+    public function session()
+    {
+        return $this->belongsTo(Session::class, 'session_id');
+    }
+    public function contributor()
+    {
+        return $this->belongsTo(Contributor::class, 'contributor_id');
+    }
+
+
+    // Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
     protected $casts = [
         'request_data' => 'array',
         'response_data' => 'array',
@@ -38,20 +39,4 @@ class ApiLog extends Model
         'completion_tokens' => 'integer',
         'total_tokens' => 'integer',
     ];
-
-    /**
-     * Holt die zugehörige Session.
-     */
-    public function session()
-    {
-        return $this->belongsTo(Session::class, 'session_id');
-    }
-
-    /**
-     * Holt den zugehörigen Contributor.
-     */
-    public function contributor()
-    {
-        return $this->belongsTo(Contributor::class, 'contributor_id');
-    }
 }

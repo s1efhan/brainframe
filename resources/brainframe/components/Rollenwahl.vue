@@ -103,14 +103,12 @@ const getIconComponent = (iconName) => {
 
 const addContributor = () => {
   updateSelectedRole();
-  console.log("addContributor, session.value.id", session.value.id, "selectedRole.value", selectedRole.value.id, "userId.value",userId.value);
   axios.post('/api/contributor/create', {
     session_id: session.value.id,
     user_id: userId.value,
     role_id: selectedRole.value.id
   })
     .then(response => {
-      console.log('Server response:', response.data);
       showSelectRole.value = false;
       emit('contributorAdded');
     })
@@ -121,10 +119,8 @@ const addContributor = () => {
 };
 
 onMounted(() => {
-  console.log("Rollenwahl Mounted: ", session.value, userId.value);
   Echo.channel('session.' + session.value.id)
     .listen('UserPickedRole', (e) => {
-      console.log("UserPickedRole event empfangen")
       getRoles();
     });
   if (session.value.id) {

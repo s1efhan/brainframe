@@ -41,13 +41,13 @@ class SessionController extends Controller
         }
         return response()->json(['message' => 'Keine Berechtigung zum Löschen'], 403);
     }
-    public function alter(Request $request)
+    public function alter(Request $request) //gleichzeitig auch Create
     {
         $sessionId = $request->input('session_id');
         $userId = $request->input('user_id');
         $methodId = $request->input('method_id');
         $target = $request->input('target');
-       
+
         $todaySessionCount = Session::where('host_id', $userId)
             ->whereDate('created_at', Carbon::today())
             ->count();
@@ -60,7 +60,7 @@ class SessionController extends Controller
         $session = Session::find($sessionId);
 
         if (!$session) {
-            // Session existiert nicht, also erstellen wir eine neue
+            // Session existiert nicht, also wird eine neue erstellt
             $session = new Session();
             $session->id = $sessionId;
             $session->host_id = $userId;
@@ -73,7 +73,7 @@ class SessionController extends Controller
             return response()->json(['message' => 'Session erfolgreich erstellt'], 201);
         }
 
-        // Session existiert, also überprüfen wir die Berechtigung zum Aktualisieren
+        // Session existiert, also wird die Berechtigung zum Aktualisieren überprüft
         if ($userId == $session->host_id && ($session->phase === 'collecting' || $session->phase === null)) {
             $session->update([
                 'method_id' => $methodId,
@@ -154,8 +154,6 @@ class SessionController extends Controller
             'collecting_round' => $collectingRound,
             'vote_round' => $voteRound
         ]);
-        Log::info('Method: ' . $session->method->name);
-        Log::info('collectingRound: ' . $collectingRound);
         if ($session->method->name === "6 Thinking Hats" && $collectingRound > 1) {
 
             $this->rotateContributorRoles($session);
@@ -167,13 +165,11 @@ class SessionController extends Controller
         return response()->json(['message' => 'Session gestartet']);
     }
 
-
     public function stop(Request $request)
     {
         $sessionId = $request->input('session_id');
         $voteRound = $request->input('vote_round');
         $collectingRound = $request->input('collecting_round');
-        Log::info($collectingRound);
         $session = Session::findOrFail($sessionId);
         event(new SessionPaused($session));
         if ($session->phase === 'collecting') {
@@ -207,15 +203,15 @@ class SessionController extends Controller
     }
     private function sendIdeasToGPT($sessionId)
     {
-        Log::info("sendToGPT");
+
         $session = Session::findOrFail($sessionId);
         $round = $session->collecting_round;
-        Log::info("round: " . $round);
+
         $ideas = Idea::where('session_id', $sessionId)
             ->where('round', $round)
             ->select('id', 'text_input', 'contributor_id', 'round')
             ->get();
-        Log::info(message: '$round, $sessionId' . $round . $sessionId);
+
         if ($ideas->isEmpty()) {
             Log::info('Keine ideen Fehler');
             return false;
@@ -234,7 +230,7 @@ class SessionController extends Controller
             ];
         })->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        Log::info(message: $ideasFormatted . " not Empty");
+
         try {
             $response = $client->post('https://api.openai.com/v1/chat/completions', [
                 'headers' => [
@@ -275,7 +271,7 @@ class SessionController extends Controller
                 ],
             ]);
             $responseBody = json_decode($response->getBody(), true);
-            Log::info("Response Body: " . json_encode($responseBody));
+
             ApiLog::create([
                 'session_id' => $sessionId,
                 'contributor_id' => Contributor::where('user_id', $session->host_id)->where('session_id', $sessionId)->first()->id,
@@ -289,14 +285,13 @@ class SessionController extends Controller
                 $content = $responseBody['choices'][0]['message']['content'];
                 $content = preg_replace('/```json\s*|\s*```/', '', $content);
                 $newIdeas = json_decode($content, true);
-                Log::info("Decoded new ideas:", $newIdeas);
+
 
                 $createdIdeas = [];
                 if (is_array($newIdeas)) {
                     foreach ($newIdeas as $idea) {
-                        Log::info("Processing idea:", ['idea' => $idea]);
+
                         $originalIdea = $ideas->firstWhere('id', $idea['id']);
-                        Log::info("Original idea found:", ['originalIdea' => $originalIdea ? $originalIdea->toArray() : 'null']);
 
                         if ($originalIdea) {
                             $createdIdea = Idea::create([
@@ -309,14 +304,14 @@ class SessionController extends Controller
                                 'original_idea_id' => $originalIdea->id
                             ]);
                             $createdIdeas[] = $createdIdea;
-                            Log::info("Created new idea:", $createdIdea->toArray());
+
                         } else {
                             Log::warning("Original idea not found for id: " . $idea['id']);
                         }
                     }
 
                     event(new IdeasFormatted($createdIdeas, $sessionId));
-                    Log::info('New ideas saved and event broadcasted successfully. Created ideas count: ' . count($createdIdeas));
+
                 } elseif (is_object($newIdeas) || (is_array($newIdeas) && !isset($newIdeas[0]))) {
                     $newIdeas = [$newIdeas];
                     foreach ($newIdeas as $idea) {
@@ -335,7 +330,7 @@ class SessionController extends Controller
                         }
                     }
                     event(new IdeasFormatted($createdIdeas, $sessionId));
-                    Log::info('Single idea processed and event broadcasted. Created idea count: ' . count($createdIdeas));
+
                 } else {
                     Log::error('Invalid format for new ideas', ['content' => $content]);
                 }
@@ -355,7 +350,6 @@ class SessionController extends Controller
         }
     }
 
-
     public function pause(Request $request)
     {
         $sessionId = $request->input('session_id');
@@ -368,7 +362,6 @@ class SessionController extends Controller
         event(new SessionPaused($session));
         return response()->json(['message' => 'Session pausiert']);
     }
-
     private function updateCountdown($sessionId, $secondsLeft)
     {
         $timerKey = "timer_{$sessionId}";
@@ -382,9 +375,8 @@ class SessionController extends Controller
         Cache::forget($timerKey);
     }
 
-    private function rotateContributorRoles(Session $session)
+    private function rotateContributorRoles(Session $session) // bei 6 Thinking Hats Methode
     {
-        Log::info("Rotating roles for session {$session->id}, collecting round {$session->collecting_round}");
 
         $contributors = $session->contributors;
         $roles = Role::whereHas('methods', function ($query) use ($session) {
@@ -397,8 +389,6 @@ class SessionController extends Controller
             $newRoleIndex = ($index + $session->collecting_round - 1) % $rolesCount;
             $newRole = $roles[$newRoleIndex];
             $contributor->update(['role_id' => $newRole->id]);
-
-            Log::info("Contributor {$contributor->id} role rotated: {$oldRoleId} -> {$newRole->id}");
         }
         event(new RotateContributorRoles($session->id));
     }
@@ -414,14 +404,14 @@ class SessionController extends Controller
         $sessionId = $request->input('session_id');
         $contributorId = $request->input('contributor_id');
         $iceBreakerCount = ApiLog::where('session_id', $sessionId)
-        ->where('contributor_id', $contributorId)
-        ->count();
-    
-    if ($iceBreakerCount >= 10) {
-        return response()->json([
-            'message' => 'Du hast das Limit von 10 IceBreakern für diese Session erreicht.'
-        ], 403);
-    }
+            ->where('contributor_id', $contributorId)
+            ->count();
+
+        if ($iceBreakerCount >= 10) {
+            return response()->json([
+                'message' => 'Du hast das Limit von 10 IceBreakern für diese Session erreicht.'
+            ], 403);
+        }
         $ideas = Idea::where('session_id', $sessionId)
             ->select('id', 'text_input')
             ->get();
@@ -541,7 +531,6 @@ class SessionController extends Controller
     public function invite(Request $request)
     {
         try {
-            Log::info('Session Invite Request:', $request->all());
 
             $validated = $request->validate([
                 'session_id' => 'required',
@@ -584,9 +573,6 @@ class SessionController extends Controller
                     }
                 }
             }
-
-            Log::info("Invitations sent: {$sentCount} out of " . count($contributorEmailAddresses));
-
             return response()->json([
                 'message' => 'Invitations sent successfully.',
                 'sent_count' => $sentCount,
@@ -601,6 +587,7 @@ class SessionController extends Controller
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         }
     }
+
     public function downloadCSV($sessionId)
     {
         $session = Session::with(['method', 'host', 'contributors.role', 'contributors.user'])->findOrFail($sessionId);
@@ -627,7 +614,8 @@ class SessionController extends Controller
             ['Ideas'],
             ['Round', 'Idea ID', 'Title', 'Description', 'Tag', 'Contributor', 'Highest Round', 'Avg Rating', 'Votes Count', 'Created At']
         ];
-
+        
+        // Der folgende Codeabschnitt wurde mit Unterstützung von Claude 3.5 Sonnet erstellt
         $groupedIdeas = $ideas->groupBy(function ($idea) {
             return $idea->original_idea_id ?? $idea->id;
         });
@@ -729,7 +717,6 @@ class SessionController extends Controller
         $personalContributor = $contributors->where('isMe', true)->first();
 
         $closingData = $this->getClosingPdf($sessionId);
-        Log::info(json_encode($closingData));
 
         $data = [
             'session' => $session,
@@ -778,7 +765,6 @@ class SessionController extends Controller
         $personalContributor = $contributors->where('isMe', true)->first();
 
         $closingData = $this->getClosingPdf($sessionId);
-        Log::info(json_encode($closingData));
 
         $data = [
             'session' => $session,
@@ -792,16 +778,12 @@ class SessionController extends Controller
             'completion_tokens' => $closingData['completion_tokens'],
             'prompt_tokens' => $closingData['prompt_tokens']
         ];
-        $format = request('format', 'html');
 
         $html = view('pdf.session_details', $data)->render();
         $pdf = PDF::loadHTML($html);
         $filename = $session->target ?? 'session_details';
         $filename .= '.pdf';
         return $pdf->download($filename);
-
-        // Standardmäßig HTML zurückgeben
-        //   return view('pdf.session_details', $data);
     }
 
     private function getClosingPdf($sessionId)
