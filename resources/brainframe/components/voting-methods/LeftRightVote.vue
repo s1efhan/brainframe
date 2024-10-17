@@ -1,6 +1,6 @@
 <template>
   <div class="vote__headline__container">
-    <h2>Pick Left or Right to Vote <br>↔</h2>
+    <h2>Wähle zwischen der linken und Rechten Idee<br>↔</h2>
   </div>
   <div v-if="currentPair.length === 2" class="left-right__container">
     <div v-for="(idea, index) in currentPair" :key="idea.id" class="idea-card">

@@ -1,6 +1,6 @@
 <template>
   <div class="vote__headline__container">
-    <h2>Swipe to Vote <SwipeIcon/></h2>
+    <h2>Gefällt dir die Idee?<SwipeIcon/></h2>
   </div>
   <div v-if="currentIdea" class="idea-card" @touchstart="touchStart" @touchend="touchEnd">
     <h3>{{ currentIdea.title }}</h3>

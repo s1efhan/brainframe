@@ -1,6 +1,6 @@
 <template>
   <div class="vote__headline__container">
-    <h2>Rank the Ideas descending <br>
+    <h2>Sortiere die Ideen absteigend <br>
       <PodiumIcon />
     </h2>
   </div>

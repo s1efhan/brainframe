@@ -1,6 +1,6 @@
 <template>
   <div class="vote__headline__container">
-    <h2>Bewerte diese Idee <br>★★✰</h2>
+    <h2>Bewerte diese Idee von 1-3 <br>★★✰</h2>
   </div>
   <div v-if="currentIdea" class="idea-card star-vote">
     <h3>{{ currentIdea.title }}</h3>
