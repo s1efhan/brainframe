@@ -57,22 +57,70 @@ Echo Listener:
 - Komponente zur Verarbeitung von Echtzeit-Ereignissen
 - Unterstützt die Websocket-Kommunikation
 ### 3.2 Verwendete Technologien und Begründung der Auswahl
-PostgreSQL 14:
+
+**PostgreSQL 14:**
 - Gewählt aufgrund seiner Zuverlässigkeit, Leistungsfähigkeit und Unterstützung komplexer Datenstrukturen
 - Bietet robuste Funktionen für Datenkonsistenz und -integrität
-Laravel 11 & Reverb Websockets:
+
+**Laravel 11 & Reverb Websockets:**
 - Laravel als PHP-Framework ermöglicht eine schnelle und sichere Entwicklung des Backends
 - Reverb, als Teil des Laravel-Ökosystems, bietet nahtlose Integration für Echtzeit-Kommunikation
-Laravel Forge und AWS EC2 T2.Micro:
+
+**Laravel Forge und AWS EC2 T2.Micro:**
 - Laravel Forge vereinfacht die Bereitstellung und Verwaltung von Laravel-Anwendungen
 - AWS EC2 T2.Micro bietet eine kosteneffiziente und skalierbare Infrastruktur für die Anwendung
-Vue3:
+
+**Vue3:**
 - Gewählt für das Frontend aufgrund seiner Leistungsfähigkeit und Flexibilität
 - Ermöglicht die Erstellung von reaktiven und dynamischen Benutzeroberflächen
-Vite:
+
+**Vite:**
 - Dient als Build-Tool und Entwicklungsserver
 - Bietet schnelle Kompilierungszeiten und effizientes Hot Module Replacement für eine verbesserte Entwicklererfahrung
+
 ### 3.3 ERD nach Chen & Relationenschema
+[Users] 1 -- 0..N [Sessions]
+[Users] 1 -- 0..N [Personal_Access_Tokens]
+[Users] 1 -- 0..N [BF_Contributors]
+[Users] 1 -- 0..N [BF_Sessions] (als Host)
+[Users] 1 -- 0..N [BF_Survey_Responses]
+
+[BF_Methods] 1 -- 0..N [BF_Sessions]
+[BF_Methods] m -- N [BF_Roles]
+
+[BF_Roles] 1 -- 0..N [BF_Contributors]
+
+[BF_Sessions] 1 -- 0..N [BF_Contributors]
+[BF_Sessions] 1 -- 0..N [BF_Ideas]
+[BF_Sessions] 1 -- 0..N [BF_Votes]
+[BF_Sessions] 1 -- 0..N [API_Logs]
+
+[BF_Contributors] 1 -- 0..N [BF_Ideas]
+[BF_Contributors] 1 -- 0..N [BF_Votes]
+[BF_Contributors] 1 -- 0..N [API_Logs]
+
+[BF_Ideas] 1 -- 0..N [BF_Votes]
+[BF_Ideas] 0..1 -- 0..N [BF_Ideas] (Original zu abgeleiteten Ideen)
+
+- users(id, name, email, email_verified_at, password, remember_token, created_at, updated_at, token)
+- password_reset_tokens(email, token, created_at)
+- sessions(id, user_id, ip_address, user_agent, payload, last_activity)
+- cache(key, value, expiration)
+- cache_locks(key, owner, expiration)
+- jobs(id, queue, payload, attempts, reserved_at, available_at, created_at)
+- job_batches(id, name, total_jobs, pending_jobs, failed_jobs, failed_job_ids, options, cancelled_at, created_at, finished_at)
+- failed_jobs(id, uuid, connection, queue, payload, exception, failed_at)
+- personal_access_tokens(id, tokenable_id, tokenable_type, name, token, abilities, last_used_at, expires_at, created_at, updated_at)
+- bf_methods(id, name, description, time_limit, round_limit, created_at, updated_at, idea_limit)
+- bf_roles(id, name, description, icon, created_at, updated_at)
+- bf_sessions(id, target, method_id, host_id, phase, collecting_round, vote_round, is_paused, created_at, updated_at, seconds_left)
+- bf_contributors(id, session_id, role_id, user_id, last_ping, is_active, created_at, updated_at)
+- bf_methods_roles(id, method_id, role_id, created_at, updated_at)
+- bf_ideas(id, created_at, updated_at, text_input, image_file_url, session_id, round, contributor_id, title, description, tag, original_idea_id)
+- bf_votes(id, session_id, idea_id, contributor_id, vote_type, value, round, created_at, updated_at)
+- api_logs(id, session_id, contributor_id, request_data, response_data, prompt_tokens, completion_tokens, created_at, updated_at)
+- bf_survey_responses(id, user_id, session_id, timestamp, ideas_novelty_relevance, ideas_quantity_diversity, tool_ease_of_use, tool_thought_organization, anonymous_input_openness, ai_support_helpfulness, ai_suggestions_relevance, ai_inspiration, structure_method_facilitation, tool_effectiveness, idea_evaluation_transparency, rating_methods_understandability, result_pdf_usefulness, result_pdf_clarity, tool_future_use, tool_recommendation, session_expectations, known_method_635, known_method_walt_disney, known_method_crazy_8, known_method_brainstorming, known_method_6_thinking_hats, known_method_none, valuable_aspects, desired_improvements, unexpected_benefits_challenges, additional_comments, age, occupation, industry, created_at, updated_at)
+
 
 ## 4. Implementierungsdetails
 Anwendungs-Logik
@@ -132,9 +180,6 @@ const neighbourIdeas = computed(() => {
     }
     return neighbourIdeas;
 });
-
-- Codebeispiele für zentrale Funktionen
-- Erläuterung von Design-Entscheidungen
 
 ## 5. Testdokumentation
 //Jmeter Lasttest für die Anwendung auf einem AWS EC2 T2.Micro
