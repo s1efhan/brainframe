@@ -12,6 +12,7 @@
 9. [Literaturverzeichnis](#9-literaturverzeichnis)
 
 ## 1. Einleitung
+Dieses Projekt ist im Rahmen meines Praxisprojekts als Vorbereitung für meine Bachelorarbeit am Fachbereich 5 (Elektrotechnik und Informationstechnik) an der FH Aachen entstanden.
 BrainFrame ist ein digitales Kollaborationstool, das auf Vue3 und Laravel 11 basiert. Das Hauptziel der Anwendung besteht darin, Nutzern die Möglichkeit zu bieten, Ideen anonym zu sammeln und zu bewerten. Das Konzept von BrainFrame vereint traditionelle Brainstorming-Techniken mit modernen technologischen Ansätzen wie Künstlicher Intelligenz (KI) und Web Apps.
 In der kreativen Branche und im akademischen Umfeld sind klassische Brainstorming-Methoden mit physischen Hilfsmitteln wie Stift und Papier oder Tafeln noch weit verbreitet. Alternativ kommen digitale Whiteboard-Lösungen wie Miro zum Einsatz. Diese Methoden weisen jedoch Einschränkungen hinsichtlich der Effizienz auf. Eine wesentliche Herausforderung des klassischen Brainstormings liegt in der oft unstrukturierten und unübersichtlichen Darstellung der Ergebnisse, was eine effiziente Weiterverarbeitung der gesammelten Ideen erschwert.
 BrainFrame adressiert diese Problematik durch die Implementierung vorgegebener Strukturen und die automatische Generierung von Ergebnis-PDFs und CSVs. Dieser Ansatz zielt darauf ab, den Prozess der Ideenfindung und -verarbeitung zu optimieren.
@@ -259,9 +260,10 @@ export let options = {
 ![IMG_0844](https://github.com/user-attachments/assets/e137822d-2c44-401b-8bb0-0ce8239c71ad)
 
 11. Registrieren/Anmelden
-![IMG_0843](https://github.com/user-attachments/assets/7fc9a9a8-6cbd-443a-a455-b04cdd6e27c5), ![IMG_0842](https://github.com/user-attachments/assets/e634bd7c-5007-452b-a9e9-6d2c31c693c1)
+![IMG_0843](https://github.com/user-attachments/assets/7fc9a9a8-6cbd-443a-a455-b04cdd6e27c5)
+![IMG_0842](https://github.com/user-attachments/assets/e634bd7c-5007-452b-a9e9-6d2c31c693c1)
 
-12. Umfrage Teilnahme
+13. Umfrage Teilnahme
 - Datenweitergabe Zustimmung
 ![IMG_0835](https://github.com/user-attachments/assets/c7e81632-3166-4dd1-ac97-058482e5cd36)
 - Email-Verifizierung
@@ -279,11 +281,26 @@ Zeitplan und Meilensteine
 - M6 - 30.10.24: Projektarbeit wurde präsentiert
 
 Herausforderungen und Lösungsansätze
-
-Lessons Learned
+1. Laravel 10 Inkompatibilität mit Reverb
+- nach etwa einer Woche Coden und einem ersten Prototypen (ohne Websockets) bin ich auf das Problem gestoßen, dass ich leider noch mit einer veralteten Laravel Version (10) gestartet habe und nun auf Laravel 11 upgraden musste um die Kompatibilität mit Reverb zu gewährleisten
+2. Fehlerhafte Berechnung der Kosten für die OpenAI API
+- den meisten Teil des Projekts über habe ich mit einem API-Token Preis kalkurliert, der um den Faktor 100 höher war, als der eigentliche Preis. Glück gehabt, so konnte ich eigentlich als "zu teuer" eingestufte Features wie die Bildererkennung letztlich doch noch einbauen
+3. Unstrukturierter Code bzw. mangelnde Zustandsspeicherung einer "Brainframe Session"
+- nach etwa 2/3 der Projektarbeit, nach vielen Wochen des kontinuierlichen hinzufügens neuer Features, ohne besonders auf die Lesbarkeit und Struktur des Codes zu achten, habe ich die "Reißleine" gezogen und den Großteil der Logik "neu" aufgesetzt und strukturiert.
+- das habe ich deswegen gemacht, da es meiner Ansicht nach zeit-effizienter und professioneller es "neu" zu machen, als weiter im unübersichtlichen Code nach Fehlern zu suchen
+- von da an war das Debugging wesentlich einfacher und schneller, da der Code nun verständlich und weniger verschachtelt ist
+- die Hauptänderung betraf die Logik hinter dem Session-Zustand (Phase, Sekunden etc.) . Dieser wurde zunächst nicht bzw nicht vollständig in der Datenbank gespeichert sondern über komplizierte bedingungen vom Frontend errechnet. Das war fürs erste Prototyping schneller, aber defintiv nicht erweiterbar und wartbar
+4. Weitere Schwierigkeiten
+- Testen der Bildverarbeitung, weil die OpenAI API bei der lokalen Entwicklung natürlich nicht auf die auf dem Server liegenden Bilder zugreifen kann
+- Ressourcen-sparendes Daten-Laden (ich habe es jetzt weitgehend über Websockets gelöst, anstatt ständig API Aufrufe ans Laravel Backend zu senden)
+- Anwendungsdesign (Visuell)
 
 ## 8. Ausblick
-- Mögliche zukünftige Erweiterungen
+Mögliche zukünftige Erweiterungen
+- User-freundlicheres bzw. klassischeres App Design
+- Kommentare von Nutzern / Chat oder Reaktionen
+- andere Methodiken (Design Thinking)
+- Custom-Methoden mit einstellbaren Phasen / Voting Methoden und Timern/Limits
 
 ## 9. Literaturverzeichnis
 - [Vue3 Doku](https://vuejs.org/guide/introduction.html)
@@ -291,4 +308,5 @@ Lessons Learned
 - [Laravel Reverb Doku](https://laravel.com/docs/11.x/reverb)
 - [LDRS Animations](https://uiball.com/ldrs/)
 - [Icons](https://uxwing.com)
+- [Vue-QR-Code](https://gruhn.github.io/vue-qrcode-reader)
 - [DOM Pdf](https://github.com/barryvdh/laravel-dompdf)
