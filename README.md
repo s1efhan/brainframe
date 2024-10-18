@@ -12,6 +12,7 @@
 9. [Literaturverzeichnis](#9-literaturverzeichnis)
 
 ## 1. Einleitung
+Dieses Projekt ist im Rahmen meines Praxisprojekts als Vorbereitung für meine Bachelorarbeit am Fachbereich 5 (Elektrotechnik und Informationstechnik) an der FH Aachen entstanden.
 BrainFrame ist ein digitales Kollaborationstool, das auf Vue3 und Laravel 11 basiert. Das Hauptziel der Anwendung besteht darin, Nutzern die Möglichkeit zu bieten, Ideen anonym zu sammeln und zu bewerten. Das Konzept von BrainFrame vereint traditionelle Brainstorming-Techniken mit modernen technologischen Ansätzen wie Künstlicher Intelligenz (KI) und Web Apps.
 In der kreativen Branche und im akademischen Umfeld sind klassische Brainstorming-Methoden mit physischen Hilfsmitteln wie Stift und Papier oder Tafeln noch weit verbreitet. Alternativ kommen digitale Whiteboard-Lösungen wie Miro zum Einsatz. Diese Methoden weisen jedoch Einschränkungen hinsichtlich der Effizienz auf. Eine wesentliche Herausforderung des klassischen Brainstormings liegt in der oft unstrukturierten und unübersichtlichen Darstellung der Ergebnisse, was eine effiziente Weiterverarbeitung der gesammelten Ideen erschwert.
 BrainFrame adressiert diese Problematik durch die Implementierung vorgegebener Strukturen und die automatische Generierung von Ergebnis-PDFs und CSVs. Dieser Ansatz zielt darauf ab, den Prozess der Ideenfindung und -verarbeitung zu optimieren.
@@ -56,22 +57,70 @@ Echo Listener:
 - Komponente zur Verarbeitung von Echtzeit-Ereignissen
 - Unterstützt die Websocket-Kommunikation
 ### 3.2 Verwendete Technologien und Begründung der Auswahl
-PostgreSQL 14:
+
+**PostgreSQL 14:**
 - Gewählt aufgrund seiner Zuverlässigkeit, Leistungsfähigkeit und Unterstützung komplexer Datenstrukturen
 - Bietet robuste Funktionen für Datenkonsistenz und -integrität
-Laravel 11 & Reverb Websockets:
+
+**Laravel 11 & Reverb Websockets:**
 - Laravel als PHP-Framework ermöglicht eine schnelle und sichere Entwicklung des Backends
 - Reverb, als Teil des Laravel-Ökosystems, bietet nahtlose Integration für Echtzeit-Kommunikation
-Laravel Forge und AWS EC2 T2.Micro:
+
+**Laravel Forge und AWS EC2 T2.Micro:**
 - Laravel Forge vereinfacht die Bereitstellung und Verwaltung von Laravel-Anwendungen
 - AWS EC2 T2.Micro bietet eine kosteneffiziente und skalierbare Infrastruktur für die Anwendung
-Vue3:
+
+**Vue3:**
 - Gewählt für das Frontend aufgrund seiner Leistungsfähigkeit und Flexibilität
 - Ermöglicht die Erstellung von reaktiven und dynamischen Benutzeroberflächen
-Vite:
+
+**Vite:**
 - Dient als Build-Tool und Entwicklungsserver
 - Bietet schnelle Kompilierungszeiten und effizientes Hot Module Replacement für eine verbesserte Entwicklererfahrung
+
 ### 3.3 ERD nach Chen & Relationenschema
+[Users] 1 -- 0..N [Sessions]
+[Users] 1 -- 0..N [Personal_Access_Tokens]
+[Users] 1 -- 0..N [BF_Contributors]
+[Users] 1 -- 0..N [BF_Sessions] (als Host)
+[Users] 1 -- 0..N [BF_Survey_Responses]
+
+[BF_Methods] 1 -- 0..N [BF_Sessions]
+[BF_Methods] m -- N [BF_Roles]
+
+[BF_Roles] 1 -- 0..N [BF_Contributors]
+
+[BF_Sessions] 1 -- 0..N [BF_Contributors]
+[BF_Sessions] 1 -- 0..N [BF_Ideas]
+[BF_Sessions] 1 -- 0..N [BF_Votes]
+[BF_Sessions] 1 -- 0..N [API_Logs]
+
+[BF_Contributors] 1 -- 0..N [BF_Ideas]
+[BF_Contributors] 1 -- 0..N [BF_Votes]
+[BF_Contributors] 1 -- 0..N [API_Logs]
+
+[BF_Ideas] 1 -- 0..N [BF_Votes]
+[BF_Ideas] 0..1 -- 0..N [BF_Ideas] (Original zu abgeleiteten Ideen)
+
+- users(id, name, email, email_verified_at, password, remember_token, created_at, updated_at, token)
+- password_reset_tokens(email, token, created_at)
+- sessions(id, user_id, ip_address, user_agent, payload, last_activity)
+- cache(key, value, expiration)
+- cache_locks(key, owner, expiration)
+- jobs(id, queue, payload, attempts, reserved_at, available_at, created_at)
+- job_batches(id, name, total_jobs, pending_jobs, failed_jobs, failed_job_ids, options, cancelled_at, created_at, finished_at)
+- failed_jobs(id, uuid, connection, queue, payload, exception, failed_at)
+- personal_access_tokens(id, tokenable_id, tokenable_type, name, token, abilities, last_used_at, expires_at, created_at, updated_at)
+- bf_methods(id, name, description, time_limit, round_limit, created_at, updated_at, idea_limit)
+- bf_roles(id, name, description, icon, created_at, updated_at)
+- bf_sessions(id, target, method_id, host_id, phase, collecting_round, vote_round, is_paused, created_at, updated_at, seconds_left)
+- bf_contributors(id, session_id, role_id, user_id, last_ping, is_active, created_at, updated_at)
+- bf_methods_roles(id, method_id, role_id, created_at, updated_at)
+- bf_ideas(id, created_at, updated_at, text_input, image_file_url, session_id, round, contributor_id, title, description, tag, original_idea_id)
+- bf_votes(id, session_id, idea_id, contributor_id, vote_type, value, round, created_at, updated_at)
+- api_logs(id, session_id, contributor_id, request_data, response_data, prompt_tokens, completion_tokens, created_at, updated_at)
+- bf_survey_responses(id, user_id, session_id, timestamp, ideas_novelty_relevance, ideas_quantity_diversity, tool_ease_of_use, tool_thought_organization, anonymous_input_openness, ai_support_helpfulness, ai_suggestions_relevance, ai_inspiration, structure_method_facilitation, tool_effectiveness, idea_evaluation_transparency, rating_methods_understandability, result_pdf_usefulness, result_pdf_clarity, tool_future_use, tool_recommendation, session_expectations, known_method_635, known_method_walt_disney, known_method_crazy_8, known_method_brainstorming, known_method_6_thinking_hats, known_method_none, valuable_aspects, desired_improvements, unexpected_benefits_challenges, additional_comments, age, occupation, industry, created_at, updated_at)
+
 
 ## 4. Implementierungsdetails
 Anwendungs-Logik
@@ -131,9 +180,6 @@ const neighbourIdeas = computed(() => {
     }
     return neighbourIdeas;
 });
-
-- Codebeispiele für zentrale Funktionen
-- Erläuterung von Design-Entscheidungen
 
 ## 5. Testdokumentation
 //Jmeter Lasttest für die Anwendung auf einem AWS EC2 T2.Micro
@@ -221,64 +267,91 @@ export let options = {
 ## 6. Benutzerhandbuch
 1. Session Erstellen
 - Zielfrage festlegen
+![IMG_0822](https://github.com/user-attachments/assets/cd5decce-c7e5-420e-84e5-af87faab10b1)
 - Kreativ-Methode auswählen
+![IMG_0823](https://github.com/user-attachments/assets/288c9d0d-aa11-4396-ade2-039422aeb7e1)
 - Teilnehmer einladen
-- Session Starten
-
+![IMG_0826](https://github.com/user-attachments/assets/3546d403-829d-4a32-94d9-efac4d8e5cc8)
 3. Session beitreten
-
+![IMG_0824](https://github.com/user-attachments/assets/303ebc74-66f6-4c3b-afca-819f6c8f1f4c)
 4. Ideen Sammeln
-- Texteingabe
-- Bildeingabe
-- KI Eisbrecher
+- Texteingabe, Bildeingabe, KI Eisbrecher
 - Zeitlimit & Ideenlimit
 - Session pausieren
-- Session Stats
-  
+![IMG_0828](https://github.com/user-attachments/assets/3e34a932-9f08-4f57-8276-562e24f975c5)
+  - Session Stats
+ ![IMG_0829](https://github.com/user-attachments/assets/641f25e4-c1f3-40e7-bb4e-a59761164022)
 5. Ideen Bewerten
 - Links oder Rechts Voting
+![IMG_0830](https://github.com/user-attachments/assets/361dae5d-136d-478a-a42d-cbae60a4a224)
 - Swipe Voting
+![IMG_0832](https://github.com/user-attachments/assets/8173108b-54eb-4454-913a-2c6813ddae83)
 - Stern Voting
+![IMG_0833](https://github.com/user-attachments/assets/e2896a24-849b-4869-a4e2-9666362ec44c)
 - Rangliste Voting
+![IMG_0834](https://github.com/user-attachments/assets/703e5138-b3d8-4885-a261-67e51ff17eeb)
 
 7. Session Auswerten
-- PDF verschicken
-- PDF Download
-- CSV Download
-- Wortcluster Erklärung
-- Prozess-Darstellung Erklärung
+![IMG_0837](https://github.com/user-attachments/assets/7245177f-c698-4e4f-9be0-b7be9a4281df)
+- PDF verschicken, PDF Download, CSV Download
+![IMG_0841](https://github.com/user-attachments/assets/9a014654-deaf-4e6e-b5e2-8e0eb2c234e8)
+- Wortcluster
+![IMG_0839](https://github.com/user-attachments/assets/e145677e-e782-4022-9dc8-aeddaf9d168b)
+![IMG_0838](https://github.com/user-attachments/assets/146e2fd7-f557-419e-9b08-0cf0b574d562)
+- Prozess-Darstellung
+![IMG_0845](https://github.com/user-attachments/assets/1f298363-8999-4c22-9306-64fec8e52b02)
 
 9. Session Löschen/Bearbeiten
-- Löschen
-- Bearbeiten
+![IMG_0844](https://github.com/user-attachments/assets/e137822d-2c44-401b-8bb0-0ce8239c71ad)
 
 11. Registrieren/Anmelden
-- Registrieren
-- Anmelden
+![IMG_0843](https://github.com/user-attachments/assets/7fc9a9a8-6cbd-443a-a455-b04cdd6e27c5)
+![IMG_0842](https://github.com/user-attachments/assets/e634bd7c-5007-452b-a9e9-6d2c31c693c1)
 
-12. Umfrage Teilnahme
+13. Umfrage Teilnahme
 - Datenweitergabe Zustimmung
+![IMG_0835](https://github.com/user-attachments/assets/c7e81632-3166-4dd1-ac97-058482e5cd36)
 - Email-Verifizierung
+![IMG_0836](https://github.com/user-attachments/assets/98cd8e14-3f56-41ba-9bbe-3b8eda07e30f)
 - Umfrage durchführen
+![IMG_0847](https://github.com/user-attachments/assets/29a7d5ef-d4ef-4b4e-88ec-6a893ad38ea2)
 
 ## 7. Projektverlauf
 Zeitplan und Meilensteine
-- 01.09.24 1: Das Projekt ist vorbereitet und geplant 
-- 15.09.24 2: Ein erster Prototyp (MVP) wurde implementiert
-- 27.09.24 3: Testbare/Nutzbare Software ist bereitgestellt
-- 12.10.24 4: Feinschliff ist erledigt
-- 25.10.24 5: Quantitative und Qualitative Daten wurden gesammelt
-- 30.10.24 6: Projektarbeit wurde präsentiert
+- M1 - 01.09.24: Das Projekt ist vorbereitet und geplant 
+- M2 - 15.09.24: Ein erster Prototyp (MVP) wurde implementiert
+- M3 - 27.09.24: Testbare/Nutzbare Software ist bereitgestellt
+- M4 - 12.10.24: Feinschliff ist erledigt
+- M5 - 25.10.24: Quantitative und Qualitative Daten wurden gesammelt
+- M6 - 30.10.24: Projektarbeit wurde präsentiert
 
 Herausforderungen und Lösungsansätze
-
-Lessons Learned
+1. Laravel 10 Inkompatibilität mit Reverb
+- nach etwa einer Woche Coden und einem ersten Prototypen (ohne Websockets) bin ich auf das Problem gestoßen, dass ich leider noch mit einer veralteten Laravel Version (10) gestartet habe und nun auf Laravel 11 upgraden musste um die Kompatibilität mit Reverb zu gewährleisten
+2. Fehlerhafte Berechnung der Kosten für die OpenAI API
+- den meisten Teil des Projekts über habe ich mit einem API-Token Preis kalkurliert, der um den Faktor 100 höher war, als der eigentliche Preis. Glück gehabt, so konnte ich eigentlich als "zu teuer" eingestufte Features wie die Bildererkennung letztlich doch noch einbauen
+3. Unstrukturierter Code bzw. mangelnde Zustandsspeicherung einer "Brainframe Session"
+- nach etwa 2/3 der Projektarbeit, nach vielen Wochen des kontinuierlichen hinzufügens neuer Features, ohne besonders auf die Lesbarkeit und Struktur des Codes zu achten, habe ich die "Reißleine" gezogen und den Großteil der Logik "neu" aufgesetzt und strukturiert.
+- das habe ich deswegen gemacht, da es meiner Ansicht nach zeit-effizienter und professioneller es "neu" zu machen, als weiter im unübersichtlichen Code nach Fehlern zu suchen
+- von da an war das Debugging wesentlich einfacher und schneller, da der Code nun verständlich und weniger verschachtelt ist
+- die Hauptänderung betraf die Logik hinter dem Session-Zustand (Phase, Sekunden etc.) . Dieser wurde zunächst nicht bzw nicht vollständig in der Datenbank gespeichert sondern über komplizierte bedingungen vom Frontend errechnet. Das war fürs erste Prototyping schneller, aber defintiv nicht erweiterbar und wartbar
+4. Weitere Schwierigkeiten
+- Testen der Bildverarbeitung, weil die OpenAI API bei der lokalen Entwicklung natürlich nicht auf die auf dem Server liegenden Bilder zugreifen kann
+- Ressourcen-sparendes Daten-Laden (ich habe es jetzt weitgehend über Websockets gelöst, anstatt ständig API Aufrufe ans Laravel Backend zu senden)
+- Anwendungsdesign (Visuell)
 
 ## 8. Ausblick
-- Mögliche zukünftige Erweiterungen
+Mögliche zukünftige Erweiterungen
+- User-freundlicheres bzw. klassischeres App Design
+- Kommentare von Nutzern / Chat oder Reaktionen
+- andere Methodiken (Design Thinking)
+- Custom-Methoden mit einstellbaren Phasen / Voting Methoden und Timern/Limits
 
 ## 9. Literaturverzeichnis
-- Laravel Doku
-- Vue3 Doku
-- Laravel Forge Doku
-- Laravel Reverb Doku
+- [Vue3 Doku](https://vuejs.org/guide/introduction.html)
+- [Laravel Forge Doku](https://forge.laravel.com/docs/introduction.html)
+- [Laravel Reverb Doku](https://laravel.com/docs/11.x/reverb)
+- [LDRS Animations](https://uiball.com/ldrs/)
+- [Icons](https://uxwing.com)
+- [Vue-QR-Code](https://gruhn.github.io/vue-qrcode-reader)
+- [DOM Pdf](https://github.com/barryvdh/laravel-dompdf)
