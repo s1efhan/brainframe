@@ -1,6 +1,7 @@
 <template>
     <component :is="votingMethods[votingMethod]" :personalContributor="personalContributor" :ideas="ideas"
         :votes="votes" :session="session"  @sendVote="sendVote" @wait="emit('wait')"/>
+        <button class="accent stop" v-if="personalContributor.isHost" @click="confirmStop"> Runde beenden</button>
 </template>
 <script setup>
 import { ref, onMounted, computed } from 'vue';
@@ -31,7 +32,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits (['wait']);
+const emit = defineEmits (['wait', 'stop']);
 const session = ref(props.session);
 const votes = ref(props.votes);
 const votingMethod = ref(null);
@@ -51,7 +52,11 @@ const ideas = computed(() => {
     contributorIcon: props.contributors.find(c => c.id === idea.contributor_id)?.icon
   }));
 });
-
+const confirmStop = () => {
+        if (confirm('Aktuelle Runde vorzeitig beenden?')) {
+            emit('stop');
+        }
+};
 const pickVotingMethod = () => {
     if (ideas.value.length <= 5) {
         votingMethod.value = 'RankingVote'

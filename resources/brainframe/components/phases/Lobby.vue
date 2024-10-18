@@ -117,7 +117,7 @@
     </button>
 
     <button class="secondary"
-      v-if="session.seconds_left != 0 && session.isPaused && personalContributor.isHost && session.phase === 'voting'"
+      v-if="session.seconds_left != 0 && personalContributor.isHost && session.phase === 'voting'"
       @click="!isStopping && !isStarting && emit('stop')" :disabled="isStopping || isStarting">
       <l-dot-pulse v-if="isStopping || isStarting" size="43" speed="1.3" color="#91b4b2" />
       <template v-else>Runde beenden</template>

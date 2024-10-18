@@ -50,7 +50,7 @@
       @wait="showStats = true" />
     <Voting v-if=" session.phase === 'voting' && !session.isPaused && !showStats && personalContributor"
       :session="session" @wait="showStats = true" :contributors="contributors"
-      :personalContributor="personalContributor" :ideas="ideasWithTags" :votes="votes" />
+      :personalContributor="personalContributor" @stop="stopSession" :ideas="ideasWithTags" :votes="votes" />
     <Closing v-if=" session.phase === 'closing' && personalContributor" :session="session" :contributors="contributors"
       :personalContributor="personalContributor" :ideas="ideas" :votes="votes" />
     <div v-if="session.phase != 'closing' " class="timer__container">
