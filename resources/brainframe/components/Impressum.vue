@@ -14,7 +14,6 @@
     <p>Stefan Theißen</p>
     <p>In den Kronprinzengärten 15</p>
     <p>52066 Aachen</p>
-    <p>35410 Hungen</p>
 </section>
 </main>
 </template>
