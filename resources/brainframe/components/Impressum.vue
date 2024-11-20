@@ -12,8 +12,8 @@
     <section class="impressum">
     <h3>Verantwortlicher i.S.d. § 18 Abs. 2 MStV:</h3>
     <p>Stefan Theißen</p>
-    <p>c/o Impressumservice Dein-Impressum</p>
-    <p>Stettiner Straße 41</p>
+    <p>In den Kronprinzengärten 15</p>
+    <p>52066 Aachen</p>
     <p>35410 Hungen</p>
 </section>
 </main>
