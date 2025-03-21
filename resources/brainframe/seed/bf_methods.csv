@@ -1,0 +1,20 @@
+id,name,description,time_limit,round_limit,created_at,updated_at,idea_limit
+1,6-3-5,"<ul> <li>Brainstorming mit <strong>Weiterreichen</strong></li>
+    <li><strong>3 Ideen pro Runde</strong> pro Teilnehmer</li>
+    <li>5 Minuten pro Runde</li>
+    <li><strong>Vorteile:</strong> Schnelle Ideenfindung.</li><li><a href=""/brainframe/knowledge/6-3-5"" target=""_blank"">Die 6-3-5 Methode - Inspiration vom eigenen
+          ""Sitznachbarn""</a></li></ul>",360,3,,,3
+2,Crazy 8,"<ul>    <li>In 8 Minuten 8 Ideen pro Person skizzieren.</li>
+    <li><strong>Vorteile:</strong> Schnelle Ideenfindung. <strong><br>Nachteile:</strong> Kann oberflächlich sein.</li> <li><a href=""/brainframe/knowledge/crazy-8"" target=""_blank"">Crazy 8 - Schnelle Ideengenerierung in acht
+          Minuten</a></li></ul>",60,8,,,1
+3,Walt Disney,"<ul><li>Rollenwechsel (Träumer, Realist, Kritiker) zur Ideenbewertung.</li>
+    <li><strong>Vorteile:</strong> Umfassende Perspektiven. <strong><br>Nachteile:</strong> Zeitaufwendig, erfordert Engagement.</li><li><a href=""/brainframe/knowledge/walt-disney"" target=""_blank"">Walt Disney Methode - Ideenentwicklung nach
+          amerikanischem Vorbild</a></li></ul>",180,3,,,0
+4,6 Thinking Hats,"  <ul>
+    <li>Unterschiedliche Rollen (Hüte) mit spezifischen <strong>Perspektiven</strong>
+      <br>
+      z.B: Emotional, Kritisch, Optimistisch, Sachlich, Kreativ oder mit Übersicht
+    </li>
+    <li><a href=""/brainframe/knowledge/6-thinking-hats"" target=""_blank"">6 Thinking Hats - Perspektivenwechsel für
+        umfassende Lösungen</a></li>
+  </ul>",180,6,,,0
