@@ -1,0 +1,94 @@
+services:
+  # Backend Service (Laravel API)
+# Backend Service (Laravel API)
+  backend:
+    build:
+      context: ./
+      dockerfile: docker/backend/Dockerfile
+      # Übergibt die Host-Benutzer-IDs an das Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: brainframe-backend
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    entrypoint: /usr/local/bin/entrypoint.sh
+    command: php-fpm
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-brainframe}
+      - DB_USERNAME=${DB_USERNAME:-user}
+      - DB_PASSWORD=${DB_PASSWORD:-user}
+      - REDIS_HOST=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - brainframe-network
+
+  # Frontend Service (Vue.js Dev Server)
+  frontend:
+    build:
+      context: ./
+      dockerfile: docker/frontend/Dockerfile
+    container_name: brainframe-frontend
+    volumes:
+      - ./:/app
+      # Anonymes Volume für node_modules, um Konflikte mit dem Host zu vermeiden
+      - /app/node_modules
+    ports:
+      - "5173:5173" # Vite's Standard-Port
+    networks:
+      - brainframe-network
+
+  # Web Server / Reverse Proxy
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: brainframe-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - brainframe-network
+
+  # Datenbank Service
+  db:
+    image: postgres:14-alpine
+    container_name: brainframe-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-brainframe}
+      POSTGRES_USER: ${DB_USERNAME:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-user}
+    volumes:
+      - brainframe-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - brainframe-network
+
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: brainframe-redis
+    networks:
+      - brainframe-network
+
+networks:
+  brainframe-network:
+    driver: bridge
+
+volumes:
+  brainframe-db-data:
