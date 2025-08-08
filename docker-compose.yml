@@ -5,14 +5,17 @@ services:
     build:
       context: ./
       dockerfile: docker/backend/Dockerfile
-      # Übergibt die Host-Benutzer-IDs an das Dockerfile
       args:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
     container_name: brainframe-backend
     working_dir: /var/www/html
     volumes:
+      # 1. Spiegle den gesamten Code für die Live-Entwicklung
       - ./:/var/www/html
+      # 2. Überlagere die Ordner mit Named Volumes, um sie zu entkoppeln
+      - brainframe-storage:/var/www/html/storage
+      - brainframe-bootstrap-cache:/var/www/html/bootstrap/cache
     entrypoint: /usr/local/bin/entrypoint.sh
     command: php-fpm
     environment:
@@ -92,3 +95,5 @@ networks:
 
 volumes:
   brainframe-db-data:
+  brainframe-storage:
+  brainframe-bootstrap-cache:
